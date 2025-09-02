@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -18,6 +18,9 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
+
+	defer l.Close()
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -31,11 +34,42 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		text := scanner.Text()
-		if strings.TrimSpace(text) == "PING" {
-			conn.Write([]byte("+PONG\r\n"))
+	for {
+		r := NewResp(conn)
+		value, err := r.Read()
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("Client disconnected: ", conn.RemoteAddr().String())
+			} else {
+				fmt.Println("ERR IS", err)
+			}
+			return
+		} else {
+			fmt.Println("Client connected: ", conn.RemoteAddr().String())
 		}
+
+		if value.Typ != "array" {
+			fmt.Println("Invalid request, expected array")
+			continue
+		}
+
+		command := strings.ToUpper(value.Array[0].Bulk)
+		args := value.Array[1:]
+
+		writer := NewWriter(conn)
+		handler, ok := Handlers[command]
+
+		if !ok {
+			fmt.Println("Invalid command: ", command)
+			err := writer.Write(Value{Typ: "string", Str: ""})
+			if err != nil {
+				fmt.Println("Error writing response:", err)
+				break
+			}
+			continue
+		}
+
+		result := handler(args)
+		writer.Write(result)
 	}
 }
