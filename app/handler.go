@@ -1,21 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 )
 
 var Handlers = map[string]func([]Value) Value{
-	"PING": ping,
-	"ECHO": echo,
-	"SET":  set,
-	"GET":  get,
+	"PING":  ping,
+	"ECHO":  echo,
+	"SET":   set,
+	"GET":   get,
+	"RPUSH": rpush,
 }
 
 type MemoryEntry struct {
 	Value   string
+	Array   []string
 	Expires int64 // Unix timestamp in milliseconds, 0 means no expiry
 }
 
@@ -53,8 +54,6 @@ func set(args []Value) Value {
 		}
 	}
 
-	fmt.Println("entry", entry)
-
 	memory[key] = entry
 	return Value{Typ: "string", Str: "OK"}
 }
@@ -78,5 +77,32 @@ func get(args []Value) Value {
 		return Value{Typ: "null", Str: ""}
 	}
 
+	// If it's an array, return an error (GET only works with strings)
+	if len(entry.Array) > 0 {
+		return Value{Typ: "error", Str: "WRONGTYPE Operation against a key holding the wrong kind of value"}
+	}
+
 	return Value{Typ: "string", Str: entry.Value}
+}
+
+func rpush(args []Value) Value {
+	if len(args) < 2 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'rpush' command"}
+	}
+
+	key := args[0].Bulk
+	entry, exists := memory[key]
+
+	// If key doesn't exist or is not an array, create a new array
+	if !exists || len(entry.Array) == 0 && entry.Value != "" {
+		entry = MemoryEntry{Array: []string{}, Expires: 0}
+	}
+
+	// Add all values to the end of the array
+	for i := 1; i < len(args); i++ {
+		entry.Array = append(entry.Array, args[i].Bulk)
+	}
+
+	memory[key] = entry
+	return Value{Typ: "integer", Num: len(entry.Array)}
 }
