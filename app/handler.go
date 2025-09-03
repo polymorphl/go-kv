@@ -187,7 +187,7 @@ func lrange(args []Value) Value {
 	entry, exists := memory[key]
 
 	if !exists {
-		return Value{Typ: "error", Str: "ERR no such key"}
+		return Value{Typ: "error", Array: []Value{}}
 	}
 
 	// Check if it's an array
