@@ -10,6 +10,7 @@ var Handlers = map[string]func([]Value) Value{
 	"LPUSH":  lpush,
 	"RPUSH":  rpush,
 	"LRANGE": lrange,
+	"LLEN":   llen,
 }
 
 // MemoryEntry represents a value stored in the in-memory database.

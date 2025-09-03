@@ -159,3 +159,18 @@ func lrange(args []Value) Value {
 
 	return Value{Typ: "array", Array: result}
 }
+
+func llen(args []Value) Value {
+	if len(args) != 1 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'llen' command"}
+	}
+
+	key := args[0].Bulk
+	entry, exists := memory[key]
+
+	if !exists {
+		return Value{Typ: "integer", Num: 0}
+	}
+
+	return Value{Typ: "integer", Num: len(entry.Array)}
+}
