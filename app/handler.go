@@ -16,7 +16,8 @@ var Handlers = map[string]func([]Value) Value{
 	"LPOP":   lpop,
 	"BLPOP":  blpop,
 	// stream commands
-	"TYPE": typeCmd,
+	"TYPE": typeCmd, // type is a reserved word
+	"XADD": xadd,
 }
 
 // MemoryEntry represents a value stored in the in-memory database.
@@ -24,6 +25,7 @@ var Handlers = map[string]func([]Value) Value{
 type MemoryEntry struct {
 	Value   string   // String value (used when Array is empty)
 	Array   []string // Array of strings (used for list operations)
+	Stream  []string // Stream of strings (used for stream operations)
 	Expires int64    // Unix timestamp in milliseconds, 0 means no expiry
 }
 
