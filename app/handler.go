@@ -15,6 +15,8 @@ var Handlers = map[string]func([]Value) Value{
 	"LLEN":   llen,
 	"LPOP":   lpop,
 	"BLPOP":  blpop,
+	// stream commands
+	"TYPE": typeCmd,
 }
 
 // MemoryEntry represents a value stored in the in-memory database.
