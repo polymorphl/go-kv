@@ -1,33 +1,96 @@
-[![progress-banner](https://backend.codecrafters.io/progress/redis/7eb7ef2d-cd35-410a-a246-abc9d30cb08b)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+# Redis Implementation in Go
 
-This is a starting point for Go solutions to the
-["Build Your Own Redis" Challenge](https://codecrafters.io/challenges/redis).
+A lightweight Redis-compatible server implementation written in Go, featuring core Redis commands and the RESP (Redis Serialization Protocol).
 
-In this challenge, you'll build a toy Redis clone that's capable of handling
-basic commands like `PING`, `SET` and `GET`. Along the way we'll learn about
-event loops, the Redis protocol and more.
+**⚠️ Work in Progress** - This is an ongoing implementation with features being added incrementally.
 
-**Note**: If you're viewing this repo on GitHub, head over to
-[codecrafters.io](https://codecrafters.io) to try the challenge.
+## Features
 
-# Passing the first stage
+This implementation supports the following Redis commands:
 
-The entry point for your Redis implementation is in `app/main.go`. Study and
-uncomment the relevant code, and push your changes to pass the first stage:
+### Basic Commands
+- `PING` - Test server connectivity
+- `ECHO` - Echo back the provided message
 
-```sh
-git commit -am "pass 1st stage" # any msg
-git push origin master
+### String Operations
+- `SET` - Set a key-value pair with optional expiration
+- `GET` - Retrieve a value by key
+
+### List Operations
+- `LPUSH` - Push elements to the left of a list
+- `RPUSH` - Push elements to the right of a list
+- `LRANGE` - Get a range of elements from a list
+- `LLEN` - Get the length of a list
+- `LPOP` - Remove and return the leftmost element
+- `BLPOP` - Blocking left pop operation
+
+### Stream Operations
+- `XADD` - Add entries to a stream
+- `TYPE` - Get the type of a key
+
+## Architecture
+
+The server is built with a clean, modular architecture:
+
+- **Network Layer**: TCP server listening on port 6379
+- **Protocol Layer**: RESP (Redis Serialization Protocol) implementation
+- **Command Handler**: Extensible command routing system
+- **Storage**: In-memory key-value store with support for strings, lists, and streams
+
+## Project Structure
+
+```
+app/
+├── main.go          # Server entry point and connection handling
+├── handler.go       # Command handlers and in-memory storage
+├── cmd_string.go    # String operation implementations
+├── cmd_list.go      # List operation implementations
+├── cmd_stream.go    # Stream operation implementations
+├── resp.go          # RESP protocol implementation
+├── marshal.go       # Data marshaling utilities
+└── writer.go        # Response writing utilities
 ```
 
-That's all!
+## Getting Started
 
-# Stage 2 & beyond
+### Prerequisites
+- Go 1.24 or later
 
-Note: This section is for stages 2 and beyond.
+### Running the Server
 
-1. Ensure you have `go (1.24)` installed locally
-1. Run `./your_program.sh` to run your Redis server, which is implemented in
-   `app/main.go`.
-1. Commit your changes and run `git push origin master` to submit your solution
-   to CodeCrafters. Test output will be streamed to your terminal.
+1. Clone the repository
+2. Navigate to the project directory
+3. Run the server:
+   ```bash
+   ./your_program.sh
+   ```
+
+The server will start listening on `localhost:6379`.
+
+### Testing
+
+You can test the server using any Redis client or the `redis-cli`:
+
+```bash
+redis-cli -p 6379
+```
+
+Example commands:
+```redis
+PING
+SET mykey "Hello World"
+GET mykey
+LPUSH mylist "item1" "item2"
+LRANGE mylist 0 -1
+```
+
+## Implementation Details
+
+- **Concurrent Connections**: Each client connection is handled in a separate goroutine
+- **Memory Management**: In-memory storage with optional expiration support
+- **Protocol Compliance**: Full RESP protocol implementation for Redis compatibility
+- **Error Handling**: Robust error handling with graceful connection management
+
+## Development
+
+This project was developed as part of the [CodeCrafters Redis Challenge](https://codecrafters.io/challenges/redis), which provides an excellent learning experience for understanding distributed systems, network programming, and the Redis protocol.
