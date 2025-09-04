@@ -14,6 +14,7 @@ var Handlers = map[string]func([]Value) Value{
 	"LRANGE": lrange,
 	"LLEN":   llen,
 	"LPOP":   lpop,
+	"BLPOP":  blpop,
 }
 
 // MemoryEntry represents a value stored in the in-memory database.
