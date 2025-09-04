@@ -14,6 +14,8 @@ func (v Value) Marshal() []byte {
 		return v.marshalInteger()
 	case "null":
 		return v.marshallNull()
+	case "null_array":
+		return v.marshallNullArray()
 	case "error":
 		return v.marshallError()
 	default:
@@ -66,6 +68,10 @@ func (v Value) marshallError() []byte {
 
 func (v Value) marshallNull() []byte {
 	return []byte("$-1\r\n")
+}
+
+func (v Value) marshallNullArray() []byte {
+	return []byte("*-1\r\n")
 }
 
 func (v Value) marshalInteger() []byte {

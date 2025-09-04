@@ -280,6 +280,7 @@ func lpop(args []Value) Value {
 // becomes available on one of the specified lists, or until the timeout is reached.
 // If timeout is 0, the command blocks indefinitely.
 //
+// The timeout can be specified as an integer (seconds) or float (fractional seconds).
 // The command returns a two-element array containing the key name and the popped value.
 // If timeout is reached before an element becomes available, null is returned.
 //
@@ -288,6 +289,8 @@ func lpop(args []Value) Value {
 //	BLPOP mylist 5                    // Wait up to 5 seconds for an element
 //	BLPOP list1 list2 10              // Wait up to 10 seconds on either list
 //	BLPOP mylist 0                    // Wait indefinitely
+//	BLPOP mylist 0.1                  // Wait up to 0.1 seconds (100ms)
+//	BLPOP mylist 1.5                  // Wait up to 1.5 seconds
 //	BLPOP nonexistent 1               // Returns null after 1 second timeout
 //
 // Note: This implementation uses polling to check for available elements every 100ms.
@@ -297,11 +300,11 @@ func blpop(args []Value) Value {
 		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'blpop' command"}
 	}
 
-	// Last argument is the timeout
+	// Last argument is the timeout (can be integer or float)
 	timeoutStr := args[len(args)-1].Bulk
-	timeout, err := strconv.Atoi(timeoutStr)
+	timeout, err := strconv.ParseFloat(timeoutStr, 64)
 	if err != nil || timeout < 0 {
-		return Value{Typ: "error", Str: "ERR timeout is not an integer or out of range"}
+		return Value{Typ: "error", Str: "ERR timeout is not a float or out of range"}
 	}
 
 	// Helper function to check and pop from any available list
@@ -341,8 +344,8 @@ func blpop(args []Value) Value {
 			}
 		}
 	} else {
-		// Block with timeout
-		deadline := time.Now().Add(time.Duration(timeout) * time.Second)
+		// Block with timeout (convert float seconds to duration)
+		deadline := time.Now().Add(time.Duration(timeout * float64(time.Second)))
 		for time.Now().Before(deadline) {
 			time.Sleep(100 * time.Millisecond)
 			if result := checkAndPop(); result != nil {
@@ -351,6 +354,6 @@ func blpop(args []Value) Value {
 		}
 	}
 
-	// Timeout reached, return null
-	return Value{Typ: "null", Str: ""}
+	// Timeout reached, return null array
+	return Value{Typ: "null_array", Str: ""}
 }
