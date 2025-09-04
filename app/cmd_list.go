@@ -160,6 +160,22 @@ func lrange(args []Value) Value {
 	return Value{Typ: "array", Array: result}
 }
 
+// llen handles the LLEN command.
+// Usage: LLEN key
+// Returns: The length of the list stored at key.
+//
+// This command returns the length of the list stored at key.
+// If key does not exist, it is treated as an empty list and 0 is returned.
+// If key exists but is not a list, an error is returned.
+//
+// Examples:
+//
+//	LLEN mylist                    // Returns the length of mylist
+//	LLEN nonexistent              // Returns 0 (key doesn't exist)
+//	LLEN mystring                 // Returns error (wrong type)
+//
+// Note: LLEN is a fast O(1) operation that simply returns the current length
+// of the list without traversing its contents.
 func llen(args []Value) Value {
 	if len(args) != 1 {
 		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'llen' command"}
@@ -173,4 +189,23 @@ func llen(args []Value) Value {
 	}
 
 	return Value{Typ: "integer", Num: len(entry.Array)}
+}
+
+func lpop(args []Value) Value {
+	if len(args) != 1 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'lpop' command"}
+	}
+
+	key := args[0].Bulk
+	entry, exists := memory[key]
+
+	if !exists || len(entry.Array) == 0 {
+		return Value{Typ: "null", Str: ""}
+	}
+
+	tmp := entry.Array[0]
+	entry.Array = entry.Array[1:]
+	memory[key] = entry
+
+	return Value{Typ: "string", Str: tmp}
 }

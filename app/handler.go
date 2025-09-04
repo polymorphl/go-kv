@@ -3,14 +3,17 @@ package main
 // Handlers maps Redis command names to their corresponding handler functions.
 // Each handler function takes an array of Value arguments and returns a Value response.
 var Handlers = map[string]func([]Value) Value{
-	"PING":   ping,
-	"ECHO":   echo,
-	"SET":    set,
-	"GET":    get,
+	"PING": ping,
+	"ECHO": echo,
+	// string commands
+	"SET": set,
+	"GET": get,
+	// list commands
 	"LPUSH":  lpush,
 	"RPUSH":  rpush,
 	"LRANGE": lrange,
 	"LLEN":   llen,
+	"LPOP":   lpop,
 }
 
 // MemoryEntry represents a value stored in the in-memory database.
