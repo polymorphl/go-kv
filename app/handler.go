@@ -31,24 +31,3 @@ type MemoryEntry struct {
 
 // memory is the global in-memory database that stores all key-value pairs.
 var memory = make(map[string]MemoryEntry)
-
-// ping handles the PING command.
-// Usage: PING [message]
-// Returns: "PONG" if no message provided, otherwise echoes the provided message.
-// This is typically used to test if the server is alive and responsive.
-func ping(args []Value) Value {
-	if len(args) == 0 {
-		return Value{Typ: "string", Str: "PONG"}
-	}
-
-	return Value{Typ: "string", Str: args[0].Bulk}
-}
-
-// echo handles the ECHO command.
-// Usage: ECHO message
-// Returns: The message that was sent as an argument.
-// This command is useful for testing the connection and verifying that
-// the server is receiving and processing commands correctly.
-func echo(args []Value) Value {
-	return Value{Typ: "string", Str: args[0].Bulk}
-}
