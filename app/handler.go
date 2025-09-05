@@ -19,6 +19,7 @@ var Handlers = map[string]func([]Value) Value{
 	"TYPE":   typeCmd, // type is a reserved word
 	"XADD":   xadd,
 	"XRANGE": xrange,
+	"XREAD":  xread,
 }
 
 // StreamEntry represents a single entry in a Redis stream

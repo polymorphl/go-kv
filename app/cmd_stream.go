@@ -518,3 +518,56 @@ func isInRange(id, start, end string) bool {
 	// Both are specific IDs - check if id is between start and end (inclusive)
 	return compareStreamIDs(id, start) >= 0 && compareStreamIDs(id, end) <= 0
 }
+
+// xread handles the XREAD command.
+// Usage: XREAD streams key id
+// Returns: Array of streams with entries newer than the specified ID.
+//
+// This command reads entries from a stream starting from a specified ID.
+// It returns only entries that come after the specified ID (exclusive).
+//
+// Command Format: XREAD streams key id
+// Response Format: [[stream_name, [entry1, entry2, ...]]]
+// Each entry is [ID, [field-value pairs]]
+//
+// Examples:
+//
+//	XREAD streams mystream 0-0                    // Read from beginning
+//	XREAD streams mystream 1526985054069-0        // Read from specific ID
+//
+// Returns: Array of streams with new entries, or empty array if no new entries
+func xread(args []Value) Value {
+	// Validate arguments: XREAD streams key id
+	if len(args) != 3 || args[0].Bulk != "streams" {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
+	}
+
+	key := args[1].Bulk
+	startID := args[2].Bulk
+
+	// Check if stream exists
+	entry, exists := memory[key]
+	if !exists {
+		return Value{Typ: "array", Array: []Value{}}
+	}
+
+	// Find entries newer than the specified ID
+	var streamEntries []Value
+	for _, streamEntry := range entry.Stream {
+		if compareStreamIDs(streamEntry.ID, startID) > 0 {
+			streamEntries = append(streamEntries, createStreamEntryValue(streamEntry))
+		}
+	}
+
+	// Return empty array if no new entries
+	if len(streamEntries) == 0 {
+		return Value{Typ: "array", Array: []Value{}}
+	}
+
+	// Return stream with new entries
+	streamArray := []Value{
+		{Typ: "bulk", Bulk: key},
+		{Typ: "array", Array: streamEntries},
+	}
+	return Value{Typ: "array", Array: []Value{{Typ: "array", Array: streamArray}}}
+}
