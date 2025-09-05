@@ -75,9 +75,56 @@ func getLastStreamID(stream []string) (*StreamID, error) {
 	return &StreamID{Timestamp: timestamp, Sequence: sequence}, nil
 }
 
-// validateStreamKey validates a Redis stream ID against existing stream entries
-// Should handle: ERR The ID specified in XADD is equal or smaller than the target stream top item
-// Should handle: ERR The ID specified in XADD must be greater than 0-0
+// generateActualID generates the actual ID, replacing * with appropriate values
+func generateActualID(id string, stream []string) string {
+	if !strings.Contains(id, "*") {
+		return id // No auto-generation needed
+	}
+
+	parts := strings.Split(id, "-")
+	if len(parts) != 2 {
+		return id // Invalid format, return as-is
+	}
+
+	timestampStr, sequenceStr := parts[0], parts[1]
+
+	// Handle timestamp
+	var timestamp int64
+	if timestampStr == "*" {
+		timestamp = time.Now().UnixMilli()
+	} else {
+		timestamp, _ = strconv.ParseInt(timestampStr, 10, 64)
+	}
+
+	// Handle sequence
+	var sequence int64
+	if sequenceStr == "*" {
+		if len(stream) == 0 {
+			sequence = 1 // First entry gets sequence 1
+		} else {
+			// Get the last entry's sequence and increment
+			lastEntry := stream[len(stream)-1]
+			lastParts := strings.Split(lastEntry, "-")
+			if len(lastParts) == 2 {
+				lastTimestamp, _ := strconv.ParseInt(lastParts[0], 10, 64)
+				lastSequence, _ := strconv.ParseInt(lastParts[1], 10, 64)
+
+				if timestamp == lastTimestamp {
+					sequence = lastSequence + 1 // Same timestamp, increment sequence
+				} else {
+					sequence = 0 // Different timestamp, start sequence at 0
+				}
+			} else {
+				sequence = 1
+			}
+		}
+	} else {
+		sequence, _ = strconv.ParseInt(sequenceStr, 10, 64)
+	}
+
+	return fmt.Sprintf("%d-%d", timestamp, sequence)
+}
+
 func validateStreamKey(id string, stream []string) (bool, error) {
 	// Parse the new ID
 	newID, err := parseStreamID(id)
@@ -86,7 +133,18 @@ func validateStreamKey(id string, stream []string) (bool, error) {
 	}
 
 	// Check if ID is greater than 0-0
-	if newID.Timestamp < 0 || newID.Sequence < 0 || (newID.Timestamp == 0 && newID.Sequence == 0) {
+	if newID.Timestamp < 0 || newID.Sequence < 0 {
+		return false, fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
+	}
+
+	// Reject exactly "0-0" but allow "0-*" (auto-generated sequence)
+	// For "0-*", sequence will be auto-generated to be > 0, so it's valid
+	if newID.Timestamp == 0 && newID.Sequence == 0 {
+		// Check if this is "0-*" by looking at the original ID
+		if strings.HasSuffix(id, "-*") {
+			// This is "0-*", which is valid (sequence will be auto-generated)
+			return true, nil
+		}
 		return false, fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
 	}
 
@@ -116,14 +174,29 @@ func validateStreamKey(id string, stream []string) (bool, error) {
 //
 // This command adds an entry to a stream stored at key. If the key does not exist,
 // a new stream is created. Each entry consists of an ID and one or more field-value pairs.
-// The ID must be unique within the stream.
+// The ID must be unique within the stream and greater than the last entry.
+//
+// ID Format:
+// - Explicit: "timestamp-sequence" (e.g., "1526919030474-0")
+// - Auto-generation: "*" for timestamp (current time) or sequence (incremented)
+// - Mixed: "timestamp-*" or "*-sequence" (e.g., "0-*", "*-0")
 //
 // Examples:
 //
-//	XADD newstream 1-0 message "Hello"                // Creates new stream
+//	XADD mystream 1-0 message "Hello"           // Explicit ID
+//	XADD mystream * message "Hello"             // Auto-generate both timestamp and sequence
+//	XADD mystream 0-* message "Hello"           // Auto-generate sequence only
+//	XADD mystream *-0 message "Hello"           // Auto-generate timestamp only
+//
+// Validation Rules:
+// - ID must be greater than "0-0"
+// - ID must be greater than the last entry in the stream
+// - Sequence auto-generation starts at 1 for empty streams
+// - Sequence auto-generation starts at 0 for new timestamps
+// - Sequence auto-generation increments for same timestamps
 //
 // Note: This is a simplified implementation that stores stream data as a basic
-// array structure.
+// array structure with field-value pairs stored in the Value field.
 func xadd(args []Value) Value {
 	if len(args) < 3 {
 		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xadd' command"}
@@ -133,22 +206,26 @@ func xadd(args []Value) Value {
 	id := args[1].Bulk
 	entry, exists := memory[key]
 
+	var actualID string
+
 	if !exists {
 		value := args[2].Bulk
 		valid, err := validateStreamKey(id, []string{})
 		if !valid {
 			return Value{Typ: "error", Str: err.Error()}
 		}
-		entry = MemoryEntry{Stream: []string{id}, Value: value}
+		actualID = generateActualID(id, []string{})
+		entry = MemoryEntry{Stream: []string{actualID}, Value: value}
 		memory[key] = entry
 	} else {
-		valid, err := validateStreamKey(id, entry.Stream)
+		actualID = generateActualID(id, entry.Stream)
+		valid, err := validateStreamKey(actualID, entry.Stream)
 		if !valid {
 			return Value{Typ: "error", Str: err.Error()}
 		}
-		entry.Stream = append(entry.Stream, id)
+		entry.Stream = append(entry.Stream, actualID)
 		memory[key] = entry
 	}
 
-	return Value{Typ: "string", Str: id}
+	return Value{Typ: "string", Str: actualID}
 }
