@@ -3,8 +3,10 @@ package main
 // Handlers maps Redis command names to their corresponding handler functions.
 // Each handler function takes an array of Value arguments and returns a Value response.
 var Handlers = map[string]func([]Value) Value{
+	// utils commands
 	"PING": ping,
 	"ECHO": echo,
+	"TYPE": typeCmd, // type is a reserved word
 	// string commands
 	"SET": set,
 	"GET": get,
@@ -16,7 +18,6 @@ var Handlers = map[string]func([]Value) Value{
 	"LPOP":   lpop,
 	"BLPOP":  blpop,
 	// stream commands
-	"TYPE":   typeCmd, // type is a reserved word
 	"XADD":   xadd,
 	"XRANGE": xrange,
 	"XREAD":  xread,

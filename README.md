@@ -26,7 +26,9 @@ This implementation supports the following Redis commands:
 - `BLPOP` - Blocking left pop operation
 
 ### Stream Operations
-- `XADD` - Add entries to a stream
+- `XADD` - Add entries to a stream with auto-generated or specified IDs
+- `XRANGE` - Retrieve entries from a stream within a specified ID range
+- `XREAD` - Read entries from one or more streams newer than specified IDs
 
 ## Architecture
 
