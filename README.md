@@ -11,6 +11,7 @@ This implementation supports the following Redis commands:
 ### Basic Commands
 - `PING` - Test server connectivity
 - `ECHO` - Echo back the provided message
+- `TYPE` - Get the type of a key
 
 ### String Operations
 - `SET` - Set a key-value pair with optional expiration
@@ -26,7 +27,6 @@ This implementation supports the following Redis commands:
 
 ### Stream Operations
 - `XADD` - Add entries to a stream
-- `TYPE` - Get the type of a key
 
 ## Architecture
 
