@@ -519,55 +519,92 @@ func isInRange(id, start, end string) bool {
 	return compareStreamIDs(id, start) >= 0 && compareStreamIDs(id, end) <= 0
 }
 
-// xread handles the XREAD command.
-// Usage: XREAD streams key id
-// Returns: Array of streams with entries newer than the specified ID.
-//
-// This command reads entries from a stream starting from a specified ID.
-// It returns only entries that come after the specified ID (exclusive).
-//
-// Command Format: XREAD streams key id
-// Response Format: [[stream_name, [entry1, entry2, ...]]]
-// Each entry is [ID, [field-value pairs]]
+// xread handles the XREAD command for reading from multiple streams.
+// Usage: XREAD streams key1 key2 ... id1 id2 ...
+// Returns: Array of streams with entries newer than the specified IDs.
 //
 // Examples:
 //
-//	XREAD streams mystream 0-0                    // Read from beginning
-//	XREAD streams mystream 1526985054069-0        // Read from specific ID
-//
-// Returns: Array of streams with new entries, or empty array if no new entries
+//	XREAD streams mystream 0-0                    // Single stream
+//	XREAD streams stream1 stream2 0-0 0-1        // Multiple streams
 func xread(args []Value) Value {
-	// Validate arguments: XREAD streams key id
-	if len(args) != 3 || args[0].Bulk != "streams" {
+	// Validate basic arguments
+	if len(args) < 3 || args[0].Bulk != "streams" {
 		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
 	}
 
-	key := args[1].Bulk
-	startID := args[2].Bulk
-
-	// Check if stream exists
-	entry, exists := memory[key]
-	if !exists {
-		return Value{Typ: "array", Array: []Value{}}
+	// Parse: ["streams", "key1", "key2", ..., "id1", "id2", ...]
+	// Must have equal number of keys and IDs
+	totalArgs := len(args) - 1 // Exclude "streams"
+	if totalArgs%2 != 0 || totalArgs == 0 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
 	}
 
-	// Find entries newer than the specified ID
-	var streamEntries []Value
-	for _, streamEntry := range entry.Stream {
-		if compareStreamIDs(streamEntry.ID, startID) > 0 {
-			streamEntries = append(streamEntries, createStreamEntryValue(streamEntry))
+	keyCount := totalArgs / 2
+	var result []Value
+
+	// Process each stream-key pair
+	for i := 0; i < keyCount; i++ {
+		key := args[i+1].Bulk
+		startID := args[i+keyCount+1].Bulk
+
+		// Get stream entries newer than startID
+		streamEntries := getStreamEntriesAfter(key, startID)
+		if len(streamEntries) > 0 {
+			result = append(result, Value{
+				Typ: "array",
+				Array: []Value{
+					{Typ: "bulk", Bulk: key},
+					{Typ: "array", Array: streamEntries},
+				},
+			})
 		}
 	}
 
-	// Return empty array if no new entries
-	if len(streamEntries) == 0 {
-		return Value{Typ: "array", Array: []Value{}}
+	return Value{Typ: "array", Array: result}
+}
+
+// getStreamEntriesAfter returns entries from a stream that are newer than the given ID.
+//
+// This function retrieves all stream entries for a given key that have IDs greater than
+// the specified startID. It's used by the XREAD command to find entries newer than
+// a particular stream position.
+//
+// Parameters:
+//   - key: The stream key to search in
+//   - startID: The stream ID to compare against (entries must be newer than this)
+//
+// Returns:
+//   - []Value: Array of stream entries formatted as RESP values, or nil if stream doesn't exist
+//   - Each entry is formatted as [ID, [field-value pairs]] using createStreamEntryValue
+//
+// Behavior:
+//   - Returns nil if the stream key doesn't exist
+//   - Only includes entries where compareStreamIDs(entry.ID, startID) > 0
+//   - Entries are returned in the order they appear in the stream
+//   - Empty array is returned if no entries are newer than startID
+//
+// Examples:
+//
+//	getStreamEntriesAfter("mystream", "0-0")     // Returns all entries newer than 0-0
+//	getStreamEntriesAfter("mystream", "1526985054069-0")  // Returns entries newer than specific ID
+//	getStreamEntriesAfter("nonexistent", "0-0") // Returns nil (stream doesn't exist)
+//
+// Stream ID Comparison:
+//   - Uses lexicographical comparison of timestamp-sequence format
+//   - "1526985054079-0" > "1526985054069-0" (newer timestamp)
+//   - "1526985054069-1" > "1526985054069-0" (same timestamp, higher sequence)
+func getStreamEntriesAfter(key, startID string) []Value {
+	entry, exists := memory[key]
+	if !exists {
+		return nil
 	}
 
-	// Return stream with new entries
-	streamArray := []Value{
-		{Typ: "bulk", Bulk: key},
-		{Typ: "array", Array: streamEntries},
+	var result []Value
+	for _, streamEntry := range entry.Stream {
+		if compareStreamIDs(streamEntry.ID, startID) > 0 {
+			result = append(result, createStreamEntryValue(streamEntry))
+		}
 	}
-	return Value{Typ: "array", Array: []Value{{Typ: "array", Array: streamArray}}}
+	return result
 }
