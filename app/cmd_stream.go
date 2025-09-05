@@ -296,23 +296,225 @@ func xadd(args []Value) Value {
 	var actualID string
 
 	if !exists {
-		value := args[2].Bulk
 		valid, err := validateStreamKey(id, []string{})
 		if !valid {
 			return Value{Typ: "error", Str: err.Error()}
 		}
 		actualID = generateActualID(id, []string{})
-		entry = MemoryEntry{Stream: []string{actualID}, Value: value}
+
+		// Parse field-value pairs from args[2:]
+		streamData := make(map[string]string)
+		for i := 2; i < len(args); i += 2 {
+			if i+1 < len(args) {
+				field := args[i].Bulk
+				value := args[i+1].Bulk
+				streamData[field] = value
+			}
+		}
+
+		streamEntry := StreamEntry{ID: actualID, Data: streamData}
+		entry = MemoryEntry{Stream: []StreamEntry{streamEntry}}
 		memory[key] = entry
 	} else {
-		actualID = generateActualID(id, entry.Stream)
-		valid, err := validateStreamKey(actualID, entry.Stream)
+		// Convert existing stream to string slice for validation
+		streamIDs := make([]string, len(entry.Stream))
+		for i, streamEntry := range entry.Stream {
+			streamIDs[i] = streamEntry.ID
+		}
+
+		actualID = generateActualID(id, streamIDs)
+		valid, err := validateStreamKey(actualID, streamIDs)
 		if !valid {
 			return Value{Typ: "error", Str: err.Error()}
 		}
-		entry.Stream = append(entry.Stream, actualID)
+
+		// Parse field-value pairs from args[2:]
+		streamData := make(map[string]string)
+		for i := 2; i < len(args); i += 2 {
+			if i+1 < len(args) {
+				field := args[i].Bulk
+				value := args[i+1].Bulk
+				streamData[field] = value
+			}
+		}
+
+		streamEntry := StreamEntry{ID: actualID, Data: streamData}
+		entry.Stream = append(entry.Stream, streamEntry)
 		memory[key] = entry
 	}
 
 	return Value{Typ: "bulk", Bulk: actualID}
+}
+
+// xrange handles the XRANGE command.
+// Usage: XRANGE key start end [COUNT count]
+// Returns: Array of stream entries within the specified ID range.
+//
+// This command returns entries from a stream within a specified ID range.
+// Each entry is returned as an array containing [ID, [field1, value1, field2, value2, ...]]
+//
+// ID Range Format:
+// - start/end: Can be stream IDs (e.g., "1526985054069-0") or "-"/"+" for beginning/end
+// - "-": Start from the beginning of the stream
+// - "+": End at the end of the stream
+//
+// Examples:
+//
+//	XRANGE mystream 1526985054069 1526985054079    // Range between specific IDs
+//	XRANGE mystream - +                            // All entries
+//	XRANGE mystream 1526985054069 +                // From specific ID to end
+//
+// Returns: Array of entries, where each entry is [ID, [field-value pairs]]
+func xrange(args []Value) Value {
+	if len(args) < 3 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xrange' command"}
+	}
+
+	key := args[0].Bulk
+	start := args[1].Bulk
+	end := args[2].Bulk
+
+	entry, exists := memory[key]
+	if !exists {
+		// Empty stream - return empty array
+		return Value{Typ: "array", Array: []Value{}}
+	}
+
+	var result []Value
+
+	for _, streamEntry := range entry.Stream {
+		if isInRange(streamEntry.ID, start, end) {
+			entryValue := createStreamEntryValue(streamEntry)
+			result = append(result, entryValue)
+		}
+	}
+
+	return Value{Typ: "array", Array: result}
+}
+
+// createStreamEntryValue creates a RESP array value representing a stream entry.
+// It formats the stream entry as [ID, [field1, value1, field2, value2, ...]]
+// which matches the Redis XRANGE response format.
+//
+// Parameters:
+//   - entry: The stream entry containing ID and field-value pairs
+//
+// Returns: A RESP array value representing the stream entry
+func createStreamEntryValue(entry StreamEntry) Value {
+	// Create field-value array
+	var fieldValueArray []Value
+	for field, value := range entry.Data {
+		fieldValueArray = append(fieldValueArray,
+			Value{Typ: "bulk", Bulk: field},
+			Value{Typ: "bulk", Bulk: value},
+		)
+	}
+
+	// Create entry array: [ID, [field-value pairs]]
+	entryArray := []Value{
+		{Typ: "bulk", Bulk: entry.ID},
+		{Typ: "array", Array: fieldValueArray},
+	}
+
+	return Value{Typ: "array", Array: entryArray}
+}
+
+// compareStreamIDs compares two Redis stream IDs lexicographically.
+// It implements Redis stream ID comparison rules:
+// 1. Compare timestamps first (numerically)
+// 2. If timestamps are equal, compare sequences (numerically)
+// 3. Fallback to string comparison for invalid formats
+//
+// Parameters:
+//   - id1: First stream ID to compare
+//   - id2: Second stream ID to compare
+//
+// Returns:
+//   - -1: if id1 < id2
+//   - 0:  if id1 == id2
+//   - 1:  if id1 > id2
+func compareStreamIDs(id1, id2 string) int {
+	// Parse both IDs into timestamp-sequence format
+	parts1 := strings.Split(id1, "-")
+	parts2 := strings.Split(id2, "-")
+
+	// Validate ID format
+	if len(parts1) != 2 || len(parts2) != 2 {
+		return compareStrings(id1, id2)
+	}
+
+	// Parse timestamps
+	timestamp1, err1 := strconv.ParseInt(parts1[0], 10, 64)
+	timestamp2, err2 := strconv.ParseInt(parts2[0], 10, 64)
+
+	if err1 != nil || err2 != nil {
+		return compareStrings(id1, id2)
+	}
+
+	// Compare timestamps first
+	if timestamp1 < timestamp2 {
+		return -1
+	} else if timestamp1 > timestamp2 {
+		return 1
+	}
+
+	// Timestamps are equal, compare sequences
+	sequence1, err1 := strconv.ParseInt(parts1[1], 10, 64)
+	sequence2, err2 := strconv.ParseInt(parts2[1], 10, 64)
+
+	if err1 != nil || err2 != nil {
+		return compareStrings(id1, id2)
+	}
+
+	if sequence1 < sequence2 {
+		return -1
+	} else if sequence1 > sequence2 {
+		return 1
+	}
+
+	return 0
+}
+
+// compareStrings performs a simple string comparison.
+// Helper function for fallback comparison when ID parsing fails.
+func compareStrings(s1, s2 string) int {
+	if s1 < s2 {
+		return -1
+	} else if s1 > s2 {
+		return 1
+	}
+	return 0
+}
+
+// isInRange checks if a stream ID is within the specified range (inclusive).
+// It handles Redis XRANGE range semantics:
+// - "-": Start from the beginning of the stream (matches any ID)
+// - "+": End at the end of the stream (matches any ID)
+// - Specific IDs: Uses lexicographic comparison via compareStreamIDs()
+//
+// Range Examples:
+// - isInRange("0-2", "0-1", "0-3") → true (0-2 is between 0-1 and 0-3)
+// - isInRange("0-1", "0-2", "0-3") → false (0-1 is before 0-2)
+// - isInRange("0-2", "-", "+") → true (any ID matches "-" to "+")
+//
+// Parameters:
+//   - id: The stream ID to check
+//   - start: The start of the range (or "-" for beginning)
+//   - end: The end of the range (or "+" for end)
+//
+// Returns: true if the ID is within the range (inclusive), false otherwise
+func isInRange(id, start, end string) bool {
+	// Handle special Redis range values
+	if start == "-" && end == "+" {
+		return true // All entries
+	}
+	if start == "-" {
+		return compareStreamIDs(id, end) <= 0
+	}
+	if end == "+" {
+		return compareStreamIDs(id, start) >= 0
+	}
+
+	// Both are specific IDs - check if id is between start and end (inclusive)
+	return compareStreamIDs(id, start) >= 0 && compareStreamIDs(id, end) <= 0
 }
