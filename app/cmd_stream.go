@@ -13,7 +13,18 @@ type StreamID struct {
 	Sequence  int64
 }
 
-// parseStreamID parses a Redis stream ID string into timestamp and sequence components
+// parseStreamID parses a Redis stream ID string into timestamp and sequence components.
+// It handles both explicit IDs and wildcard patterns:
+// - "*": Returns current timestamp with sequence 0 (for auto-generation)
+// - "timestamp-sequence": Parses explicit values
+// - "timestamp-*" or "*-sequence": Handles partial wildcards
+//
+// Parameters:
+//   - id: The stream ID string to parse
+//
+// Returns:
+//   - *StreamID: Parsed timestamp and sequence components
+//   - error: Error if ID format is invalid
 func parseStreamID(id string) (*StreamID, error) {
 	if id == "*" {
 		return &StreamID{
@@ -42,7 +53,16 @@ func parseStreamID(id string) (*StreamID, error) {
 	return &StreamID{Timestamp: timestamp, Sequence: sequence}, nil
 }
 
-// parseStreamComponent parses a stream ID component (timestamp or sequence), handling "*" for auto-generation
+// parseStreamComponent parses a stream ID component (timestamp or sequence), handling "*" for auto-generation.
+// It's a utility function that handles the common pattern of parsing stream ID components.
+//
+// Parameters:
+//   - component: The component string to parse (e.g., "1234" or "*")
+//   - defaultValue: The value to return if component is "*"
+//
+// Returns:
+//   - int64: The parsed value or default value
+//   - error: Error if parsing fails
 func parseStreamComponent(component string, defaultValue int64) (int64, error) {
 	if component == "*" {
 		return defaultValue, nil
@@ -50,7 +70,15 @@ func parseStreamComponent(component string, defaultValue int64) (int64, error) {
 	return strconv.ParseInt(component, 10, 64)
 }
 
-// getLastStreamID extracts and parses the last ID from a stream
+// getLastStreamID extracts and parses the last ID from a stream.
+// It's used for validation to ensure new IDs are greater than existing ones.
+//
+// Parameters:
+//   - stream: The stream entries (slice of ID strings)
+//
+// Returns:
+//   - *StreamID: The parsed last stream ID, or nil if stream is empty
+//   - error: Error if the last entry has invalid format
 func getLastStreamID(stream []string) (*StreamID, error) {
 	if len(stream) == 0 {
 		return nil, nil
@@ -75,10 +103,68 @@ func getLastStreamID(stream []string) (*StreamID, error) {
 	return &StreamID{Timestamp: timestamp, Sequence: sequence}, nil
 }
 
-// generateActualID generates the actual ID, replacing * with appropriate values
+// generateSequenceForTimestamp generates the appropriate sequence number for a given timestamp.
+// It handles the Redis stream sequence generation rules:
+// - Empty stream with timestamp 0: returns 1 (avoids generating 0-0)
+// - Empty stream with other timestamps: returns 0
+// - Existing stream with same timestamp: increments from last sequence
+// - Existing stream with different timestamp: returns 0
+//
+// Parameters:
+//   - timestamp: The timestamp for which to generate a sequence
+//   - stream: The existing stream entries (slice of ID strings)
+//
+// Returns: The generated sequence number
+func generateSequenceForTimestamp(timestamp int64, stream []string) int64 {
+	if len(stream) == 0 {
+		// For empty stream, start at 1 if timestamp is 0, otherwise 0
+		if timestamp == 0 {
+			return 1
+		}
+		return 0
+	}
+
+	// Get the last entry's sequence and increment
+	lastEntry := stream[len(stream)-1]
+	lastParts := strings.Split(lastEntry, "-")
+	if len(lastParts) != 2 {
+		return 0
+	}
+
+	lastTimestamp, _ := strconv.ParseInt(lastParts[0], 10, 64)
+	lastSequence, _ := strconv.ParseInt(lastParts[1], 10, 64)
+
+	if timestamp == lastTimestamp {
+		return lastSequence + 1 // Same timestamp, increment sequence
+	}
+	return 0 // Different timestamp, start sequence at 0
+}
+
+// generateActualID generates the actual Redis stream ID by replacing wildcards (*) with appropriate values.
+// It handles various ID formats:
+// - "*": Auto-generates both timestamp (current time) and sequence
+// - "timestamp-*": Uses provided timestamp, auto-generates sequence
+// - "*-sequence": Auto-generates timestamp, uses provided sequence
+// - "timestamp-sequence": Returns as-is (no auto-generation)
+//
+// Auto-generation rules:
+// - Timestamp: Uses current Unix timestamp in milliseconds
+// - Sequence: Uses generateSequenceForTimestamp() logic
+//
+// Parameters:
+//   - id: The input ID string (may contain wildcards)
+//   - stream: The existing stream entries for sequence calculation
+//
+// Returns: The generated actual ID in "timestamp-sequence" format
 func generateActualID(id string, stream []string) string {
 	if !strings.Contains(id, "*") {
-		return id // No auto-generation needed
+		return id
+	}
+
+	if id == "*" {
+		timestamp := time.Now().UnixMilli()
+		sequence := generateSequenceForTimestamp(timestamp, stream)
+		return fmt.Sprintf("%d-%d", timestamp, sequence)
 	}
 
 	parts := strings.Split(id, "-")
@@ -99,25 +185,7 @@ func generateActualID(id string, stream []string) string {
 	// Handle sequence
 	var sequence int64
 	if sequenceStr == "*" {
-		if len(stream) == 0 {
-			sequence = 1 // First entry gets sequence 1
-		} else {
-			// Get the last entry's sequence and increment
-			lastEntry := stream[len(stream)-1]
-			lastParts := strings.Split(lastEntry, "-")
-			if len(lastParts) == 2 {
-				lastTimestamp, _ := strconv.ParseInt(lastParts[0], 10, 64)
-				lastSequence, _ := strconv.ParseInt(lastParts[1], 10, 64)
-
-				if timestamp == lastTimestamp {
-					sequence = lastSequence + 1 // Same timestamp, increment sequence
-				} else {
-					sequence = 0 // Different timestamp, start sequence at 0
-				}
-			} else {
-				sequence = 1
-			}
-		}
+		sequence = generateSequenceForTimestamp(timestamp, stream)
 	} else {
 		sequence, _ = strconv.ParseInt(sequenceStr, 10, 64)
 	}
@@ -125,6 +193,25 @@ func generateActualID(id string, stream []string) string {
 	return fmt.Sprintf("%d-%d", timestamp, sequence)
 }
 
+// validateStreamKey validates a Redis stream ID against existing stream entries.
+// It enforces Redis XADD validation rules:
+// - ID must be greater than "0-0" (unless auto-generated)
+// - ID must be greater than the last entry in the stream
+// - Auto-generated IDs (containing "*") are allowed to be "0-0"
+//
+// Validation checks:
+// 1. Parse the ID into timestamp and sequence components
+// 2. Ensure timestamp and sequence are non-negative
+// 3. Reject explicit "0-0" but allow auto-generated "0-0"
+// 4. For existing streams, ensure new ID is greater than last entry
+//
+// Parameters:
+//   - id: The stream ID to validate (may contain wildcards)
+//   - stream: The existing stream entries for comparison
+//
+// Returns:
+//   - bool: true if valid, false if invalid
+//   - error: Error message if validation fails
 func validateStreamKey(id string, stream []string) (bool, error) {
 	// Parse the new ID
 	newID, err := parseStreamID(id)
@@ -137,12 +224,12 @@ func validateStreamKey(id string, stream []string) (bool, error) {
 		return false, fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
 	}
 
-	// Reject exactly "0-0" but allow "0-*" (auto-generated sequence)
-	// For "0-*", sequence will be auto-generated to be > 0, so it's valid
+	// Reject exactly "0-0" only if it was explicitly provided
+	// Allow "0-0" if it was auto-generated (e.g., from "*" or "0-*")
 	if newID.Timestamp == 0 && newID.Sequence == 0 {
-		// Check if this is "0-*" by looking at the original ID
-		if strings.HasSuffix(id, "-*") {
-			// This is "0-*", which is valid (sequence will be auto-generated)
+		// Check if this was auto-generated by looking for "*" in the original ID
+		if strings.Contains(id, "*") {
+			// This was auto-generated, so "0-0" is valid
 			return true, nil
 		}
 		return false, fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
@@ -227,5 +314,5 @@ func xadd(args []Value) Value {
 		memory[key] = entry
 	}
 
-	return Value{Typ: "string", Str: actualID}
+	return Value{Typ: "bulk", Bulk: actualID}
 }
