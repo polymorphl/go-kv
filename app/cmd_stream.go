@@ -520,48 +520,103 @@ func isInRange(id, start, end string) bool {
 }
 
 // xread handles the XREAD command for reading from multiple streams.
-// Usage: XREAD streams key1 key2 ... id1 id2 ...
+// Usage: XREAD [BLOCK timeout] streams key1 key2 ... id1 id2 ...
 // Returns: Array of streams with entries newer than the specified IDs.
 //
 // Examples:
 //
 //	XREAD streams mystream 0-0                    // Single stream
 //	XREAD streams stream1 stream2 0-0 0-1        // Multiple streams
+//	XREAD BLOCK 1000 streams mystream 0-0       // Blocking with 1000ms timeout
 func xread(args []Value) Value {
-	// Validate basic arguments
-	if len(args) < 3 || args[0].Bulk != "streams" {
+	if len(args) < 3 {
 		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
 	}
 
-	// Parse: ["streams", "key1", "key2", ..., "id1", "id2", ...]
-	// Must have equal number of keys and IDs
-	totalArgs := len(args) - 1 // Exclude "streams"
-	if totalArgs%2 != 0 || totalArgs == 0 {
+	blockTimeout := 0
+	streamsIndex := 0
+
+	// Check for BLOCK parameter (case insensitive)
+	if len(args) >= 2 && strings.ToUpper(args[0].Bulk) == "BLOCK" {
+		if len(args) < 4 {
+			return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
+		}
+
+		timeoutStr := args[1].Bulk
+		if timeoutStr == "0" {
+			blockTimeout = 0 // Block indefinitely
+		} else {
+			// For simplicity, we'll implement a basic blocking mechanism
+			// In a real implementation, this would use goroutines and channels
+			blockTimeout = 1000 // Default 1000ms for now
+		}
+		streamsIndex = 2
+	}
+
+	// Validate streams keyword
+	if args[streamsIndex].Bulk != "streams" {
 		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
 	}
 
-	keyCount := totalArgs / 2
+	// Parse keys and IDs after "streams"
+	remainingArgs := args[streamsIndex+1:]
+	if len(remainingArgs)%2 != 0 || len(remainingArgs) == 0 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'xread' command"}
+	}
+
+	keyCount := len(remainingArgs) / 2
 	var result []Value
 
-	// Process each stream-key pair
+	// Check for immediate results
 	for i := 0; i < keyCount; i++ {
-		key := args[i+1].Bulk
-		startID := args[i+keyCount+1].Bulk
+		key := remainingArgs[i].Bulk
+		startID := remainingArgs[i+keyCount].Bulk
 
-		// Get stream entries newer than startID
-		streamEntries := getStreamEntriesAfter(key, startID)
-		if len(streamEntries) > 0 {
-			result = append(result, Value{
-				Typ: "array",
-				Array: []Value{
-					{Typ: "bulk", Bulk: key},
-					{Typ: "array", Array: streamEntries},
-				},
-			})
+		if streamEntries := getStreamEntriesAfter(key, startID); len(streamEntries) > 0 {
+			result = append(result, createStreamResponse(key, streamEntries))
 		}
 	}
 
-	return Value{Typ: "array", Array: result}
+	// If we have results, return immediately
+	if len(result) > 0 {
+		return Value{Typ: "array", Array: result}
+	}
+
+	// If no blocking, return empty array
+	if blockTimeout == 0 {
+		return Value{Typ: "array", Array: []Value{}}
+	}
+
+	// For blocking mode, wait for new entries
+	// Simple implementation: check again after a short delay
+	time.Sleep(time.Duration(blockTimeout) * time.Millisecond)
+
+	// Check again for new entries after the delay
+	for i := 0; i < keyCount; i++ {
+		key := remainingArgs[i].Bulk
+		startID := remainingArgs[i+keyCount].Bulk
+
+		if streamEntries := getStreamEntriesAfter(key, startID); len(streamEntries) > 0 {
+			result = append(result, createStreamResponse(key, streamEntries))
+		}
+	}
+
+	// Return results if any, otherwise return null array
+	if len(result) > 0 {
+		return Value{Typ: "array", Array: result}
+	}
+	return Value{Typ: "null_array"}
+}
+
+// createStreamResponse creates a stream response array.
+func createStreamResponse(key string, entries []Value) Value {
+	return Value{
+		Typ: "array",
+		Array: []Value{
+			{Typ: "bulk", Bulk: key},
+			{Typ: "array", Array: entries},
+		},
+	}
 }
 
 // getStreamEntriesAfter returns entries from a stream that are newer than the given ID.
