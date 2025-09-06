@@ -23,8 +23,9 @@ var Handlers = map[string]func([]Value) Value{
 	"ECHO": echo,
 	"TYPE": typeCmd, // type is a reserved word
 	// string commands
-	"SET": set,
-	"GET": get,
+	"SET":  set,
+	"GET":  get,
+	"INCR": incr,
 	// list commands
 	"LPUSH":  lpush,
 	"RPUSH":  rpush,

@@ -79,3 +79,30 @@ func get(args []Value) Value {
 
 	return Value{Typ: "string", Str: entry.Value}
 }
+
+// incr handles the INCR command.
+//
+// Examples:
+//
+//	INCR counter      // Increments counter from 5 to 6
+func incr(args []Value) Value {
+	if len(args) != 1 {
+		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'incr' command"}
+	}
+
+	key := args[0].Bulk
+	entry, exists := memory[key]
+
+	if !exists {
+		return Value{Typ: "error", Str: "ERR not exists"}
+	}
+
+	value, err := strconv.Atoi(entry.Value)
+	if err != nil {
+		return Value{Typ: "error", Str: "ERR value is not an integer or out of range"}
+	}
+
+	entry.Value = strconv.Itoa(value + 1)
+	memory[key] = entry
+	return Value{Typ: "integer", Num: value + 1}
+}

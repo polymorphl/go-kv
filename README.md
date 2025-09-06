@@ -16,6 +16,7 @@ This implementation supports the following Redis commands:
 ### String Operations
 - `SET` - Set a key-value pair with optional expiration
 - `GET` - Retrieve a value by key
+- `INCR` - Increment the value of a key by 1
 
 ### List Operations
 - `LPUSH` - Push elements to the left of a list
