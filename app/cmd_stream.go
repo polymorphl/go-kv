@@ -544,11 +544,14 @@ func xread(args []Value) Value {
 
 		timeoutStr := args[1].Bulk
 		if timeoutStr == "0" {
-			blockTimeout = 0 // Block indefinitely
+			blockTimeout = -1 // Block indefinitely (use -1 to distinguish from no blocking)
 		} else {
-			// For simplicity, we'll implement a basic blocking mechanism
-			// In a real implementation, this would use goroutines and channels
-			blockTimeout = 1000 // Default 1000ms for now
+			// Parse the timeout value
+			if parsedTimeout, err := strconv.Atoi(timeoutStr); err == nil {
+				blockTimeout = parsedTimeout
+			} else {
+				blockTimeout = 1000 // Default 1000ms for invalid timeout
+			}
 		}
 		streamsIndex = 2
 	}
@@ -565,20 +568,9 @@ func xread(args []Value) Value {
 	}
 
 	keyCount := len(remainingArgs) / 2
-	var result []Value
 
 	// Check for immediate results
-	for i := 0; i < keyCount; i++ {
-		key := remainingArgs[i].Bulk
-		startID := remainingArgs[i+keyCount].Bulk
-
-		if streamEntries := getStreamEntriesAfter(key, startID); len(streamEntries) > 0 {
-			result = append(result, createStreamResponse(key, streamEntries))
-		}
-	}
-
-	// If we have results, return immediately
-	if len(result) > 0 {
+	if result := checkForNewEntries(remainingArgs, keyCount); len(result) > 0 {
 		return Value{Typ: "array", Array: result}
 	}
 
@@ -588,10 +580,69 @@ func xread(args []Value) Value {
 	}
 
 	// For blocking mode, wait for new entries
-	// Simple implementation: check again after a short delay
-	time.Sleep(time.Duration(blockTimeout) * time.Millisecond)
+	checkInterval := 10 * time.Millisecond
 
-	// Check again for new entries after the delay
+	if blockTimeout == -1 {
+		// Block indefinitely - check periodically until we get results
+		for {
+			time.Sleep(checkInterval)
+			if result := checkForNewEntries(remainingArgs, keyCount); len(result) > 0 {
+				return Value{Typ: "array", Array: result}
+			}
+		}
+	} else {
+		// Block with timeout - check periodically for the specified duration
+		totalWaitTime := time.Duration(blockTimeout) * time.Millisecond
+
+		for elapsed := time.Duration(0); elapsed < totalWaitTime; elapsed += checkInterval {
+			time.Sleep(checkInterval)
+			if result := checkForNewEntries(remainingArgs, keyCount); len(result) > 0 {
+				return Value{Typ: "array", Array: result}
+			}
+		}
+	}
+
+	// Return null array if no results found after blocking
+	return Value{Typ: "null_array"}
+}
+
+// checkForNewEntries checks for new stream entries across multiple streams and returns them if found.
+// This helper function eliminates code duplication between indefinite and timeout blocking modes
+// in the XREAD command implementation.
+//
+// The function iterates through all specified streams and checks for entries that are newer than
+// the corresponding start IDs. It's used by XREAD to check for immediate results and during
+// blocking operations.
+//
+// Parameters:
+//   - remainingArgs: Array of Value arguments containing stream keys and their corresponding start IDs
+//     Format: [key1, key2, ..., keyN, startID1, startID2, ..., startIDN]
+//   - keyCount: Number of stream keys (first half of remainingArgs)
+//
+// Returns:
+//   - []Value: Array of stream responses, where each response contains [key, [entries]]
+//   - Empty array if no new entries are found in any stream
+//   - Each stream response is formatted using createStreamResponse()
+//
+// Behavior:
+//   - Checks each stream for entries newer than the corresponding start ID
+//   - Uses getStreamEntriesAfter() to find entries with IDs greater than start ID
+//   - Only includes streams that have new entries (skips streams with no new entries)
+//   - Returns results immediately when any new entries are found
+//
+// Examples:
+//
+//	// Check streams "stream1" and "stream2" for entries newer than "0-1" and "0-2"
+//	args := [Value{Bulk: "stream1"}, Value{Bulk: "stream2"}, Value{Bulk: "0-1"}, Value{Bulk: "0-2"}]
+//	result := checkForNewEntries(args, 2)
+//	// Returns: [createStreamResponse("stream1", entries), createStreamResponse("stream2", entries)]
+//
+// Stream ID Comparison:
+//   - Uses lexicographical comparison via compareStreamIDs()
+//   - "1526985054079-0" > "1526985054069-0" (newer timestamp)
+//   - "1526985054069-1" > "1526985054069-0" (same timestamp, higher sequence)
+func checkForNewEntries(remainingArgs []Value, keyCount int) []Value {
+	var result []Value
 	for i := 0; i < keyCount; i++ {
 		key := remainingArgs[i].Bulk
 		startID := remainingArgs[i+keyCount].Bulk
@@ -600,12 +651,7 @@ func xread(args []Value) Value {
 			result = append(result, createStreamResponse(key, streamEntries))
 		}
 	}
-
-	// Return results if any, otherwise return null array
-	if len(result) > 0 {
-		return Value{Typ: "array", Array: result}
-	}
-	return Value{Typ: "null_array"}
+	return result
 }
 
 // createStreamResponse creates a stream response array.
