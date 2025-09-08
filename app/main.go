@@ -69,7 +69,29 @@ func handleConnection(conn net.Conn) {
 
 		// Use connection remote address as connection ID
 		connID := conn.RemoteAddr().String()
-		result := handler(connID, args)
-		writer.Write(result)
+
+		// Check if this connection is in a transaction
+		if transaction, exists := shared.Transactions[connID]; exists {
+			// If it's MULTI or EXEC command, execute it normally
+			if command == "MULTI" || command == "EXEC" {
+				result := handler(connID, args)
+				writer.Write(result)
+			} else {
+				// Queue the command instead of executing it
+				transaction.Commands = append(transaction.Commands, shared.QueuedCommand{
+					Command: command,
+					Args:    args,
+				})
+				shared.Transactions[connID] = transaction
+
+				// Return QUEUED response
+				result := shared.Value{Typ: "string", Str: "QUEUED"}
+				writer.Write(result)
+			}
+		} else {
+			// No active transaction, execute command normally
+			result := handler(connID, args)
+			writer.Write(result)
+		}
 	}
 }

@@ -14,7 +14,7 @@ func Multi(connID string, args []shared.Value) shared.Value {
 	}
 
 	// Create a new transaction for this connection
-	shared.Transactions[connID] = shared.Transaction{Commands: []shared.Value{}}
+	shared.Transactions[connID] = shared.Transaction{Commands: []shared.QueuedCommand{}}
 
 	return shared.Value{Typ: "string", Str: "OK"}
 }

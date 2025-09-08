@@ -26,3 +26,11 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"XRANGE": commands.Xrange,
 	"XREAD":  commands.Xread,
 }
+
+// init initializes the shared command handlers map
+func init() {
+	shared.CommandHandlers = make(map[string]shared.CommandHandler)
+	for cmd, handler := range Handlers {
+		shared.CommandHandlers[cmd] = handler
+	}
+}

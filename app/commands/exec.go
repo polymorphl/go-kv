@@ -1,6 +1,8 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // Exec handles the EXEC command.
 // Executes all commands that were queued since the MULTI command was issued.
@@ -28,6 +30,11 @@ func Exec(connID string, args []shared.Value) shared.Value {
 		return shared.Value{Typ: "array", Array: []shared.Value{}}
 	}
 
-	// For now, return OK - in a full implementation, we would execute the queued commands
-	return shared.Value{Typ: "string", Str: "OK"}
+	// Execute all queued commands
+	results := make([]shared.Value, len(transaction.Commands))
+	for i, queuedCmd := range transaction.Commands {
+		results[i] = shared.ExecuteCommand(queuedCmd.Command, connID, queuedCmd.Args)
+	}
+
+	return shared.Value{Typ: "array", Array: results}
 }
