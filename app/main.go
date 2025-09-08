@@ -72,8 +72,8 @@ func handleConnection(conn net.Conn) {
 
 		// Check if this connection is in a transaction
 		if transaction, exists := shared.Transactions[connID]; exists {
-			// If it's MULTI or EXEC command, execute it normally
-			if command == "MULTI" || command == "EXEC" {
+			// If it's a transaction command, execute it normally
+			if IsTransactionCommand(command) {
 				result := handler(connID, args)
 				writer.Write(result)
 			} else {
