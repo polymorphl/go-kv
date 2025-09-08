@@ -17,12 +17,16 @@ func Exec(connID string, args []shared.Value) shared.Value {
 
 	// Check if there's an active transaction for this connection
 	transaction, exists := shared.Transactions[connID]
-	if !exists || len(transaction.Commands) == 0 {
+	if !exists {
 		return createErrorResponse("ERR EXEC without MULTI")
 	}
 
-	// Clear the transaction after execution
+	// Clear the transaction
 	delete(shared.Transactions, connID)
+
+	if len(transaction.Commands) == 0 {
+		return shared.Value{Typ: "array", Array: []shared.Value{}}
+	}
 
 	// For now, return OK - in a full implementation, we would execute the queued commands
 	return shared.Value{Typ: "string", Str: "OK"}
