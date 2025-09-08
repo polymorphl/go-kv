@@ -31,6 +31,10 @@ This implementation supports the following Redis commands:
 - `XRANGE` - Retrieve entries from a stream within a specified ID range
 - `XREAD` - Read entries from one or more streams newer than specified IDs
 
+### Transaction Operations
+- `MULTI` - Start a transaction block
+- `EXEC` - Execute all commands in a transaction block
+
 ## Architecture
 
 The server is built with a clean, modular architecture:
@@ -55,33 +59,93 @@ app/
 
 ### Prerequisites
 - Go 1.24 or later
+- Make (optional, for using Makefile commands)
 
-### Running the Server
+### Quick Start
 
-1. Clone the repository
-2. Navigate to the project directory
-3. Run the server:
+1. **Clone the repository**
    ```bash
-   ./your_program.sh
+   git clone <repository-url>
+   cd <project-name>
    ```
 
-The server will start listening on `localhost:6379`.
+2. **Run the server**
+   ```bash
+   make run
+   ```
 
-### Testing
+3. **Test the server**
+   ```bash
+   redis-cli -p 6379
+   ```
 
-You can test the server using any Redis client or the `redis-cli`:
+### Development Workflow
 
+The project includes a comprehensive Makefile for easy development:
+
+#### **Testing Commands**
 ```bash
-redis-cli -p 6379
+make help                    # Show all available commands
+make quick-test             # Run fast tests (excludes blocking operations)
+make test-all               # Run all tests with coverage
+make test-basic             # Test basic commands (PING, ECHO, GET, SET, INCR, TYPE)
+make test-list              # Test list commands (LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP)
+make test-stream             # Test stream commands (XADD, XRANGE, XREAD)
+make test-transaction        # Test transaction commands (MULTI, EXEC)
 ```
 
-Example commands:
+#### **Benchmarking Commands**
+```bash
+make bench                  # Run all benchmarks
+make bench-basic            # Benchmark basic commands
+make bench-list             # Benchmark list commands
+make bench-stream           # Benchmark stream commands
+```
+
+#### **Development Commands**
+```bash
+make build                  # Build the Redis server binary
+make run                    # Run the Redis server
+make clean                  # Clean build artifacts
+make format                 # Format Go code
+make lint                   # Run linter (requires golangci-lint)
+make deps                   # Download and tidy dependencies
+```
+
+
+
+### Example Usage
+
+#### **Basic Redis Operations**
 ```redis
+# Basic commands
 PING
-SET mykey "Hello World"
+ECHO "Hello World"
+SET mykey "Hello Redis"
 GET mykey
-LPUSH mylist "item1" "item2"
+INCR counter
+
+# List operations
+LPUSH mylist "item1" "item2" "item3"
+RPUSH mylist "item4"
 LRANGE mylist 0 -1
+LLEN mylist
+LPOP mylist
+
+# Stream operations
+XADD mystream * field1 "value1" field2 "value2"
+XRANGE mystream - +
+XREAD STREAMS mystream 0
+
+```
+
+#### **Performance Testing**
+```bash
+# Test specific command performance (ex: bench-basic, bench-list, bench-stream)
+make bench-basic 
+
+# Generate coverage report
+make test-coverage
 ```
 
 ## Implementation Details
@@ -90,6 +154,17 @@ LRANGE mylist 0 -1
 - **Memory Management**: In-memory storage with optional expiration support
 - **Protocol Compliance**: Full RESP protocol implementation for Redis compatibility
 - **Error Handling**: Robust error handling with graceful connection management
+- **Transaction Support**: Connection-specific transaction state management
+- **Stream Support**: Full Redis stream implementation with ID generation and blocking reads
+- **Unicode Support**: Complete UTF-8 string support across all operations
+
+## Test Coverage
+
+### Test Statistics
+```bash
+make status
+```
+
 
 ## Development
 

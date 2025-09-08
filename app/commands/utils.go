@@ -33,12 +33,39 @@ func push(args []shared.Value, prepend bool) shared.Value {
 	}
 
 	// Add all values to the array
-	for i := 1; i < len(args); i++ {
-		if prepend {
-			// Add to beginning (LPUSH behavior)
-			entry.Array = append([]string{args[i].Bulk}, entry.Array...)
-		} else {
-			// Add to end (RPUSH behavior)
+	if prepend {
+		// LPUSH: Optimized approach - pre-allocate and use copy for efficiency
+		newCount := len(args) - 1
+		if newCount == 0 {
+			return shared.Value{Typ: "integer", Num: len(entry.Array)}
+		}
+
+		// For single value, use simple prepend
+		if newCount == 1 {
+			entry.Array = append([]string{args[1].Bulk}, entry.Array...)
+			shared.Memory[key] = entry
+			return shared.Value{Typ: "integer", Num: len(entry.Array)}
+		}
+
+		// For multiple values, use efficient bulk prepend
+		oldCount := len(entry.Array)
+		totalCount := newCount + oldCount
+
+		// Pre-allocate with exact capacity to avoid reallocations
+		newArray := make([]string, 0, totalCount)
+
+		// Add new values in reverse order (Redis LPUSH behavior)
+		for i := len(args) - 1; i >= 1; i-- {
+			newArray = append(newArray, args[i].Bulk)
+		}
+
+		// Add existing values
+		newArray = append(newArray, entry.Array...)
+
+		entry.Array = newArray
+	} else {
+		// RPUSH: Add values one by one to the end
+		for i := 1; i < len(args); i++ {
 			entry.Array = append(entry.Array, args[i].Bulk)
 		}
 	}

@@ -1,0 +1,337 @@
+package commands
+
+import (
+	"testing"
+
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
+
+func TestLpush(t *testing.T) {
+	// Clear memory before each test
+	clearMemory()
+
+	tests := []struct {
+		name     string
+		connID   string
+		args     []shared.Value
+		setup    func() // Function to set up test data
+		expected shared.Value
+		verify   func() // Function to verify the result
+	}{
+		{
+			name:   "lpush single value to new list",
+			connID: "test-conn-1",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "newlist"},
+				{Typ: "bulk", Bulk: "first"},
+			},
+			setup:    func() {},
+			expected: shared.Value{Typ: "integer", Num: 1},
+			verify: func() {
+				entry, exists := shared.Memory["newlist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				}
+				if entry.Array[0] != "first" {
+					t.Errorf("Expected 'first', got '%s'", entry.Array[0])
+				}
+			},
+		},
+		{
+			name:   "lpush multiple values to new list",
+			connID: "test-conn-2",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "newlist"},
+				{Typ: "bulk", Bulk: "first"},
+				{Typ: "bulk", Bulk: "second"},
+				{Typ: "bulk", Bulk: "third"},
+			},
+			setup:    func() {},
+			expected: shared.Value{Typ: "integer", Num: 3},
+			verify: func() {
+				entry, exists := shared.Memory["newlist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 3 {
+					t.Errorf("Expected 3 elements, got %d", len(entry.Array))
+				}
+				// Values should be in reverse order (last pushed becomes first)
+				expected := []string{"third", "second", "first"}
+				for i, val := range expected {
+					if entry.Array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					}
+				}
+			},
+		},
+		{
+			name:   "lpush to existing list",
+			connID: "test-conn-3",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "existinglist"},
+				{Typ: "bulk", Bulk: "newfirst"},
+			},
+			setup: func() {
+				shared.Memory["existinglist"] = shared.MemoryEntry{
+					Value:   "",
+					Array:   []string{"old1", "old2"},
+					Expires: 0,
+				}
+			},
+			expected: shared.Value{Typ: "integer", Num: 3},
+			verify: func() {
+				entry, exists := shared.Memory["existinglist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 3 {
+					t.Errorf("Expected 3 elements, got %d", len(entry.Array))
+				}
+				expected := []string{"newfirst", "old1", "old2"}
+				for i, val := range expected {
+					if entry.Array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					}
+				}
+			},
+		},
+		{
+			name:   "lpush to empty list",
+			connID: "test-conn-4",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "emptylist"},
+				{Typ: "bulk", Bulk: "first"},
+			},
+			setup: func() {
+				shared.Memory["emptylist"] = shared.MemoryEntry{
+					Value:   "",
+					Array:   []string{},
+					Expires: 0,
+				}
+			},
+			expected: shared.Value{Typ: "integer", Num: 1},
+			verify: func() {
+				entry, exists := shared.Memory["emptylist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				}
+				if entry.Array[0] != "first" {
+					t.Errorf("Expected 'first', got '%s'", entry.Array[0])
+				}
+			},
+		},
+		{
+			name:   "lpush converts string to list",
+			connID: "test-conn-5",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "stringkey"},
+				{Typ: "bulk", Bulk: "first"},
+			},
+			setup: func() {
+				shared.Memory["stringkey"] = shared.MemoryEntry{Value: "old string", Expires: 0}
+			},
+			expected: shared.Value{Typ: "integer", Num: 1},
+			verify: func() {
+				entry, exists := shared.Memory["stringkey"]
+				if !exists {
+					t.Error("Key should exist after LPUSH")
+				}
+				if len(entry.Array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				}
+				if entry.Array[0] != "first" {
+					t.Errorf("Expected 'first', got '%s'", entry.Array[0])
+				}
+				// Original string value should be cleared
+				if entry.Value != "" {
+					t.Errorf("Expected empty string value, got '%s'", entry.Value)
+				}
+			},
+		},
+		{
+			name:   "lpush empty string",
+			connID: "test-conn-6",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "emptylist"},
+				{Typ: "bulk", Bulk: ""},
+			},
+			setup:    func() {},
+			expected: shared.Value{Typ: "integer", Num: 1},
+			verify: func() {
+				entry, exists := shared.Memory["emptylist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				}
+				if entry.Array[0] != "" {
+					t.Errorf("Expected empty string, got '%s'", entry.Array[0])
+				}
+			},
+		},
+		{
+			name:   "lpush unicode values",
+			connID: "test-conn-7",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "unicodelist"},
+				{Typ: "bulk", Bulk: "Hello 世界"},
+				{Typ: "bulk", Bulk: "🌍"},
+			},
+			setup:    func() {},
+			expected: shared.Value{Typ: "integer", Num: 2},
+			verify: func() {
+				entry, exists := shared.Memory["unicodelist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 2 {
+					t.Errorf("Expected 2 elements, got %d", len(entry.Array))
+				}
+				expected := []string{"🌍", "Hello 世界"}
+				for i, val := range expected {
+					if entry.Array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					}
+				}
+			},
+		},
+		{
+			name:   "wrong number of arguments",
+			connID: "test-conn-8",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "key"},
+			},
+			setup:    func() {},
+			expected: shared.Value{Typ: "error", Str: "ERR wrong number of arguments for 'lpush' command"},
+			verify:   func() {},
+		},
+		{
+			name:   "lpush large number of values",
+			connID: "test-conn-9",
+			args: []shared.Value{
+				{Typ: "bulk", Bulk: "largelist"},
+				{Typ: "bulk", Bulk: "val1"},
+				{Typ: "bulk", Bulk: "val2"},
+				{Typ: "bulk", Bulk: "val3"},
+				{Typ: "bulk", Bulk: "val4"},
+				{Typ: "bulk", Bulk: "val5"},
+			},
+			setup:    func() {},
+			expected: shared.Value{Typ: "integer", Num: 5},
+			verify: func() {
+				entry, exists := shared.Memory["largelist"]
+				if !exists {
+					t.Error("List should exist after LPUSH")
+				}
+				if len(entry.Array) != 5 {
+					t.Errorf("Expected 5 elements, got %d", len(entry.Array))
+				}
+				// Values should be in reverse order
+				expected := []string{"val5", "val4", "val3", "val2", "val1"}
+				for i, val := range expected {
+					if entry.Array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					}
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			clearMemory()
+			tt.setup()
+
+			result := Lpush(tt.connID, tt.args)
+
+			if result.Typ != tt.expected.Typ {
+				t.Errorf("Lpush() type = %v, expected %v", result.Typ, tt.expected.Typ)
+			}
+
+			if result.Str != tt.expected.Str {
+				t.Errorf("Lpush() string = %v, expected %v", result.Str, tt.expected.Str)
+			}
+
+			if result.Num != tt.expected.Num {
+				t.Errorf("Lpush() number = %v, expected %v", result.Num, tt.expected.Num)
+			}
+
+			tt.verify()
+		})
+	}
+}
+
+func BenchmarkLpush(b *testing.B) {
+	clearMemory()
+
+	connID := "benchmark-conn"
+	args := []shared.Value{
+		{Typ: "bulk", Bulk: "benchlist"},
+		{Typ: "bulk", Bulk: "value"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Lpush(connID, args)
+	}
+}
+
+func BenchmarkLpushMultiple(b *testing.B) {
+	clearMemory()
+
+	connID := "benchmark-conn"
+	args := []shared.Value{
+		{Typ: "bulk", Bulk: "benchlist"},
+		{Typ: "bulk", Bulk: "val1"},
+		{Typ: "bulk", Bulk: "val2"},
+		{Typ: "bulk", Bulk: "val3"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Lpush(connID, args)
+	}
+}
+
+func BenchmarkLpushToExisting(b *testing.B) {
+	clearMemory()
+	shared.Memory["benchlist"] = shared.MemoryEntry{
+		Value:   "",
+		Array:   []string{"existing1", "existing2"},
+		Expires: 0,
+	}
+
+	connID := "benchmark-conn"
+	args := []shared.Value{
+		{Typ: "bulk", Bulk: "benchlist"},
+		{Typ: "bulk", Bulk: "newvalue"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Lpush(connID, args)
+	}
+}
+
+func BenchmarkLpushEmpty(b *testing.B) {
+	clearMemory()
+
+	connID := "benchmark-conn"
+	args := []shared.Value{
+		{Typ: "bulk", Bulk: "benchlist"},
+		{Typ: "bulk", Bulk: ""},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Lpush(connID, args)
+	}
+}
