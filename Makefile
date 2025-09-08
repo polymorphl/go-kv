@@ -56,9 +56,9 @@ test-stream: ## Run stream command tests (XADD, XRANGE, XREAD)
 	@echo "$(BLUE)Running stream command tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestXadd|TestXrange|TestXread" -timeout $(TEST_TIMEOUT)
 
-test-transaction: ## Run transaction command tests (MULTI, EXEC)
+test-transaction: ## Run transaction command tests (MULTI, EXEC, DISCARD)
 	@echo "$(BLUE)Running transaction command tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestMulti|TestExec" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
 # Benchmarking commands
 bench: ## Run all benchmarks
@@ -114,7 +114,7 @@ deps: ## Download dependencies
 # Quick test commands for development
 quick-test: ## Run quick tests (excluding slow BLPOP tests)
 	@echo "$(BLUE)Running quick tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
 # Test specific functionality
 test-unicode: ## Test Unicode support across all commands
@@ -128,7 +128,7 @@ test-error-handling: ## Test error handling across all commands
 # CI/CD helpers
 ci-test: ## Run tests suitable for CI (no blocking operations)
 	@echo "$(BLUE)Running CI tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
 ci-bench: ## Run benchmarks suitable for CI
 	@echo "$(BLUE)Running CI benchmarks...$(RESET)"
@@ -149,7 +149,7 @@ status: ## Show project status and test results
 	@echo "  • Basic: PING, ECHO, GET, SET, INCR, TYPE"
 	@echo "  • Lists: LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP"
 	@echo "  • Streams: XADD, XRANGE, XREAD"
-	@echo "  • Transactions: MULTI, EXEC"
+	@echo "  • Transactions: MULTI, EXEC, DISCARD"
 	@echo ""
 	@echo "$(GREEN)Test coverage:$(RESET)"
 	@echo "  • $(shell find ./app/commands -name "*_test.go" | wc -l | tr -d ' ') test files"

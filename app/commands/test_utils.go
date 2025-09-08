@@ -8,3 +8,31 @@ func clearMemory() {
 		delete(shared.Memory, k)
 	}
 }
+
+// clearTransactions clears all transactions for testing
+func clearTransactions() {
+	for k := range shared.Transactions {
+		delete(shared.Transactions, k)
+	}
+}
+
+// initCommandHandlers initializes the shared command handlers for testing
+func initCommandHandlers() {
+	shared.CommandHandlers = map[string]shared.CommandHandler{
+		"SET":    Set,
+		"GET":    Get,
+		"LPUSH":  Lpush,
+		"RPUSH":  Rpush,
+		"LPOP":   Lpop,
+		"LLEN":   Llen,
+		"LRANGE": Lrange,
+		"INCR":   Incr,
+		"PING":   Ping,
+		"ECHO":   Echo,
+		"TYPE":   Type,
+		"XADD":   Xadd,
+		"XRANGE": Xrange,
+		"XREAD":  Xread,
+		"BLPOP":  Blpop,
+	}
+}

@@ -34,6 +34,7 @@ This implementation supports the following Redis commands:
 ### Transaction Operations
 - `MULTI` - Start a transaction block
 - `EXEC` - Execute all commands in a transaction block
+- `DISCARD` - Discard all commands in a transaction block
 
 ## Architecture
 
@@ -91,7 +92,7 @@ make test-all               # Run all tests with coverage
 make test-basic             # Test basic commands (PING, ECHO, GET, SET, INCR, TYPE)
 make test-list              # Test list commands (LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP)
 make test-stream             # Test stream commands (XADD, XRANGE, XREAD)
-make test-transaction        # Test transaction commands (MULTI, EXEC)
+make test-transaction        # Test transaction commands (MULTI, EXEC, DISCARD)
 ```
 
 #### **Benchmarking Commands**
@@ -136,6 +137,18 @@ LPOP mylist
 XADD mystream * field1 "value1" field2 "value2"
 XRANGE mystream - +
 XREAD STREAMS mystream 0
+
+# Transaction operations
+MULTI
+SET key1 "value1"
+SET key2 "value2"
+GET key1
+EXEC
+
+# Discard transaction
+MULTI
+SET key3 "value3"
+DISCARD
 
 ```
 
