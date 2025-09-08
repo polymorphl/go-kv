@@ -8,7 +8,7 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 // Examples:
 //
 //	MULTI           // Starts a transaction block
-func Multi(args []shared.Value) shared.Value {
+func Multi(connID string, args []shared.Value) shared.Value {
 	if len(args) != 0 {
 		return createErrorResponse("ERR wrong number of arguments for 'multi' command")
 	}
