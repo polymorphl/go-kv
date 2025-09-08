@@ -19,7 +19,7 @@ import (
 //	SET mykey "Hello" PX 1000   // Sets key with 1 second expiration
 func set(args []Value) Value {
 	if len(args) < 2 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'set' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'set' command")
 	}
 
 	key := args[0].Bulk
@@ -31,7 +31,7 @@ func set(args []Value) Value {
 		if strings.ToUpper(args[i].Bulk) == "PX" && i+1 < len(args) {
 			ms, err := strconv.ParseInt(args[i+1].Bulk, 10, 64)
 			if err != nil {
-				return Value{Typ: "error", Str: "ERR value is not an integer or out of range"}
+				return createErrorResponse("ERR value is not an integer or out of range")
 			}
 			entry.Expires = time.Now().UnixMilli() + ms
 			i++ // Skip the next argument since we've processed it
@@ -56,7 +56,7 @@ func set(args []Value) Value {
 //	GET nonexistent     // Returns null
 func get(args []Value) Value {
 	if len(args) != 1 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'get' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'get' command")
 	}
 
 	key := args[0].Bulk
@@ -74,7 +74,7 @@ func get(args []Value) Value {
 
 	// GET only works with string values, not arrays
 	if len(entry.Array) > 0 {
-		return Value{Typ: "error", Str: "WRONGTYPE Operation against a key holding the wrong kind of value"}
+		return createErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 
 	return Value{Typ: "string", Str: entry.Value}
@@ -87,19 +87,19 @@ func get(args []Value) Value {
 //	INCR counter      // Increments counter from 5 to 6
 func incr(args []Value) Value {
 	if len(args) != 1 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'incr' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'incr' command")
 	}
 
 	key := args[0].Bulk
 	entry, exists := memory[key]
 
 	if !exists {
-		return Value{Typ: "error", Str: "ERR not exists"}
+		return createErrorResponse("ERR not exists")
 	}
 
 	value, err := strconv.Atoi(entry.Value)
 	if err != nil {
-		return Value{Typ: "error", Str: "ERR value is not an integer or out of range"}
+		return createErrorResponse("ERR value is not an integer or out of range")
 	}
 
 	entry.Value = strconv.Itoa(value + 1)

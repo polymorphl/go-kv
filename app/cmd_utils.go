@@ -1,5 +1,14 @@
 package main
 
+// echo handles the ECHO command.
+// Usage: ECHO message
+// Returns: The message that was sent as an argument.
+// This command is useful for testing the connection and verifying that
+// the server is receiving and processing commands correctly.
+func echo(args []Value) Value {
+	return Value{Typ: "string", Str: args[0].Bulk}
+}
+
 // ping handles the PING command.
 // Usage: PING [message]
 // Returns: "PONG" if no message provided, otherwise echoes the provided message.
@@ -9,16 +18,7 @@ func ping(args []Value) Value {
 		return Value{Typ: "string", Str: "PONG"}
 	}
 
-	return Value{Typ: "string", Str: args[0].Bulk}
-}
-
-// echo handles the ECHO command.
-// Usage: ECHO message
-// Returns: The message that was sent as an argument.
-// This command is useful for testing the connection and verifying that
-// the server is receiving and processing commands correctly.
-func echo(args []Value) Value {
-	return Value{Typ: "string", Str: args[0].Bulk}
+	return echo(args)
 }
 
 // typeCmd handles the TYPE command.
@@ -37,7 +37,7 @@ func echo(args []Value) Value {
 //	TYPE mylist                   // Returns "list"
 func typeCmd(args []Value) Value {
 	if len(args) != 1 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'type' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'type' command")
 	}
 
 	key := args[0].Bulk

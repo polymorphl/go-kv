@@ -256,11 +256,6 @@ func getStreamIDs(stream []StreamEntry) []string {
 	return streamIDs
 }
 
-// createErrorResponse creates a standardized error response.
-func createErrorResponse(message string) Value {
-	return Value{Typ: "error", Str: message}
-}
-
 // parseBlockParameter parses the BLOCK parameter and returns timeout and streams index.
 func parseBlockParameter(args []Value) (int, int) {
 	if len(args) >= 2 && strings.ToUpper(args[0].Bulk) == "BLOCK" {

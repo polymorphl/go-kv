@@ -19,7 +19,7 @@ func push(args []Value, prepend bool) Value {
 		if !prepend {
 			cmdName = "rpush"
 		}
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for '" + cmdName + "' command"}
+		return createErrorResponse("ERR wrong number of arguments for '" + cmdName + "' command")
 	}
 
 	key := args[0].Bulk
@@ -106,7 +106,7 @@ func rpush(args []Value) Value {
 //	LRANGE mylist 5 3      // Returns empty array (start > stop)
 func lrange(args []Value) Value {
 	if len(args) != 3 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'lrange' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'lrange' command")
 	}
 
 	key := args[0].Bulk
@@ -118,17 +118,17 @@ func lrange(args []Value) Value {
 
 	// Check if it's an array
 	if len(entry.Array) == 0 {
-		return Value{Typ: "error", Str: "WRONGTYPE Operation against a key holding the wrong kind of value"}
+		return createErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 
 	// Parse start and stop indices
 	start, err := strconv.Atoi(args[1].Bulk)
 	if err != nil {
-		return Value{Typ: "error", Str: "ERR value is not an integer or out of range"}
+		return createErrorResponse("ERR value is not an integer or out of range")
 	}
 	stop, err := strconv.Atoi(args[2].Bulk)
 	if err != nil {
-		return Value{Typ: "error", Str: "ERR value is not an integer or out of range"}
+		return createErrorResponse("ERR value is not an integer or out of range")
 	}
 
 	arrayLen := len(entry.Array)
@@ -181,7 +181,7 @@ func lrange(args []Value) Value {
 // of the list without traversing its contents.
 func llen(args []Value) Value {
 	if len(args) != 1 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'llen' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'llen' command")
 	}
 
 	key := args[0].Bulk
@@ -223,7 +223,7 @@ func llen(args []Value) Value {
 // multiple elements where n is the number of elements being popped.
 func lpop(args []Value) Value {
 	if len(args) < 1 || len(args) > 2 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'lpop' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'lpop' command")
 	}
 
 	key := args[0].Bulk
@@ -239,7 +239,7 @@ func lpop(args []Value) Value {
 		var err error
 		count, err = strconv.Atoi(args[1].Bulk)
 		if err != nil || count < 0 {
-			return Value{Typ: "error", Str: "ERR value is not an integer or out of range"}
+			return createErrorResponse("ERR value is not an integer or out of range")
 		}
 	}
 
@@ -297,14 +297,14 @@ func lpop(args []Value) Value {
 // For production use, consider implementing an event-driven approach for better performance.
 func blpop(args []Value) Value {
 	if len(args) < 2 {
-		return Value{Typ: "error", Str: "ERR wrong number of arguments for 'blpop' command"}
+		return createErrorResponse("ERR wrong number of arguments for 'blpop' command")
 	}
 
 	// Last argument is the timeout (can be integer or float)
 	timeoutStr := args[len(args)-1].Bulk
 	timeout, err := strconv.ParseFloat(timeoutStr, 64)
 	if err != nil || timeout < 0 {
-		return Value{Typ: "error", Str: "ERR timeout is not a float or out of range"}
+		return createErrorResponse("ERR timeout is not a float or out of range")
 	}
 
 	// Helper function to check and pop from any available list
