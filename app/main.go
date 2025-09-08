@@ -6,11 +6,9 @@ import (
 	"net"
 	"os"
 	"strings"
-)
 
-// Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
-var _ = net.Listen
-var _ = os.Exit
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 func main() {
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
@@ -35,7 +33,7 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	for {
-		r := NewResp(conn)
+		r := shared.NewResp(conn)
 		value, err := r.Read()
 		if err != nil {
 			if err == io.EOF {
@@ -61,7 +59,7 @@ func handleConnection(conn net.Conn) {
 
 		if !ok {
 			fmt.Println("Invalid command: ", command)
-			err := writer.Write(Value{Typ: "string", Str: ""})
+			err := writer.Write(shared.Value{Typ: "string", Str: ""})
 			if err != nil {
 				fmt.Println("Error writing response:", err)
 				break

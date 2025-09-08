@@ -1,6 +1,8 @@
-package main
+package shared
 
-import "strconv"
+import (
+	"strconv"
+)
 
 func (v Value) Marshal() []byte {
 	switch v.Typ {

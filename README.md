@@ -44,14 +44,11 @@ The server is built with a clean, modular architecture:
 
 ```
 app/
-├── main.go          # Server entry point and connection handling
-├── handler.go       # Command handlers and in-memory storage
-├── cmd_string.go    # String operation implementations
-├── cmd_list.go      # List operation implementations
-├── cmd_stream.go    # Stream operation implementations
-├── resp.go          # RESP protocol implementation
-├── marshal.go       # Data marshaling utilities
-└── writer.go        # Response writing utilities
+├── main.go                    # Server entry point and connection handling
+├── handler.go                 # Command routing and request handling
+├── writer.go                  # Response writing utilities
+├── commands/                  # Individual command implementations
+└── shared/                    # Shared utilities and data structures
 ```
 
 ## Getting Started
