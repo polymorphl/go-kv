@@ -33,7 +33,7 @@ import (
 //
 // Note: LPOP is an O(1) operation for popping a single element, or O(n) for popping
 // multiple elements where n is the number of elements being popped.
-func Lpop(args []shared.Value) shared.Value {
+func Lpop(connID string, args []shared.Value) shared.Value {
 	if len(args) < 1 || len(args) > 2 {
 		return createErrorResponse("ERR wrong number of arguments for 'lpop' command")
 	}

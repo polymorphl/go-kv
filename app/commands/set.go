@@ -19,7 +19,7 @@ import (
 //
 //	SET mykey "Hello"           // Sets key without expiration
 //	SET mykey "Hello" PX 1000   // Sets key with 1 second expiration
-func Set(args []shared.Value) shared.Value {
+func Set(connID string, args []shared.Value) shared.Value {
 	if len(args) < 2 {
 		return createErrorResponse("ERR wrong number of arguments for 'set' command")
 	}

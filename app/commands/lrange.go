@@ -26,7 +26,7 @@ import (
 //	LRANGE mylist 0 -1     // Returns all elements
 //	LRANGE mylist -3 -1    // Returns last 3 elements
 //	LRANGE mylist 5 3      // Returns empty array (start > stop)
-func Lrange(args []shared.Value) shared.Value {
+func Lrange(connID string, args []shared.Value) shared.Value {
 	if len(args) != 3 {
 		return createErrorResponse("ERR wrong number of arguments for 'lrange' command")
 	}

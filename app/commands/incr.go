@@ -11,7 +11,7 @@ import (
 // Examples:
 //
 //	INCR counter      // Increments counter from 5 to 6
-func Incr(args []shared.Value) shared.Value {
+func Incr(connID string, args []shared.Value) shared.Value {
 	if len(args) != 1 {
 		return createErrorResponse("ERR wrong number of arguments for 'incr' command")
 	}

@@ -18,7 +18,7 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 //
 // Note: LLEN is a fast O(1) operation that simply returns the current length
 // of the list without traversing its contents.
-func Llen(args []shared.Value) shared.Value {
+func Llen(connID string, args []shared.Value) shared.Value {
 	if len(args) != 1 {
 		return createErrorResponse("ERR wrong number of arguments for 'llen' command")
 	}

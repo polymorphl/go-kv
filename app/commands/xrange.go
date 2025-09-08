@@ -116,7 +116,7 @@ func createStreamEntryValue(entry shared.StreamEntry) shared.Value {
 //	XRANGE mystream 1526985054069 1526985054079    // Range between specific IDs
 //	XRANGE mystream - +                            // All entries
 //	XRANGE mystream 1526985054069 +                // From specific ID to end
-func Xrange(args []shared.Value) shared.Value {
+func Xrange(connID string, args []shared.Value) shared.Value {
 	if len(args) < 3 {
 		return createErrorResponse("ERR wrong number of arguments for 'xrange' command")
 	}

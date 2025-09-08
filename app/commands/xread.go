@@ -147,7 +147,7 @@ func blockForNewEntries(processedArgs []shared.Value, keyCount int, blockTimeout
 //	XREAD streams stream1 stream2 0-0 0-1        // Multiple streams
 //	XREAD BLOCK 1000 streams mystream 0-0       // Blocking with 1000ms timeout
 //	XREAD BLOCK 0 streams mystream $      		// Blocking until new entries are available
-func Xread(args []shared.Value) shared.Value {
+func Xread(connID string, args []shared.Value) shared.Value {
 	if len(args) < 3 {
 		return createErrorResponse("ERR wrong number of arguments for 'xread' command")
 	}

@@ -18,7 +18,7 @@ import (
 //
 //	GET mykey           // Returns the value of mykey
 //	GET nonexistent     // Returns null
-func Get(args []shared.Value) shared.Value {
+func Get(connID string, args []shared.Value) shared.Value {
 	if len(args) != 1 {
 		return createErrorResponse("ERR wrong number of arguments for 'get' command")
 	}

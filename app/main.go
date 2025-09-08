@@ -67,7 +67,9 @@ func handleConnection(conn net.Conn) {
 			continue
 		}
 
-		result := handler(args)
+		// Use connection remote address as connection ID
+		connID := conn.RemoteAddr().String()
+		result := handler(connID, args)
 		writer.Write(result)
 	}
 }

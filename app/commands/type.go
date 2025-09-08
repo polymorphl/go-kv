@@ -16,7 +16,7 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 //	TYPE nonexistent              // Returns "none" (key doesn't exist)
 //	TYPE mystring                 // Returns "string"
 //	TYPE mylist                   // Returns "list"
-func Type(args []shared.Value) shared.Value {
+func Type(connID string, args []shared.Value) shared.Value {
 	if len(args) != 1 {
 		return createErrorResponse("ERR wrong number of arguments for 'type' command")
 	}

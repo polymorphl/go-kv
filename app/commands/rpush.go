@@ -15,6 +15,6 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 //	RPUSH mylist "one"                    // Creates list with one element, returns 1
 //	RPUSH mylist "two" "three"            // Adds two elements, returns 3
 //	RPUSH newlist "first" "second"        // Creates new list, returns 2
-func Rpush(args []shared.Value) shared.Value {
+func Rpush(connID string, args []shared.Value) shared.Value {
 	return push(args, false)
 }

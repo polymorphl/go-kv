@@ -221,7 +221,7 @@ func getLastStreamID(stream []string) (*StreamID, error) {
 //	XADD mystream * message "Hello"             // Auto-generate both timestamp and sequence
 //	XADD mystream 0-* message "Hello"           // Auto-generate sequence only
 //	XADD mystream *-0 message "Hello"           // Auto-generate timestamp only
-func Xadd(args []shared.Value) shared.Value {
+func Xadd(connID string, args []shared.Value) shared.Value {
 	if len(args) < 3 {
 		return createErrorResponse("ERR wrong number of arguments for 'xadd' command")
 	}

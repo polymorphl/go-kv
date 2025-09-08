@@ -30,7 +30,7 @@ import (
 //
 // Note: This implementation uses polling to check for available elements every 100ms.
 // For production use, consider implementing an event-driven approach for better performance.
-func Blpop(args []shared.Value) shared.Value {
+func Blpop(connID string, args []shared.Value) shared.Value {
 	if len(args) < 2 {
 		return createErrorResponse("ERR wrong number of arguments for 'blpop' command")
 	}

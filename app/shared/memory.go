@@ -15,5 +15,14 @@ type MemoryEntry struct {
 	Expires int64         // Unix timestamp in milliseconds, 0 means no expiry
 }
 
+// Transaction represents a transaction that is being executed.
+type Transaction struct {
+	Commands []Value
+}
+
 // memory is the global in-memory database that stores all key-value pairs.
 var Memory = make(map[string]MemoryEntry)
+
+// Transactions is the global map of transactions that are being executed.
+// The key is the connection ID.
+var Transactions = make(map[string]Transaction)

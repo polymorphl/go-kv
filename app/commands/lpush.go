@@ -20,6 +20,6 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 // Note: LPUSH is the opposite of RPUSH - it adds elements to the beginning of the list,
 // while RPUSH adds them to the end. The order of elements in the final list will be
 // reversed compared to the order they were pushed.
-func Lpush(args []shared.Value) shared.Value {
+func Lpush(connID string, args []shared.Value) shared.Value {
 	return push(args, true)
 }
