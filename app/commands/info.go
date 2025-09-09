@@ -1,6 +1,10 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"strconv"
+
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // info handles the INFO command.
 // Usage: INFO
@@ -10,6 +14,8 @@ func Info(connID string, args []shared.Value) shared.Value {
 
 	// Build the info response as a bulk string with key-value pairs
 	info := "role:" + state.Role + "\r\n"
+	info += "master_replid:" + state.MasterReplID + "\r\n"
+	info += "master_repl_offset:" + strconv.FormatInt(state.MasterReplOffset, 10) + "\r\n"
 
 	// If a section is specified, we can filter the response
 	// For now, we'll return the same info regardless of section

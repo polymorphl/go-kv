@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"io"
@@ -16,6 +17,21 @@ const DEFAULT_PORT = "6379"
 var port = ""
 var replicaOf = ""
 
+// generateReplID generates a random 40-character alphanumeric string for replication ID
+func generateReplID() string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	const length = 40
+
+	b := make([]byte, length)
+	rand.Read(b)
+
+	for i := range b {
+		b[i] = charset[b[i]%byte(len(charset))]
+	}
+
+	return string(b)
+}
+
 // Parse command line arguments
 func parseArgs() string {
 	flag.StringVar(&port, "port", DEFAULT_PORT, "Port to listen on")
@@ -27,6 +43,10 @@ func parseArgs() string {
 			Role:      "slave",
 			ReplicaOf: replicaOf,
 		}
+	}
+
+	if shared.StoreState.Role == "master" {
+		shared.StoreState.MasterReplID = generateReplID()
 	}
 
 	return port
