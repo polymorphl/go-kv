@@ -24,6 +24,11 @@ type Value struct {
 	Expires int64
 }
 
+// Special value types
+const (
+	NO_RESPONSE = "no_response"
+)
+
 type Resp struct {
 	reader *bufio.Reader
 }

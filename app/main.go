@@ -78,6 +78,11 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
+	// Register the connection
+	connID := conn.RemoteAddr().String()
+	shared.Connections[connID] = conn
+	defer delete(shared.Connections, connID)
+
 	for {
 		r := shared.NewResp(conn)
 		value, err := r.Read()
@@ -121,7 +126,10 @@ func handleConnection(conn net.Conn) {
 			// If it's a transaction command, execute it normally
 			if IsTransactionCommand(command) {
 				result := handler(connID, args)
-				writer.Write(result)
+				// Only write response if it's not a NO_RESPONSE type
+				if result.Typ != shared.NO_RESPONSE {
+					writer.Write(result)
+				}
 			} else {
 				// Queue the command instead of executing it
 				transaction.Commands = append(transaction.Commands, shared.QueuedCommand{
@@ -137,7 +145,10 @@ func handleConnection(conn net.Conn) {
 		} else {
 			// No active transaction, execute command normally
 			result := handler(connID, args)
-			writer.Write(result)
+			// Only write response if it's not a NO_RESPONSE type
+			if result.Typ != shared.NO_RESPONSE {
+				writer.Write(result)
+			}
 		}
 	}
 }

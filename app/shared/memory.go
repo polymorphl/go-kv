@@ -1,5 +1,7 @@
 package shared
 
+import "net"
+
 // StreamEntry represents a single entry in a Redis stream
 type StreamEntry struct {
 	ID   string            // Stream ID (e.g., "1526985054069-0")
@@ -33,6 +35,10 @@ var Memory = make(map[string]MemoryEntry)
 // Transactions is the global map of transactions that are being executed.
 // The key is the connection ID.
 var Transactions = make(map[string]Transaction)
+
+// Connections is the global map of active connections.
+// The key is the connection ID.
+var Connections = make(map[string]net.Conn)
 
 // CommandHandler represents a function that handles a Redis command
 type CommandHandler func(string, []Value) Value
