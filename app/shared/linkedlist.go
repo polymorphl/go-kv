@@ -62,6 +62,25 @@ func (ll *LinkedList) ToArray() []string {
 	return result
 }
 
+// RemoveFromHead removes and returns the value at the head of the linked list (for LPOP/BLPOP)
+func (ll *LinkedList) RemoveFromHead() string {
+	if ll.Size == 0 {
+		return ""
+	}
+
+	value := ll.Head.Value
+	ll.Head = ll.Head.Next
+
+	if ll.Head != nil {
+		ll.Head.Prev = nil
+	} else {
+		ll.Tail = nil
+	}
+
+	ll.Size--
+	return value
+}
+
 // FromArray creates a linked list from a slice
 func FromArray(arr []string) *LinkedList {
 	ll := NewLinkedList()

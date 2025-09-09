@@ -48,17 +48,30 @@ func Blpop(connID string, args []shared.Value) shared.Value {
 			key := args[i].Bulk
 			entry, exists := shared.Memory[key]
 
-			if exists && len(entry.Array) > 0 {
-				// Found a non-empty list, pop the first element
-				value := entry.Array[0]
-				entry.Array = entry.Array[1:]
-				shared.Memory[key] = entry
+			if exists {
+				var value string
+				var found bool
 
-				// Return [key, value] array
-				return &shared.Value{Typ: "array", Array: []shared.Value{
-					{Typ: "string", Str: key},
-					{Typ: "string", Str: value},
-				}}
+				// Check linked list first
+				if entry.List != nil && entry.List.Size > 0 {
+					value = entry.List.RemoveFromHead()
+					found = true
+				} else if len(entry.Array) > 0 {
+					// Fall back to array for backward compatibility
+					value = entry.Array[0]
+					entry.Array = entry.Array[1:]
+					found = true
+				}
+
+				if found {
+					shared.Memory[key] = entry
+
+					// Return [key, value] array
+					return &shared.Value{Typ: "array", Array: []shared.Value{
+						{Typ: "string", Str: key},
+						{Typ: "string", Str: value},
+					}}
+				}
 			}
 		}
 		return nil
@@ -73,7 +86,7 @@ func Blpop(connID string, args []shared.Value) shared.Value {
 	if timeout == 0 {
 		// Block indefinitely
 		for {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond) // Reduced polling interval for better responsiveness
 			if result := checkAndPop(); result != nil {
 				return *result
 			}
@@ -82,7 +95,7 @@ func Blpop(connID string, args []shared.Value) shared.Value {
 		// Block with timeout (convert float seconds to duration)
 		deadline := time.Now().Add(time.Duration(timeout * float64(time.Second)))
 		for time.Now().Before(deadline) {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(10 * time.Millisecond) // Reduced polling interval for better responsiveness
 			if result := checkAndPop(); result != nil {
 				return *result
 			}
