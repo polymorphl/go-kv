@@ -43,6 +43,18 @@ func parseArgs() string {
 			Role:      "slave",
 			ReplicaOf: replicaOf,
 		}
+
+		conn, err := net.Dial("tcp", strings.Split(shared.StoreState.ReplicaOf, " ")[0]+":"+strings.Split(shared.StoreState.ReplicaOf, " ")[1])
+		if err != nil {
+			fmt.Println("Failed to connect to master: ", err.Error())
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		writer := NewWriter(conn)
+		writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+			{Typ: "bulk", Bulk: "PING"},
+		}})
 	}
 
 	if shared.StoreState.Role == "master" {
