@@ -38,8 +38,8 @@ func Lrange(connID string, args []shared.Value) shared.Value {
 		return shared.Value{Typ: "array", Array: []shared.Value{}}
 	}
 
-	// Check if it's an array
-	if len(entry.Array) == 0 {
+	// Check if it's a list (either array or linked list)
+	if entry.List == nil && len(entry.Array) == 0 {
 		return createErrorResponse("WRONGTYPE Operation against a key holding the wrong kind of value")
 	}
 
@@ -53,22 +53,32 @@ func Lrange(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR value is not an integer or out of range")
 	}
 
-	arrayLen := len(entry.Array)
+	// Get the list length and elements
+	var listLen int
+	var elements []string
+
+	if entry.List != nil {
+		listLen = entry.List.Size
+		elements = entry.List.ToArray()
+	} else {
+		listLen = len(entry.Array)
+		elements = entry.Array
+	}
 
 	// Handle negative indices (count from end)
 	if start < 0 {
-		start = arrayLen + start
+		start = listLen + start
 	}
 	if stop < 0 {
-		stop = arrayLen + stop
+		stop = listLen + stop
 	}
 
 	// Clamp indices to valid range
 	if start < 0 {
 		start = 0
 	}
-	if stop >= arrayLen {
-		stop = arrayLen - 1
+	if stop >= listLen {
+		stop = listLen - 1
 	}
 
 	// Check if start is after stop (invalid range)
@@ -78,7 +88,7 @@ func Lrange(connID string, args []shared.Value) shared.Value {
 
 	// Pre-allocate result slice with exact capacity for better performance
 	result := make([]shared.Value, 0, stop-start+1)
-	for _, value := range entry.Array[start : stop+1] {
+	for _, value := range elements[start : stop+1] {
 		result = append(result, shared.Value{Typ: "string", Str: value})
 	}
 

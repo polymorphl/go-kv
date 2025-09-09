@@ -30,5 +30,13 @@ func Llen(connID string, args []shared.Value) shared.Value {
 		return shared.Value{Typ: "integer", Num: 0}
 	}
 
-	return shared.Value{Typ: "integer", Num: len(entry.Array)}
+	// Get the list length (either from linked list or array)
+	var length int
+	if entry.List != nil {
+		length = entry.List.Size
+	} else {
+		length = len(entry.Array)
+	}
+
+	return shared.Value{Typ: "integer", Num: length}
 }

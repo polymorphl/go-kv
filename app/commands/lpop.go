@@ -41,7 +41,19 @@ func Lpop(connID string, args []shared.Value) shared.Value {
 	key := args[0].Bulk
 	entry, exists := shared.Memory[key]
 
-	if !exists || len(entry.Array) == 0 {
+	if !exists {
+		return shared.Value{Typ: "null", Str: ""}
+	}
+
+	// Check if list is empty (either array or linked list)
+	isEmpty := false
+	if entry.List != nil {
+		isEmpty = entry.List.Size == 0
+	} else {
+		isEmpty = len(entry.Array) == 0
+	}
+
+	if isEmpty {
 		return shared.Value{Typ: "null", Str: ""}
 	}
 
@@ -55,9 +67,17 @@ func Lpop(connID string, args []shared.Value) shared.Value {
 		}
 	}
 
-	// Limit count to the actual array length
-	if count > len(entry.Array) {
-		count = len(entry.Array)
+	// Get the actual list size
+	var listSize int
+	if entry.List != nil {
+		listSize = entry.List.Size
+	} else {
+		listSize = len(entry.Array)
+	}
+
+	// Limit count to the actual list length
+	if count > listSize {
+		count = listSize
 	}
 
 	// If count is 0, return empty array
@@ -67,18 +87,31 @@ func Lpop(connID string, args []shared.Value) shared.Value {
 
 	// If count is 1, return single string (backward compatibility)
 	if count == 1 {
-		tmp := entry.Array[0]
-		entry.Array = entry.Array[1:]
+		var value string
+		if entry.List != nil {
+			value = entry.List.RemoveFromHead()
+		} else {
+			value = entry.Array[0]
+			entry.Array = entry.Array[1:]
+		}
 		shared.Memory[key] = entry
-		return shared.Value{Typ: "string", Str: tmp}
+		return shared.Value{Typ: "string", Str: value}
 	}
 
 	// Pop multiple items and return as array
 	result := make([]shared.Value, count)
-	for i := 0; i < count; i++ {
-		result[i] = shared.Value{Typ: "string", Str: entry.Array[i]}
+	if entry.List != nil {
+		// Use linked list
+		for i := 0; i < count; i++ {
+			result[i] = shared.Value{Typ: "string", Str: entry.List.RemoveFromHead()}
+		}
+	} else {
+		// Use array
+		for i := 0; i < count; i++ {
+			result[i] = shared.Value{Typ: "string", Str: entry.Array[i]}
+		}
+		entry.Array = entry.Array[count:]
 	}
-	entry.Array = entry.Array[count:]
 	shared.Memory[key] = entry
 
 	return shared.Value{Typ: "array", Array: result}
