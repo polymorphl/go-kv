@@ -98,6 +98,19 @@ func (r *Resp) readBulk() (Value, error) {
 	return v, nil
 }
 
+func (r *Resp) readString() (Value, error) {
+	v := Value{}
+	v.Typ = "string"
+
+	line, _, err := r.readLine()
+	if err != nil {
+		return v, err
+	}
+
+	v.Str = string(line)
+	return v, nil
+}
+
 func (r *Resp) Read() (Value, error) {
 	_type, err := r.reader.ReadByte()
 	if err != nil {
@@ -109,8 +122,10 @@ func (r *Resp) Read() (Value, error) {
 		return r.readArray()
 	case BULK:
 		return r.readBulk()
+	case STRING:
+		return r.readString()
 	default:
-		fmt.Printf("Unknown type: %v", string(_type))
+		fmt.Printf("Unknown type: %v\n", string(_type))
 		return Value{}, nil
 	}
 }

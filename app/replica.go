@@ -4,25 +4,14 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
-// performReplicationHandshake performs the complete replication handshake with master
-func performReplicationHandshake(address, port string) {
-	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		fmt.Printf("Failed to connect to master %s: %s\n", address, err.Error())
-		os.Exit(1)
-	}
-	// Note: We don't close the connection here - keep it alive for replication
-
-	writer := NewWriter(conn)
-	reader := shared.NewResp(conn)
-
-	// Step 1: Send PING and wait for PONG response
-	err = writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendPing(conn net.Conn, writer *Writer, reader *shared.Resp) {
+	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "PING"},
 	}})
 	if err != nil {
@@ -36,9 +25,10 @@ func performReplicationHandshake(address, port string) {
 		conn.Close()
 		return
 	}
+}
 
-	// Step 2: Send REPLCONF listening-port and wait for OK response
-	err = writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendReplConfListeningPort(conn net.Conn, writer *Writer, reader *shared.Resp, port string) {
+	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
 		{Typ: "bulk", Bulk: "listening-port"},
 		{Typ: "bulk", Bulk: port},
@@ -54,9 +44,10 @@ func performReplicationHandshake(address, port string) {
 		conn.Close()
 		return
 	}
+}
 
-	// Step 3: Send REPLCONF capa psync2 and wait for OK response
-	err = writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendReplConfCapaPsync2(conn net.Conn, writer *Writer, reader *shared.Resp) {
+	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
 		{Typ: "bulk", Bulk: "capa"},
 		{Typ: "bulk", Bulk: "psync2"},
@@ -72,9 +63,50 @@ func performReplicationHandshake(address, port string) {
 		conn.Close()
 		return
 	}
+}
 
-	// Handshake completed successfully - connection remains open
-	fmt.Println("Replication handshake completed successfully")
+func sendPsync(conn net.Conn, writer *Writer, reader *shared.Resp, masterReplID string, masterReplOffset int64) {
+	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+		{Typ: "bulk", Bulk: "PSYNC"},
+		{Typ: "bulk", Bulk: masterReplID},
+		{Typ: "bulk", Bulk: strconv.FormatInt(masterReplOffset, 10)},
+	}})
+	if err != nil {
+		fmt.Printf("Failed to send PSYNC: %s\n", err.Error())
+		conn.Close()
+		return
+	}
+	_, err = reader.Read()
+	if err != nil {
+		fmt.Printf("Failed to read PSYNC response: %s\n", err.Error())
+		conn.Close()
+		return
+	}
+}
+
+// performReplicationHandshake performs the complete replication handshake with master
+func performReplicationHandshake(address, port string) {
+	conn, err := net.Dial("tcp", address)
+	if err != nil {
+		fmt.Printf("Failed to connect to master %s: %s\n", address, err.Error())
+		os.Exit(1)
+	}
+	// Note: We don't close the connection here - keep it alive for replication
+
+	writer := NewWriter(conn)
+	reader := shared.NewResp(conn)
+
+	// Step 1: Send PING and wait for PONG response
+	sendPing(conn, writer, reader)
+
+	// Step 2: Send REPLCONF listening-port and wait for OK response
+	sendReplConfListeningPort(conn, writer, reader, port)
+
+	// Step 3: Send REPLCONF capa psync2 and wait for OK response
+	sendReplConfCapaPsync2(conn, writer, reader)
+
+	// Step 4: Send PSYNC and wait for FULLRESYNC response
+	sendPsync(conn, writer, reader, "?", -1)
 }
 
 func connectToMaster(replicaPort string) {
