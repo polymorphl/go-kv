@@ -34,6 +34,7 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"LRANGE":   commands.Lrange,
 	"MULTI":    commands.Multi,
 	"PING":     commands.Ping,
+	"PSYNC":    commands.Psync,
 	"REPLCONF": commands.Replconf,
 	"RPUSH":    commands.Rpush,
 	"SET":      commands.Set,
