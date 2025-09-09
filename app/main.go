@@ -126,6 +126,12 @@ func handleConnection(conn net.Conn) {
 			// If it's a transaction command, execute it normally
 			if IsTransactionCommand(command) {
 				result := handler(connID, args)
+
+				// Propagate transaction commands to replicas
+				if shared.IsWriteCommand(command) {
+					shared.PropagateCommand(command, args)
+				}
+
 				// Only write response if it's not a NO_RESPONSE type
 				if result.Typ != shared.NO_RESPONSE {
 					writer.Write(result)
@@ -145,6 +151,12 @@ func handleConnection(conn net.Conn) {
 		} else {
 			// No active transaction, execute command normally
 			result := handler(connID, args)
+
+			// Propagate write commands to replicas
+			if shared.IsWriteCommand(command) {
+				shared.PropagateCommand(command, args)
+			}
+
 			// Only write response if it's not a NO_RESPONSE type
 			if result.Typ != shared.NO_RESPONSE {
 				writer.Write(result)

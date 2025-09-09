@@ -1,6 +1,9 @@
 package shared
 
-import "net"
+import (
+	"fmt"
+	"net"
+)
 
 // StreamEntry represents a single entry in a Redis stream
 type StreamEntry struct {
@@ -54,11 +57,59 @@ func ExecuteCommand(command string, connID string, args []Value) Value {
 	return Value{Typ: "string", Str: ""}
 }
 
+// IsWriteCommand checks if a command modifies data and should be propagated to replicas
+func IsWriteCommand(command string) bool {
+	writeCommands := map[string]bool{
+		"SET":     true,
+		"LPUSH":   true,
+		"RPUSH":   true,
+		"LPOP":    true,
+		"BLPOP":   true,
+		"INCR":    true,
+		"XADD":    true,
+		"MULTI":   true,
+		"EXEC":    true,
+		"DISCARD": true,
+	}
+	return writeCommands[command]
+}
+
+// PropagateCommand sends a command to all connected replicas
+func PropagateCommand(command string, args []Value) {
+	if StoreState.Role != "master" {
+		return
+	}
+
+	fmt.Printf("Propagating command: %s to %d replicas\n", command, len(StoreState.Replicas))
+
+	// Build the command array for propagation
+	commandArray := make([]Value, len(args)+1)
+	commandArray[0] = Value{Typ: "bulk", Bulk: command}
+	for i, arg := range args {
+		commandArray[i+1] = arg
+	}
+
+	// Send to all replicas
+	for replicaID, replicaConn := range StoreState.Replicas {
+		// Create a simple writer for this connection
+		bytes := Value{Typ: "array", Array: commandArray}.Marshal()
+		_, err := replicaConn.Write(bytes)
+		if err != nil {
+			// Remove failed replica connection
+			delete(StoreState.Replicas, replicaID)
+			fmt.Printf("Failed to propagate command to replica %s: %v\n", replicaID, err)
+		} else {
+			fmt.Printf("Successfully propagated command to replica %s\n", replicaID)
+		}
+	}
+}
+
 type State struct {
 	Role             string
 	ReplicaOf        string
 	MasterReplID     string
 	MasterReplOffset int64
+	Replicas         map[string]net.Conn // Map of replica connection IDs to their connections
 }
 
 var StoreState = State{
@@ -66,4 +117,5 @@ var StoreState = State{
 	ReplicaOf:        "",
 	MasterReplID:     "",
 	MasterReplOffset: 0,
+	Replicas:         make(map[string]net.Conn),
 }

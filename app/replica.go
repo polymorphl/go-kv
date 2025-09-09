@@ -107,6 +107,9 @@ func performReplicationHandshake(address, port string) {
 
 	// Step 4: Send PSYNC and wait for FULLRESYNC response
 	sendPsync(conn, writer, reader, "?", -1)
+
+	// Step 5: Start listening for propagated commands
+	go processPropagatedCommands(conn, reader)
 }
 
 func connectToMaster(replicaPort string) {
@@ -121,6 +124,34 @@ func connectToMaster(replicaPort string) {
 	address := host + ":" + masterPort
 
 	performReplicationHandshake(address, replicaPort)
+}
+
+// processPropagatedCommands processes commands propagated from the master
+func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
+	for {
+		value, err := reader.Read()
+		if err != nil {
+			fmt.Printf("Error reading propagated command: %v\n", err)
+			return
+		}
+
+		if value.Typ != "array" {
+			fmt.Printf("Invalid propagated command format, expected array\n")
+			continue
+		}
+
+		if len(value.Array) == 0 {
+			continue
+		}
+
+		command := strings.ToUpper(value.Array[0].Bulk)
+		args := value.Array[1:]
+
+		// Execute the command using the shared handlers
+		// Use a dummy connection ID for replica commands
+		connID := "replica"
+		shared.ExecuteCommand(command, connID, args)
+	}
 }
 
 // handleReplicaMode sets up the server as a replica and connects to master
