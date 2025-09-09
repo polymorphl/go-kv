@@ -16,6 +16,18 @@ func clearTransactions() {
 	}
 }
 
+// getListAsArray gets list as array for testing (works with both linked list and array)
+func getListAsArray(key string) []string {
+	entry, exists := shared.Memory[key]
+	if !exists {
+		return nil
+	}
+	if entry.List != nil {
+		return entry.List.ToArray()
+	}
+	return entry.Array
+}
+
 // initCommandHandlers initializes the shared command handlers for testing
 func initCommandHandlers() {
 	shared.CommandHandlers = map[string]shared.CommandHandler{

@@ -28,15 +28,16 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				entry, exists := shared.Memory["newlist"]
+				_, exists := shared.Memory["newlist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 1 {
-					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				array := getListAsArray("newlist")
+				if len(array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(array))
 				}
-				if entry.Array[0] != "first" {
-					t.Errorf("Expected 'first', got '%s'", entry.Array[0])
+				if array[0] != "first" {
+					t.Errorf("Expected 'first', got '%s'", array[0])
 				}
 			},
 		},
@@ -52,18 +53,19 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 3},
 			verify: func() {
-				entry, exists := shared.Memory["newlist"]
+				_, exists := shared.Memory["newlist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 3 {
-					t.Errorf("Expected 3 elements, got %d", len(entry.Array))
+				array := getListAsArray("newlist")
+				if len(array) != 3 {
+					t.Errorf("Expected 3 elements, got %d", len(array))
 				}
 				// Values should be in reverse order (last pushed becomes first)
 				expected := []string{"third", "second", "first"}
 				for i, val := range expected {
-					if entry.Array[i] != val {
-						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					if array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, array[i])
 					}
 				}
 			},
@@ -84,17 +86,18 @@ func TestLpush(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "integer", Num: 3},
 			verify: func() {
-				entry, exists := shared.Memory["existinglist"]
+				_, exists := shared.Memory["existinglist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 3 {
-					t.Errorf("Expected 3 elements, got %d", len(entry.Array))
+				array := getListAsArray("existinglist")
+				if len(array) != 3 {
+					t.Errorf("Expected 3 elements, got %d", len(array))
 				}
 				expected := []string{"newfirst", "old1", "old2"}
 				for i, val := range expected {
-					if entry.Array[i] != val {
-						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					if array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, array[i])
 					}
 				}
 			},
@@ -115,15 +118,16 @@ func TestLpush(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				entry, exists := shared.Memory["emptylist"]
+				_, exists := shared.Memory["emptylist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 1 {
-					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				array := getListAsArray("emptylist")
+				if len(array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(array))
 				}
-				if entry.Array[0] != "first" {
-					t.Errorf("Expected 'first', got '%s'", entry.Array[0])
+				if array[0] != "first" {
+					t.Errorf("Expected 'first', got '%s'", array[0])
 				}
 			},
 		},
@@ -139,17 +143,19 @@ func TestLpush(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				entry, exists := shared.Memory["stringkey"]
+				_, exists := shared.Memory["stringkey"]
 				if !exists {
 					t.Error("Key should exist after LPUSH")
 				}
-				if len(entry.Array) != 1 {
-					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				array := getListAsArray("stringkey")
+				if len(array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(array))
 				}
-				if entry.Array[0] != "first" {
-					t.Errorf("Expected 'first', got '%s'", entry.Array[0])
+				if array[0] != "first" {
+					t.Errorf("Expected 'first', got '%s'", array[0])
 				}
 				// Original string value should be cleared
+				entry := shared.Memory["stringkey"]
 				if entry.Value != "" {
 					t.Errorf("Expected empty string value, got '%s'", entry.Value)
 				}
@@ -165,15 +171,16 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				entry, exists := shared.Memory["emptylist"]
+				_, exists := shared.Memory["emptylist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 1 {
-					t.Errorf("Expected 1 element, got %d", len(entry.Array))
+				array := getListAsArray("emptylist")
+				if len(array) != 1 {
+					t.Errorf("Expected 1 element, got %d", len(array))
 				}
-				if entry.Array[0] != "" {
-					t.Errorf("Expected empty string, got '%s'", entry.Array[0])
+				if array[0] != "" {
+					t.Errorf("Expected empty string, got '%s'", array[0])
 				}
 			},
 		},
@@ -188,17 +195,18 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 2},
 			verify: func() {
-				entry, exists := shared.Memory["unicodelist"]
+				_, exists := shared.Memory["unicodelist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 2 {
-					t.Errorf("Expected 2 elements, got %d", len(entry.Array))
+				array := getListAsArray("unicodelist")
+				if len(array) != 2 {
+					t.Errorf("Expected 2 elements, got %d", len(array))
 				}
 				expected := []string{"🌍", "Hello 世界"}
 				for i, val := range expected {
-					if entry.Array[i] != val {
-						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					if array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, array[i])
 					}
 				}
 			},
@@ -227,18 +235,19 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 5},
 			verify: func() {
-				entry, exists := shared.Memory["largelist"]
+				_, exists := shared.Memory["largelist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
-				if len(entry.Array) != 5 {
-					t.Errorf("Expected 5 elements, got %d", len(entry.Array))
+				array := getListAsArray("largelist")
+				if len(array) != 5 {
+					t.Errorf("Expected 5 elements, got %d", len(array))
 				}
 				// Values should be in reverse order
 				expected := []string{"val5", "val4", "val3", "val2", "val1"}
 				for i, val := range expected {
-					if entry.Array[i] != val {
-						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, entry.Array[i])
+					if array[i] != val {
+						t.Errorf("Expected '%s' at position %d, got '%s'", val, i, array[i])
 					}
 				}
 			},

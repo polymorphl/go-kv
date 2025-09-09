@@ -7,10 +7,11 @@ type StreamEntry struct {
 }
 
 // MemoryEntry represents a value stored in the in-memory database.
-// It can hold either a string value or an array of strings, with optional expiration.
+// It can hold either a string value, an array of strings, or a linked list, with optional expiration.
 type MemoryEntry struct {
 	Value   string        // String value (used when Array is empty)
-	Array   []string      // Array of strings (used for list operations)
+	Array   []string      // Array of strings (used for list operations - kept for compatibility)
+	List    *LinkedList   // Linked list (used for optimized list operations)
 	Stream  []StreamEntry // Stream entries (used for stream operations)
 	Expires int64         // Unix timestamp in milliseconds, 0 means no expiry
 }

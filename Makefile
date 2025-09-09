@@ -116,15 +116,6 @@ quick-test: ## Run quick tests (excluding slow BLPOP tests)
 	@echo "$(BLUE)Running quick tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
-# Test specific functionality
-test-unicode: ## Test Unicode support across all commands
-	@echo "$(BLUE)Testing Unicode support...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run ".*[Uu]nicode.*" -timeout $(TEST_TIMEOUT)
-
-test-error-handling: ## Test error handling across all commands
-	@echo "$(BLUE)Testing error handling...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run ".*[Ee]rror.*|.*[Ii]nvalid.*|.*[Ww]rong.*" -timeout $(TEST_TIMEOUT)
-
 # CI/CD helpers
 ci-test: ## Run tests suitable for CI (no blocking operations)
 	@echo "$(BLUE)Running CI tests...$(RESET)"

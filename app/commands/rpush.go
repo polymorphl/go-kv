@@ -16,5 +16,33 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 //	RPUSH mylist "two" "three"            // Adds two elements, returns 3
 //	RPUSH newlist "first" "second"        // Creates new list, returns 2
 func Rpush(connID string, args []shared.Value) shared.Value {
-	return push(args, false)
+	if len(args) < 2 {
+		return createErrorResponse("ERR wrong number of arguments for 'rpush' command")
+	}
+	key := args[0].Bulk
+	entry, exists := shared.Memory[key]
+
+	// If key doesn't exist, create a new linked list
+	if !exists {
+		entry = shared.MemoryEntry{List: shared.NewLinkedList(), Expires: 0}
+	} else if entry.List == nil {
+		// If we have an array but no list, convert array to linked list
+		if len(entry.Array) > 0 {
+			entry.List = shared.FromArray(entry.Array)
+			entry.Array = nil // Clear the array to save memory
+		} else {
+			// Create new linked list for empty array
+			entry.List = shared.NewLinkedList()
+		}
+		// Clear the string value when converting to list
+		entry.Value = ""
+	}
+
+	// RPUSH: O(1) insertion at tail using linked list
+	for i := 1; i < len(args); i++ {
+		entry.List.AddToTail(args[i].Bulk)
+	}
+
+	shared.Memory[key] = entry
+	return shared.Value{Typ: "integer", Num: entry.List.Size}
 }
