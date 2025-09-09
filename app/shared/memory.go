@@ -48,5 +48,11 @@ func ExecuteCommand(command string, connID string, args []Value) Value {
 }
 
 type State struct {
-	Role string
+	Role      string
+	ReplicaOf string
+}
+
+var StoreState = State{
+	Role:      "master",
+	ReplicaOf: "",
 }

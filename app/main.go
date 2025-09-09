@@ -14,16 +14,26 @@ import (
 const DEFAULT_PORT = "6379"
 
 var port = ""
+var replicaOf = ""
 
-// Parse the port from the command line arguments
-func parsePort() string {
+// Parse command line arguments
+func parseArgs() string {
 	flag.StringVar(&port, "port", DEFAULT_PORT, "Port to listen on")
+	flag.StringVar(&replicaOf, "replicaof", "", "Replica of")
 	flag.Parse()
+
+	if replicaOf != "" && strings.Contains(replicaOf, " ") {
+		shared.StoreState = shared.State{
+			Role:      "slave",
+			ReplicaOf: replicaOf,
+		}
+	}
+
 	return port
 }
 
 func main() {
-	l, err := net.Listen("tcp", "0.0.0.0:"+parsePort())
+	l, err := net.Listen("tcp", "0.0.0.0:"+parseArgs())
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)

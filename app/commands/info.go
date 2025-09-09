@@ -6,9 +6,7 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 // Usage: INFO
 // This command is used to get information about the server.
 func Info(connID string, args []shared.Value) shared.Value {
-	state := shared.State{
-		Role: "master",
-	}
+	state := shared.StoreState
 
 	// Build the info response as a bulk string with key-value pairs
 	info := "role:" + state.Role + "\r\n"
