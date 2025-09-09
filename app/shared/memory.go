@@ -46,3 +46,7 @@ func ExecuteCommand(command string, connID string, args []Value) Value {
 	}
 	return Value{Typ: "string", Str: ""}
 }
+
+type State struct {
+	Role string
+}
