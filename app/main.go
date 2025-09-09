@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -10,8 +11,19 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
+const DEFAULT_PORT = "6379"
+
+var port = ""
+
+// Parse the port from the command line arguments
+func parsePort() string {
+	flag.StringVar(&port, "port", DEFAULT_PORT, "Port to listen on")
+	flag.Parse()
+	return port
+}
+
 func main() {
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	l, err := net.Listen("tcp", "0.0.0.0:"+parsePort())
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
