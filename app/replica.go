@@ -82,7 +82,7 @@ func sendPsync(conn net.Conn, writer *Writer, reader *shared.Resp, masterReplID 
 	}
 
 	// Read the FULLRESYNC response
-	resp, err := reader.Read()
+	_, err = reader.Read()
 	if err != nil {
 		fmt.Printf("Failed to read PSYNC response: %s\n", err.Error())
 		conn.Close()
