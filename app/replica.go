@@ -124,7 +124,8 @@ func performReplicationHandshake(address, port string) {
 	sendPsync(conn, writer, reader, "?", -1)
 
 	// Step 5: Start listening for propagated commands
-	go processPropagatedCommands(conn, shared.NewResp(conn))
+	// Reuse the same RESP reader to avoid losing any buffered bytes
+	go processPropagatedCommands(conn, reader)
 }
 
 func connectToMaster(replicaPort string) {
@@ -164,8 +165,7 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 		args := value.Array[1:]
 
 		// Execute the command using the shared handlers
-		// Use a dummy connection ID for replica commands
-		connID := "replica"
+		connID := conn.RemoteAddr().String()
 		result := shared.ExecuteCommand(command, connID, args)
 
 		// For REPLCONF GETACK, we need to send the response back to the master
