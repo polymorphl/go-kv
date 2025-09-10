@@ -143,6 +143,8 @@ func connectToMaster(replicaPort string) {
 
 // processPropagatedCommands processes commands propagated from the master
 func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
+	writer := NewWriter(conn)
+
 	for {
 		value, err := reader.Read()
 		if err != nil {
@@ -164,7 +166,18 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 		// Execute the command using the shared handlers
 		// Use a dummy connection ID for replica commands
 		connID := "replica"
-		shared.ExecuteCommand(command, connID, args)
+		result := shared.ExecuteCommand(command, connID, args)
+
+		// For REPLCONF GETACK, we need to send the response back to the master
+		if command == "REPLCONF" && len(args) >= 1 && args[0].Bulk == "GETACK" {
+			if result.Typ != shared.NO_RESPONSE {
+				err := writer.Write(result)
+				if err != nil {
+					fmt.Printf("Error writing REPLCONF GETACK response: %v\n", err)
+					return
+				}
+			}
+		}
 	}
 }
 

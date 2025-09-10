@@ -5,15 +5,29 @@ import (
 )
 
 // replconf handles the REPLCONF command.
-// Usage: REPLCONF listening-port <port>
-// Returns: "OK" on success, error message on failure.
+// Usage: REPLCONF listening-port <port> or REPLCONF GETACK *
+// Returns: "OK" on success, error message on failure, or REPLCONF ACK <offset> for GETACK.
 //
-// This command sets the listening port for the replica.
-// It is used to configure the replica to listen on a specific port.
+// This command sets the listening port for the replica or responds to GETACK requests.
 // It is also used to register the replica connection as soon as we receive REPLCONF.
 func Replconf(connID string, args []shared.Value) shared.Value {
 	if len(args) < 2 {
 		return createErrorResponse("ERR wrong number of arguments for 'replconf' command")
+	}
+
+	subcommand := args[0].Bulk
+
+	// Handle REPLCONF GETACK * command
+	if subcommand == "GETACK" {
+		if len(args) >= 2 && args[1].Bulk == "*" {
+			// Respond with REPLCONF ACK 0 (hardcoded offset for now)
+			return shared.Value{Typ: "array", Array: []shared.Value{
+				{Typ: "bulk", Bulk: "REPLCONF"},
+				{Typ: "bulk", Bulk: "ACK"},
+				{Typ: "bulk", Bulk: "0"},
+			}}
+		}
+		return createErrorResponse("ERR wrong number of arguments for 'replconf getack' command")
 	}
 
 	// Register replica connection as soon as we receive REPLCONF
