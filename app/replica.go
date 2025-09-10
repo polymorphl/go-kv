@@ -10,6 +10,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
+// sendPing sends a PING command to the master
 func sendPing(conn net.Conn, writer *Writer, reader *shared.Resp) {
 	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "PING"},
@@ -27,6 +28,7 @@ func sendPing(conn net.Conn, writer *Writer, reader *shared.Resp) {
 	}
 }
 
+// sendReplConfListeningPort sends a REPLCONF listening-port command to the master
 func sendReplConfListeningPort(conn net.Conn, writer *Writer, reader *shared.Resp, port string) {
 	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
@@ -46,6 +48,7 @@ func sendReplConfListeningPort(conn net.Conn, writer *Writer, reader *shared.Res
 	}
 }
 
+// sendReplConfCapaPsync2 sends a REPLCONF capa psync2 command to the master
 func sendReplConfCapaPsync2(conn net.Conn, writer *Writer, reader *shared.Resp) {
 	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
@@ -65,6 +68,7 @@ func sendReplConfCapaPsync2(conn net.Conn, writer *Writer, reader *shared.Resp) 
 	}
 }
 
+// sendPsync sends a PSYNC command to the master
 func sendPsync(conn net.Conn, writer *Writer, reader *shared.Resp, masterReplID string, masterReplOffset int64) {
 	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
 		{Typ: "bulk", Bulk: "PSYNC"},
@@ -76,9 +80,20 @@ func sendPsync(conn net.Conn, writer *Writer, reader *shared.Resp, masterReplID 
 		conn.Close()
 		return
 	}
-	_, err = reader.Read()
+
+	// Read the FULLRESYNC response
+	resp, err := reader.Read()
 	if err != nil {
 		fmt.Printf("Failed to read PSYNC response: %s\n", err.Error())
+		conn.Close()
+		return
+	}
+
+	// Read the RDB file (this is binary data, not a command)
+	// Use the RESP reader to read it as a bulk string without trailing CRLF
+	_, err = reader.ReadBulkWithoutCRLF()
+	if err != nil {
+		fmt.Printf("Failed to read RDB file: %s\n", err.Error())
 		conn.Close()
 		return
 	}
@@ -89,7 +104,7 @@ func performReplicationHandshake(address, port string) {
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		fmt.Printf("Failed to connect to master %s: %s\n", address, err.Error())
-		os.Exit(1)
+		return // Don't exit, just return and let the server start
 	}
 	// Note: We don't close the connection here - keep it alive for replication
 
@@ -109,7 +124,7 @@ func performReplicationHandshake(address, port string) {
 	sendPsync(conn, writer, reader, "?", -1)
 
 	// Step 5: Start listening for propagated commands
-	go processPropagatedCommands(conn, reader)
+	go processPropagatedCommands(conn, shared.NewResp(conn))
 }
 
 func connectToMaster(replicaPort string) {
@@ -136,7 +151,6 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 		}
 
 		if value.Typ != "array" {
-			fmt.Printf("Invalid propagated command format, expected array\n")
 			continue
 		}
 
@@ -157,6 +171,7 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 // handleReplicaMode sets up the server as a replica and connects to master
 func handleReplicaMode(replicaPort string) {
 	if shared.StoreState.Role == "slave" {
-		connectToMaster(replicaPort)
+		// Start replica connection in a goroutine so it doesn't block the server startup
+		go connectToMaster(replicaPort)
 	}
 }

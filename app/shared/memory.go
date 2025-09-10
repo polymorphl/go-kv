@@ -80,8 +80,6 @@ func PropagateCommand(command string, args []Value) {
 		return
 	}
 
-	fmt.Printf("Propagating command: %s to %d replicas\n", command, len(StoreState.Replicas))
-
 	// Build the command array for propagation
 	commandArray := make([]Value, len(args)+1)
 	commandArray[0] = Value{Typ: "bulk", Bulk: command}

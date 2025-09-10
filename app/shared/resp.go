@@ -103,6 +103,38 @@ func (r *Resp) readBulk() (Value, error) {
 	return v, nil
 }
 
+// ReadBulkWithoutCRLF reads a bulk string without expecting trailing CRLF
+// This is used for reading RDB files which don't have trailing CRLF
+func (r *Resp) ReadBulkWithoutCRLF() (Value, error) {
+	v := Value{}
+	v.Typ = "bulk"
+
+	// Read the bulk string length (format: $<length>\r\n)
+	line, _, err := r.readLine()
+	if err != nil {
+		return v, err
+	}
+
+	// Parse the length from the line (should be $<length>)
+	if len(line) < 2 || line[0] != '$' {
+		return v, fmt.Errorf("invalid bulk string header: %s", string(line))
+	}
+
+	lengthStr := string(line[1:])
+	len, err := strconv.Atoi(lengthStr)
+	if err != nil {
+		return v, fmt.Errorf("failed to parse bulk string length: %s", lengthStr)
+	}
+
+	bulk := make([]byte, len)
+	r.reader.Read(bulk)
+	v.Bulk = string(bulk)
+
+	// Don't read the CRLF - RDB files don't have it
+
+	return v, nil
+}
+
 func (r *Resp) readString() (Value, error) {
 	v := Value{}
 	v.Typ = "string"

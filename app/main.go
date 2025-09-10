@@ -38,7 +38,7 @@ func parseArgs() string {
 	flag.StringVar(&replicaOf, "replicaof", "", "Replica of")
 	flag.Parse()
 
-	if replicaOf != "" && strings.Contains(replicaOf, " ") {
+	if replicaOf != "" {
 		shared.StoreState = shared.State{
 			Role:      "slave",
 			ReplicaOf: replicaOf,
@@ -55,11 +55,12 @@ func parseArgs() string {
 func main() {
 	port := parseArgs()
 
+	fmt.Printf("Starting Redis server on port %s, role: %s\n", port, shared.StoreState.Role)
 	handleReplicaMode(port)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {
-		fmt.Println("Failed to bind to port 6379")
+		fmt.Printf("Failed to bind to port %s\n", port)
 		os.Exit(1)
 	}
 
@@ -93,8 +94,6 @@ func handleConnection(conn net.Conn) {
 				fmt.Println("ERR IS", err)
 			}
 			return
-		} else {
-			fmt.Println("Client connected: ", conn.RemoteAddr().String())
 		}
 
 		if value.Typ != "array" {
