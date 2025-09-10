@@ -13,8 +13,8 @@ func Multi(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'multi' command")
 	}
 
-	// Create a new transaction for this connection
-	shared.Transactions[connID] = shared.Transaction{Commands: []shared.QueuedCommand{}}
+	// Create a new transaction for this connection (concurrency-safe)
+	shared.TransactionsSet(connID, shared.Transaction{Commands: []shared.QueuedCommand{}})
 
 	return shared.Value{Typ: "string", Str: "OK"}
 }

@@ -32,10 +32,10 @@ func Replconf(connID string, args []shared.Value) shared.Value {
 
 	// Register replica connection as soon as we receive REPLCONF
 	// This ensures the replica is registered before any commands are processed
-	if conn, exists := shared.Connections[connID]; exists {
+	if conn, exists := shared.ConnectionsGet(connID); exists {
 		// Only register if not already registered
 		if _, alreadyRegistered := shared.StoreState.Replicas[connID]; !alreadyRegistered {
-			shared.StoreState.Replicas[connID] = conn
+			shared.ReplicasSet(connID, conn)
 		}
 	}
 

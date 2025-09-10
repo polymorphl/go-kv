@@ -17,14 +17,14 @@ func Exec(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'exec' command")
 	}
 
-	// Check if there's an active transaction for this connection
-	transaction, exists := shared.Transactions[connID]
+	// Check if there's an active transaction for this connection (concurrency-safe)
+	transaction, exists := shared.TransactionsGet(connID)
 	if !exists {
 		return createErrorResponse("ERR EXEC without MULTI")
 	}
 
-	// Clear the transaction
-	delete(shared.Transactions, connID)
+	// Clear the transaction (concurrency-safe)
+	shared.TransactionsDelete(connID)
 
 	if len(transaction.Commands) == 0 {
 		return shared.Value{Typ: "array", Array: []shared.Value{}}

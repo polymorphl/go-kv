@@ -12,11 +12,11 @@ func Discard(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'discard' command")
 	}
 
-	if _, exists := shared.Transactions[connID]; !exists {
+	if _, exists := shared.TransactionsGet(connID); !exists {
 		return createErrorResponse("ERR DISCARD without MULTI")
 	}
 
-	delete(shared.Transactions, connID)
+	shared.TransactionsDelete(connID)
 
 	return shared.Value{Typ: "string", Str: "OK"}
 }

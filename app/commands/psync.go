@@ -19,9 +19,9 @@ func Psync(connID string, args []shared.Value) shared.Value {
 	fullResyncResponse := fmt.Sprintf("FULLRESYNC %s %d", shared.StoreState.MasterReplID, shared.StoreState.MasterReplOffset)
 
 	// Find the connection to send the RDB file
-	if conn, exists := shared.Connections[connID]; exists {
+	if conn, exists := shared.ConnectionsGet(connID); exists {
 		// Register this replica connection for command propagation
-		shared.StoreState.Replicas[connID] = conn
+		shared.ReplicasSet(connID, conn)
 
 		// Send the FULLRESYNC response first
 		response := shared.Value{Typ: "string", Str: fullResyncResponse}

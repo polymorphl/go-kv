@@ -79,10 +79,10 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	// Register the connection
+	// Register the connection (concurrency-safe)
 	connID := conn.RemoteAddr().String()
-	shared.Connections[connID] = conn
-	defer delete(shared.Connections, connID)
+	shared.ConnectionsSet(connID, conn)
+	defer shared.ConnectionsDelete(connID)
 
 	for {
 		r := shared.NewResp(conn)
@@ -120,8 +120,8 @@ func handleConnection(conn net.Conn) {
 		// Use connection remote address as connection ID
 		connID := conn.RemoteAddr().String()
 
-		// Check if this connection is in a transaction
-		if transaction, exists := shared.Transactions[connID]; exists {
+		// Check if this connection is in a transaction (concurrency-safe)
+		if transaction, exists := shared.TransactionsGet(connID); exists {
 			// If it's a transaction command, execute it normally
 			if IsTransactionCommand(command) {
 				result := handler(connID, args)
@@ -141,7 +141,7 @@ func handleConnection(conn net.Conn) {
 					Command: command,
 					Args:    args,
 				})
-				shared.Transactions[connID] = transaction
+				shared.TransactionsSet(connID, transaction)
 
 				// Return QUEUED response
 				result := shared.Value{Typ: "string", Str: "QUEUED"}

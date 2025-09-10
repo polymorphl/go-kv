@@ -3,6 +3,7 @@ package shared
 import (
 	"fmt"
 	"net"
+	"sync"
 )
 
 // StreamEntry represents a single entry in a Redis stream
@@ -42,6 +43,11 @@ var Transactions = make(map[string]Transaction)
 // Connections is the global map of active connections.
 // The key is the connection ID.
 var Connections = make(map[string]net.Conn)
+
+// Mutexes to protect concurrent access to global maps
+var connectionsMu sync.RWMutex
+var transactionsMu sync.RWMutex
+var replicasMu sync.RWMutex
 
 // CommandHandler represents a function that handles a Redis command
 type CommandHandler func(string, []Value) Value
@@ -87,14 +93,21 @@ func PropagateCommand(command string, args []Value) {
 		commandArray[i+1] = arg
 	}
 
-	// Send to all replicas
-	for replicaID, replicaConn := range StoreState.Replicas {
-		// Create a simple writer for this connection
+	// Snapshot replicas under read lock to avoid concurrent map iteration/writes
+	replicasMu.RLock()
+	snapshot := make(map[string]net.Conn, len(StoreState.Replicas))
+	for id, c := range StoreState.Replicas {
+		snapshot[id] = c
+	}
+	replicasMu.RUnlock()
+
+	// Send to all replicas using the snapshot
+	for replicaID, replicaConn := range snapshot {
 		bytes := Value{Typ: "array", Array: commandArray}.Marshal()
 		_, err := replicaConn.Write(bytes)
 		if err != nil {
 			// Remove failed replica connection
-			delete(StoreState.Replicas, replicaID)
+			ReplicasDelete(replicaID)
 			fmt.Printf("Failed to propagate command to replica %s: %v\n", replicaID, err)
 		} else {
 			fmt.Printf("Successfully propagated command to replica %s\n", replicaID)
@@ -116,4 +129,64 @@ var StoreState = State{
 	MasterReplID:     "",
 	MasterReplOffset: 0,
 	Replicas:         make(map[string]net.Conn),
+}
+
+// Connections helpers
+func ConnectionsSet(connID string, conn net.Conn) {
+	connectionsMu.Lock()
+	Connections[connID] = conn
+	connectionsMu.Unlock()
+}
+
+func ConnectionsDelete(connID string) {
+	connectionsMu.Lock()
+	delete(Connections, connID)
+	connectionsMu.Unlock()
+}
+
+func ConnectionsGet(connID string) (net.Conn, bool) {
+	connectionsMu.RLock()
+	c, ok := Connections[connID]
+	connectionsMu.RUnlock()
+	return c, ok
+}
+
+// Transactions helpers
+func TransactionsGet(connID string) (Transaction, bool) {
+	transactionsMu.RLock()
+	t, ok := Transactions[connID]
+	transactionsMu.RUnlock()
+	return t, ok
+}
+
+func TransactionsSet(connID string, t Transaction) {
+	transactionsMu.Lock()
+	Transactions[connID] = t
+	transactionsMu.Unlock()
+}
+
+func TransactionsDelete(connID string) {
+	transactionsMu.Lock()
+	delete(Transactions, connID)
+	transactionsMu.Unlock()
+}
+
+// Replicas helpers (inside StoreState)
+func ReplicasGet(connID string) (net.Conn, bool) {
+	replicasMu.RLock()
+	c, ok := StoreState.Replicas[connID]
+	replicasMu.RUnlock()
+	return c, ok
+}
+
+func ReplicasSet(connID string, conn net.Conn) {
+	replicasMu.Lock()
+	StoreState.Replicas[connID] = conn
+	replicasMu.Unlock()
+}
+
+func ReplicasDelete(connID string) {
+	replicasMu.Lock()
+	delete(StoreState.Replicas, connID)
+	replicasMu.Unlock()
 }
