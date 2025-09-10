@@ -39,6 +39,7 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"RPUSH":    commands.Rpush,
 	"SET":      commands.Set,
 	"TYPE":     commands.Type,
+	"WAIT":     commands.Wait,
 	"XADD":     commands.Xadd,
 	"XRANGE":   commands.Xrange,
 	"XREAD":    commands.Xread,
