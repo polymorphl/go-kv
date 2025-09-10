@@ -145,6 +145,7 @@ func connectToMaster(replicaPort string) {
 // processPropagatedCommands processes commands propagated from the master
 func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 	writer := NewWriter(conn)
+	var processedOffset int64 = 0
 
 	for {
 		value, err := reader.Read()
@@ -161,23 +162,31 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 			continue
 		}
 
+		// Count bytes consumed by this command in RESP form
+		bytesConsumed := int64(len(value.Marshal()))
+
 		command := strings.ToUpper(value.Array[0].Bulk)
 		args := value.Array[1:]
 
-		// Execute the command using the shared handlers
-		connID := conn.RemoteAddr().String()
-		result := shared.ExecuteCommand(command, connID, args)
-
-		// For REPLCONF GETACK, we need to send the response back to the master
-		if command == "REPLCONF" && len(args) >= 1 && args[0].Bulk == "GETACK" {
-			if result.Typ != shared.NO_RESPONSE {
-				err := writer.Write(result)
-				if err != nil {
-					fmt.Printf("Error writing REPLCONF GETACK response: %v\n", err)
-					return
-				}
+		// For REPLCONF GETACK, respond with current offset before including this command
+		if command == "REPLCONF" && len(args) >= 1 && strings.ToUpper(args[0].Bulk) == "GETACK" {
+			ack := shared.Value{Typ: "array", Array: []shared.Value{
+				{Typ: "bulk", Bulk: "REPLCONF"},
+				{Typ: "bulk", Bulk: "ACK"},
+				{Typ: "bulk", Bulk: strconv.FormatInt(processedOffset, 10)},
+			}}
+			if err := writer.Write(ack); err != nil {
+				fmt.Printf("Error writing REPLCONF GETACK response: %v\n", err)
+				return
 			}
+			processedOffset += bytesConsumed
+			continue
 		}
+
+		// Execute the command using the shared handlers; ignore response to master
+		connID := conn.RemoteAddr().String()
+		_ = shared.ExecuteCommand(command, connID, args)
+		processedOffset += bytesConsumed
 	}
 }
 
