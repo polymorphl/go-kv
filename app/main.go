@@ -58,6 +58,14 @@ func main() {
 	port := parseArgs()
 
 	fmt.Printf("Starting Redis server on port %s, role: %s\n", port, shared.StoreState.Role)
+
+	// Load RDB file if we're a master
+	if shared.StoreState.Role == "master" {
+		if err := shared.LoadRDBFile(shared.StoreState.ConfigDir, shared.StoreState.ConfigDbfilename); err != nil {
+			fmt.Printf("Warning: Failed to load RDB file: %v\n", err)
+		}
+	}
+
 	handleReplicaMode(port)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
