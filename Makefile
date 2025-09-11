@@ -1,7 +1,7 @@
 # Redis Go Implementation Makefile
 # Provides convenient commands for testing, benchmarking, and development
 
-.PHONY: help test test-all test-basic test-list test-stream test-transaction bench bench-all bench-basic bench-list bench-stream clean build run lint format
+.PHONY: help test test-all test-basic test-list test-stream test-transaction test-pubsub bench bench-all bench-basic bench-list bench-stream bench-pubsub clean build run lint format
 
 # Default target
 .DEFAULT_GOAL := help
@@ -60,6 +60,10 @@ test-transaction: ## Run transaction command tests (MULTI, EXEC, DISCARD)
 	@echo "$(BLUE)Running transaction command tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
+test-pubsub: ## Run pub/sub command tests (SUBSCRIBE)
+	@echo "$(BLUE)Running pub/sub command tests...$(RESET)"
+	$(GO_TEST) ./app/commands -v -run "TestSubscribe" -timeout $(TEST_TIMEOUT)
+
 test-replication: ## Run replication command tests (REPLCONF, PSYNC, INFO, WAIT)
 	@echo "$(BLUE)Running replication command tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestReplconf|TestPsync|TestInfo|TestWait" -timeout $(TEST_TIMEOUT)
@@ -84,6 +88,10 @@ bench-list: ## Run list command benchmarks (LPUSH, RPUSH, LRANGE, LPOP, LLEN)
 bench-stream: ## Run stream command benchmarks (XADD, XRANGE, XREAD)
 	@echo "$(BLUE)Running stream command benchmarks...$(RESET)"
 	$(GO_TEST) ./app/commands -bench="BenchmarkXadd|BenchmarkXrange|BenchmarkXread" -benchmem
+
+bench-pubsub: ## Run pub/sub command benchmarks (SUBSCRIBE)
+	@echo "$(BLUE)Running pub/sub command benchmarks...$(RESET)"
+	$(GO_TEST) ./app/commands -bench="BenchmarkSubscribe" -benchmem
 
 bench-replication: ## Run replication command benchmarks (REPLCONF, PSYNC, INFO, WAIT)
 	@echo "$(BLUE)Running replication command benchmarks...$(RESET)"
@@ -122,16 +130,16 @@ deps: ## Download dependencies
 # Quick test commands for development
 quick-test: ## Run quick tests (excluding slow BLPOP tests)
 	@echo "$(BLUE)Running quick tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard|TestSubscribe" -timeout $(TEST_TIMEOUT)
 
 # CI/CD helpers
 ci-test: ## Run tests suitable for CI (no blocking operations)
 	@echo "$(BLUE)Running CI tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard|TestSubscribe" -timeout $(TEST_TIMEOUT)
 
 ci-bench: ## Run benchmarks suitable for CI
 	@echo "$(BLUE)Running CI benchmarks...$(RESET)"
-	$(GO_TEST) ./app/commands -bench="BenchmarkPing|BenchmarkEcho|BenchmarkGet|BenchmarkSet|BenchmarkIncr|BenchmarkType|BenchmarkLpush|BenchmarkRpush|BenchmarkLrange|BenchmarkLpop|BenchmarkLlen|BenchmarkXadd|BenchmarkXrange|BenchmarkXread" -benchmem
+	$(GO_TEST) ./app/commands -bench="BenchmarkPing|BenchmarkEcho|BenchmarkGet|BenchmarkSet|BenchmarkIncr|BenchmarkType|BenchmarkLpush|BenchmarkRpush|BenchmarkLrange|BenchmarkLpop|BenchmarkLlen|BenchmarkXadd|BenchmarkXrange|BenchmarkXread|BenchmarkSubscribe" -benchmem
 
 # Documentation
 test-coverage: ## Generate test coverage report
@@ -149,6 +157,7 @@ status: ## Show project status and test results
 	@echo "  • Lists: LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP"
 	@echo "  • Streams: XADD, XRANGE, XREAD"
 	@echo "  • Transactions: MULTI, EXEC, DISCARD"
+	@echo "  • Pub/Sub: SUBSCRIBE"
 	@echo "  • Replication: REPLCONF, PSYNC, INFO, WAIT"
 	@echo ""
 	@echo "$(GREEN)Test coverage:$(RESET)"

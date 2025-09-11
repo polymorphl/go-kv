@@ -38,6 +38,9 @@ This implementation supports the following Redis commands:
 - `EXEC` - Execute all commands in a transaction block
 - `DISCARD` - Discard all commands in a transaction block
 
+### Pub/Sub Operations
+- `SUBSCRIBE` - Subscribe to one or more channels for pub/sub messaging
+
 ### Replication Operations
 - `REPLCONF` - Configure replication parameters (listening-port, capa, GETACK, ACK)
 - `PSYNC` - Synchronize with master server (partial or full sync)
@@ -102,6 +105,7 @@ make test-basic             # Test basic commands (PING, ECHO, GET, SET, INCR, T
 make test-list              # Test list commands (LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP)
 make test-stream             # Test stream commands (XADD, XRANGE, XREAD)
 make test-transaction        # Test transaction commands (MULTI, EXEC, DISCARD)
+make test-pubsub             # Test pub/sub commands (SUBSCRIBE)
 make test-replication       # Test replication commands (REPLCONF, PSYNC, INFO, WAIT)
 ```
 
@@ -111,6 +115,7 @@ make bench                  # Run all benchmarks
 make bench-basic            # Benchmark basic commands
 make bench-list             # Benchmark list commands
 make bench-stream           # Benchmark stream commands
+make bench-pubsub           # Benchmark pub/sub commands
 make bench-replication     # Benchmark replication commands
 ```
 
@@ -164,6 +169,9 @@ MULTI
 SET key3 "value3"
 DISCARD
 
+# Pub/Sub operations
+SUBSCRIBE channel1 channel2 channel3
+
 # Replication operations
 REPLCONF listening-port 6380
 REPLCONF capa psync2
@@ -190,6 +198,7 @@ make test-coverage
 - **Error Handling**: Robust error handling with graceful connection management
 - **Transaction Support**: Connection-specific transaction state management
 - **Stream Support**: Full Redis stream implementation with ID generation and blocking reads
+- **Pub/Sub Support**: Channel subscription system with multi-channel support and duplicate handling
 - **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
 - **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations

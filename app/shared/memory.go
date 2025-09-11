@@ -246,3 +246,46 @@ func SendReplconfGetack() {
 		}
 	}
 }
+
+// subscriptionsMu is the mutex for the subscriptions map
+var subscriptionsMu sync.RWMutex
+
+// Subscriptions is the global map of subscriptions.
+// The key is the connection ID, the value is a slice of subscribed channels.
+var Subscriptions = make(map[string][]string)
+
+// SubscriptionsSet adds a subscription for a connection ID
+func SubscriptionsSet(connID string, channel string) {
+	subscriptionsMu.Lock()
+	defer subscriptionsMu.Unlock()
+
+	// Check if connection already exists
+	if channels, exists := Subscriptions[connID]; exists {
+		// Check if channel is already subscribed
+		for _, existingChannel := range channels {
+			if existingChannel == channel {
+				return // Already subscribed to this channel
+			}
+		}
+		// Add new channel to existing list
+		Subscriptions[connID] = append(channels, channel)
+	} else {
+		// Create new subscription list
+		Subscriptions[connID] = []string{channel}
+	}
+}
+
+// SubscriptionsGet gets all subscriptions for a connection ID
+func SubscriptionsGet(connID string) ([]string, bool) {
+	subscriptionsMu.RLock()
+	defer subscriptionsMu.RUnlock()
+	channels, ok := Subscriptions[connID]
+	return channels, ok
+}
+
+// SubscriptionsDelete deletes a subscription for a connection ID
+func SubscriptionsDelete(connID string) {
+	subscriptionsMu.Lock()
+	delete(Subscriptions, connID)
+	subscriptionsMu.Unlock()
+}
