@@ -36,13 +36,15 @@ func generateReplID() string {
 func parseArgs() string {
 	flag.StringVar(&port, "port", DEFAULT_PORT, "Port to listen on")
 	flag.StringVar(&replicaOf, "replicaof", "", "Replica of")
+	flag.StringVar(&shared.StoreState.ConfigDir, "dir", shared.StoreState.ConfigDir, "Directory where Redis stores its data")
+	flag.StringVar(&shared.StoreState.ConfigDbfilename, "dbfilename", shared.StoreState.ConfigDbfilename, "Database filename")
 	flag.Parse()
 
 	if replicaOf != "" {
-		shared.StoreState = shared.State{
-			Role:      "slave",
-			ReplicaOf: replicaOf,
-		}
+		shared.StoreState.Role = "slave"
+		shared.StoreState.ReplicaOf = replicaOf
+	} else {
+		shared.StoreState.Role = "master"
 	}
 
 	if shared.StoreState.Role == "master" {

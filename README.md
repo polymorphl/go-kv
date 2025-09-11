@@ -12,6 +12,7 @@ This implementation supports the following Redis commands:
 - `PING` - Test server connectivity
 - `ECHO` - Echo back the provided message
 - `TYPE` - Get the type of a key
+- `CONFIG` - Get configuration parameters
 
 ### String Operations
 - `SET` - Set a key-value pair with optional expiration
@@ -131,6 +132,7 @@ make deps                   # Download and tidy dependencies
 # Basic commands
 PING
 ECHO "Hello World"
+CONFIG GET dir port
 SET mykey "Hello Redis"
 GET mykey
 INCR counter

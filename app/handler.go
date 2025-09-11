@@ -22,6 +22,7 @@ func IsTransactionCommand(command string) bool {
 // Each handler function takes a connection ID and an array of Value arguments, and returns a Value response.
 var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"BLPOP":    commands.Blpop,
+	"CONFIG":   commands.Config,
 	"DISCARD":  commands.Discard,
 	"ECHO":     commands.Echo,
 	"EXEC":     commands.Exec,

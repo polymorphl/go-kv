@@ -145,7 +145,7 @@ status: ## Show project status and test results
 	@echo "$(BLUE)Project Status$(RESET)"
 	@echo "$(BLUE)=============$(RESET)"
 	@echo "$(GREEN)Commands implemented:$(RESET)"
-	@echo "  • Basic: PING, ECHO, GET, SET, INCR, TYPE"
+	@echo "  • Basic: PING, ECHO, GET, SET, INCR, TYPE, CONFIG"
 	@echo "  • Lists: LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP"
 	@echo "  • Streams: XADD, XRANGE, XREAD"
 	@echo "  • Transactions: MULTI, EXEC, DISCARD"
