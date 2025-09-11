@@ -60,6 +60,10 @@ test-transaction: ## Run transaction command tests (MULTI, EXEC, DISCARD)
 	@echo "$(BLUE)Running transaction command tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
+test-replication: ## Run replication command tests (REPLCONF, PSYNC, INFO, WAIT)
+	@echo "$(BLUE)Running replication command tests...$(RESET)"
+	$(GO_TEST) ./app/commands -v -run "TestReplconf|TestPsync|TestInfo|TestWait" -timeout $(TEST_TIMEOUT)
+
 # Benchmarking commands
 bench: ## Run all benchmarks
 	@echo "$(BLUE)Running all benchmarks...$(RESET)"
@@ -80,6 +84,10 @@ bench-list: ## Run list command benchmarks (LPUSH, RPUSH, LRANGE, LPOP, LLEN)
 bench-stream: ## Run stream command benchmarks (XADD, XRANGE, XREAD)
 	@echo "$(BLUE)Running stream command benchmarks...$(RESET)"
 	$(GO_TEST) ./app/commands -bench="BenchmarkXadd|BenchmarkXrange|BenchmarkXread" -benchmem
+
+bench-replication: ## Run replication command benchmarks (REPLCONF, PSYNC, INFO, WAIT)
+	@echo "$(BLUE)Running replication command benchmarks...$(RESET)"
+	$(GO_TEST) ./app/commands -bench="BenchmarkReplconf|BenchmarkPsync|BenchmarkInfo|BenchmarkWait" -benchmem
 
 # Development commands
 build: ## Build the Redis server
@@ -141,10 +149,14 @@ status: ## Show project status and test results
 	@echo "  • Lists: LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP"
 	@echo "  • Streams: XADD, XRANGE, XREAD"
 	@echo "  • Transactions: MULTI, EXEC, DISCARD"
+	@echo "  • Replication: REPLCONF, PSYNC, INFO, WAIT"
 	@echo ""
 	@echo "$(GREEN)Test coverage:$(RESET)"
 	@echo "  • $(shell find ./app/commands -name "*_test.go" | wc -l | tr -d ' ') test files"
 	@echo "  • $(shell grep -r "func Test" ./app/commands | wc -l | tr -d ' ') test functions"
 	@echo "  • $(shell grep -r "func Benchmark" ./app/commands | wc -l | tr -d ' ') benchmark functions"
+	@echo ""
+	@echo "$(GREEN)Commands supported:$(RESET)"
+	@echo "  • $(shell grep -E '^[[:space:]]*\"[A-Z]+\":' app/handler.go | wc -l | tr -d ' ') Redis commands implemented"
 	@echo ""
 	@echo "$(GREEN)Run 'make help' for available commands$(RESET)"

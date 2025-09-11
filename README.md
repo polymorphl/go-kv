@@ -36,6 +36,12 @@ This implementation supports the following Redis commands:
 - `EXEC` - Execute all commands in a transaction block
 - `DISCARD` - Discard all commands in a transaction block
 
+### Replication Operations
+- `REPLCONF` - Configure replication parameters (listening-port, capa, GETACK, ACK)
+- `PSYNC` - Synchronize with master server (partial or full sync)
+- `INFO` - Get server information including replication status
+- `WAIT` - Wait for specified number of replicas to acknowledge commands
+
 ## Architecture
 
 The server is built with a clean, modular architecture:
@@ -44,6 +50,7 @@ The server is built with a clean, modular architecture:
 - **Protocol Layer**: RESP (Redis Serialization Protocol) implementation
 - **Command Handler**: Extensible command routing system
 - **Storage**: In-memory key-value store with support for strings, lists, and streams
+- **Replication**: Master-replica replication with command propagation and acknowledgment tracking
 
 ## Project Structure
 
@@ -93,6 +100,7 @@ make test-basic             # Test basic commands (PING, ECHO, GET, SET, INCR, T
 make test-list              # Test list commands (LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP)
 make test-stream             # Test stream commands (XADD, XRANGE, XREAD)
 make test-transaction        # Test transaction commands (MULTI, EXEC, DISCARD)
+make test-replication       # Test replication commands (REPLCONF, PSYNC, INFO, WAIT)
 ```
 
 #### **Benchmarking Commands**
@@ -101,6 +109,7 @@ make bench                  # Run all benchmarks
 make bench-basic            # Benchmark basic commands
 make bench-list             # Benchmark list commands
 make bench-stream           # Benchmark stream commands
+make bench-replication     # Benchmark replication commands
 ```
 
 #### **Development Commands**
@@ -150,6 +159,13 @@ MULTI
 SET key3 "value3"
 DISCARD
 
+# Replication operations
+REPLCONF listening-port 6380
+REPLCONF capa psync2
+PSYNC ? -1
+INFO replication
+WAIT 1 1000
+
 ```
 
 #### **Performance Testing**
@@ -169,6 +185,8 @@ make test-coverage
 - **Error Handling**: Robust error handling with graceful connection management
 - **Transaction Support**: Connection-specific transaction state management
 - **Stream Support**: Full Redis stream implementation with ID generation and blocking reads
+- **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
+- **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations
 
 ## Test Coverage
@@ -177,6 +195,37 @@ make test-coverage
 ```bash
 make status
 ```
+
+## Replication Setup
+
+This implementation supports Redis-style master-replica replication:
+
+### Starting a Master Server
+```bash
+# Start master server on port 6379
+make run
+```
+
+### Starting a Replica Server
+```bash
+# Start replica server on port 6380, connecting to master on 6379
+./redis-server --port 6380 --replicaof "localhost 6379"
+```
+
+### Replication Features
+- **Handshake Protocol**: Automatic replication handshake (PING, REPLCONF, PSYNC)
+- **Command Propagation**: Master propagates write commands to all connected replicas
+- **Acknowledgment Tracking**: WAIT command tracks replica acknowledgments
+- **Offset Tracking**: Replicas track processed command bytes for replication offset
+- **RDB Transfer**: Empty RDB file transfer during initial sync
+
+### Example Replication Workflow
+1. Master starts on port 6379
+2. Replica connects to master using `--replicaof "localhost 6379"`
+3. Replica performs handshake: PING → REPLCONF → PSYNC
+4. Master sends RDB file to replica
+5. Master propagates subsequent commands to replica
+6. Use `WAIT` command to ensure commands are acknowledged by replicas
 
 
 ## Development

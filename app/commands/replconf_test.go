@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"net"
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
@@ -98,4 +99,46 @@ func TestReplconfInsufficientArgs(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && s[:len(substr)] == substr ||
 		len(s) > len(substr) && contains(s[1:], substr)
+}
+
+// BenchmarkReplconf benchmarks the REPLCONF command
+func BenchmarkReplconf(b *testing.B) {
+	// Reset store state for clean benchmark
+	shared.StoreState = shared.State{
+		Role:             "master",
+		MasterReplID:     "bench-repl-id",
+		MasterReplOffset: 0,
+		Replicas:         make(map[string]net.Conn),
+	}
+
+	args := []shared.Value{
+		{Typ: "bulk", Bulk: "listening-port"},
+		{Typ: "bulk", Bulk: "6379"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Replconf("bench-conn", args)
+	}
+}
+
+// BenchmarkReplconfGetack benchmarks the REPLCONF GETACK command
+func BenchmarkReplconfGetack(b *testing.B) {
+	// Reset store state for clean benchmark
+	shared.StoreState = shared.State{
+		Role:             "master",
+		MasterReplID:     "bench-repl-id",
+		MasterReplOffset: 0,
+		Replicas:         make(map[string]net.Conn),
+	}
+
+	args := []shared.Value{
+		{Typ: "bulk", Bulk: "GETACK"},
+		{Typ: "bulk", Bulk: "*"},
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		Replconf("bench-conn", args)
+	}
 }
