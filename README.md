@@ -41,7 +41,7 @@ This implementation supports the following Redis commands:
 ### Pub/Sub Operations
 - `SUBSCRIBE` - Subscribe to one or more channels for pub/sub messaging
 - `UNSUBSCRIBE` - Unsubscribe from one or more channels
-- `PUBLISH` - Publish a message to a channel and return the number of subscribers
+- `PUBLISH` - Publish a message to a channel and deliver it to all subscribers
 
 ### Replication Operations
 - `REPLCONF` - Configure replication parameters (listening-port, capa, GETACK, ACK)
@@ -175,7 +175,12 @@ DISCARD
 SUBSCRIBE channel1 channel2 channel3
 UNSUBSCRIBE channel1 channel2
 UNSUBSCRIBE  # Unsubscribe from all channels
-PUBLISH channel1 "Hello subscribers!"  # Returns number of subscribers
+PUBLISH channel1 "Hello subscribers!"  # Returns number of subscribers that received the message
+
+# Pub/Sub message delivery example:
+# Client 1: SUBSCRIBE news
+# Client 2: SUBSCRIBE news
+# Client 3: PUBLISH news "Breaking news!"  # Both Client 1 and Client 2 receive the message
 
 # Replication operations
 REPLCONF listening-port 6380
@@ -203,10 +208,39 @@ make test-coverage
 - **Error Handling**: Robust error handling with graceful connection management
 - **Transaction Support**: Connection-specific transaction state management
 - **Stream Support**: Full Redis stream implementation with ID generation and blocking reads
-- **Pub/Sub Support**: Channel subscription system with multi-channel support, duplicate handling, and message publishing with subscriber count tracking
+- **Pub/Sub Support**: Complete pub/sub implementation with channel subscription system, multi-channel support, duplicate handling, and real-time message delivery to all subscribers
 - **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
 - **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations
+
+## PUBLISH Command Implementation
+
+The PUBLISH command implements real-time message delivery to all subscribers of a channel:
+
+### Message Format
+When a message is published to a channel, each subscribed client receives a RESP array with 3 elements:
+```
+*3\r\n
+$7\r\n
+message\r\n
+$9\r\n
+channel_1\r\n
+$5\r\n
+hello\r\n
+```
+
+### Key Features
+- **Real-time Delivery**: Messages are immediately delivered to all active subscribers
+- **Concurrent Safety**: Thread-safe subscription management with proper mutex protection
+- **Error Handling**: Failed connections are automatically cleaned up and removed from subscriptions
+- **Unicode Support**: Full UTF-8 support for channel names and message content
+- **Return Value**: Returns the number of clients that successfully received the message
+
+### Example Workflow
+1. Client A: `SUBSCRIBE news` → Enters subscribed mode
+2. Client B: `SUBSCRIBE news` → Enters subscribed mode  
+3. Client C: `PUBLISH news "Breaking news!"` → Returns `(integer) 2`
+4. Both Client A and Client B receive: `["message", "news", "Breaking news!"]`
 
 ## Test Coverage
 
