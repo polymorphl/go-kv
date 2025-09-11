@@ -316,6 +316,7 @@ func SubscribedModeSet(connID string) {
 	subscribedModeMu.Unlock()
 }
 
+// SubscribedModeGet gets the subscribed mode for a connection ID
 func SubscribedModeGet(connID string) bool {
 	subscribedModeMu.RLock()
 	defer subscribedModeMu.RUnlock()
