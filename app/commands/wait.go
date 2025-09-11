@@ -8,5 +8,5 @@ func Wait(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'wait' command")
 	}
 
-	return shared.Value{Typ: "integer", Num: 0}
+	return shared.Value{Typ: "integer", Num: len(shared.StoreState.Replicas)}
 }
