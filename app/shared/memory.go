@@ -309,6 +309,23 @@ func SubscriptionsSetChannels(connID string, channels []string) {
 	subscriptionsMu.Unlock()
 }
 
+// SubscriptionsCountForChannel counts the number of clients subscribed to a specific channel
+func SubscriptionsCountForChannel(channel string) int {
+	subscriptionsMu.RLock()
+	defer subscriptionsMu.RUnlock()
+
+	count := 0
+	for _, channels := range Subscriptions {
+		for _, subscribedChannel := range channels {
+			if subscribedChannel == channel {
+				count++
+				break // Each connection can only be counted once per channel
+			}
+		}
+	}
+	return count
+}
+
 // SubscribedMode helpers
 func SubscribedModeSet(connID string) {
 	subscribedModeMu.Lock()

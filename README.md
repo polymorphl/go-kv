@@ -41,6 +41,7 @@ This implementation supports the following Redis commands:
 ### Pub/Sub Operations
 - `SUBSCRIBE` - Subscribe to one or more channels for pub/sub messaging
 - `UNSUBSCRIBE` - Unsubscribe from one or more channels
+- `PUBLISH` - Publish a message to a channel and return the number of subscribers
 
 ### Replication Operations
 - `REPLCONF` - Configure replication parameters (listening-port, capa, GETACK, ACK)
@@ -106,7 +107,7 @@ make test-basic             # Test basic commands (PING, ECHO, GET, SET, INCR, T
 make test-list              # Test list commands (LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP)
 make test-stream             # Test stream commands (XADD, XRANGE, XREAD)
 make test-transaction        # Test transaction commands (MULTI, EXEC, DISCARD)
-make test-pubsub             # Test pub/sub commands (SUBSCRIBE)
+make test-pubsub             # Test pub/sub commands (SUBSCRIBE, UNSUBSCRIBE, PUBLISH)
 make test-replication       # Test replication commands (REPLCONF, PSYNC, INFO, WAIT)
 ```
 
@@ -174,6 +175,7 @@ DISCARD
 SUBSCRIBE channel1 channel2 channel3
 UNSUBSCRIBE channel1 channel2
 UNSUBSCRIBE  # Unsubscribe from all channels
+PUBLISH channel1 "Hello subscribers!"  # Returns number of subscribers
 
 # Replication operations
 REPLCONF listening-port 6380
@@ -201,7 +203,7 @@ make test-coverage
 - **Error Handling**: Robust error handling with graceful connection management
 - **Transaction Support**: Connection-specific transaction state management
 - **Stream Support**: Full Redis stream implementation with ID generation and blocking reads
-- **Pub/Sub Support**: Channel subscription system with multi-channel support and duplicate handling
+- **Pub/Sub Support**: Channel subscription system with multi-channel support, duplicate handling, and message publishing with subscriber count tracking
 - **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
 - **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations
