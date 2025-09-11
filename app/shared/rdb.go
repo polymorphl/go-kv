@@ -179,6 +179,7 @@ func (p *RDBParser) parseResizeDB() error {
 
 // parseKeyValuePairs parses key-value pairs until EOF
 func (p *RDBParser) parseKeyValuePairs() error {
+	keyCount := 0
 	for {
 		// Check if we're at EOF
 		if p.pos >= len(p.data) {
@@ -207,6 +208,8 @@ func (p *RDBParser) parseKeyValuePairs() error {
 			return err
 		}
 
+		keyCount++
+
 		// After parsing a key-value pair, check if we're at EOF
 		if p.pos >= len(p.data) {
 			return nil
@@ -220,6 +223,47 @@ func (p *RDBParser) parseKeyValuePairs() error {
 
 // parseKeyValue parses a key-value pair
 func (p *RDBParser) parseKeyValue(opcode byte) error {
+	var expires int64 = 0
+	var valueType byte = opcode
+
+	// Handle expiration opcodes first
+	switch opcode {
+	case 0xFC: // Expiry time in seconds
+		// Skip the first 3 bytes (00 0c 28 or 00 9c ef)
+		if p.pos+3 > len(p.data) {
+			return io.EOF
+		}
+		p.pos += 3
+		// Read the expiration timestamp (4 bytes)
+		if p.pos+4 > len(p.data) {
+			return io.EOF
+		}
+		expiresVal, err := p.readUint32BigEndian()
+		if err != nil {
+			return err
+		}
+		// Convert from seconds to milliseconds (absolute timestamp)
+		expires = expiresVal * 1000
+		// Skip the remaining 2 bytes (00 00)
+		if p.pos+2 > len(p.data) {
+			return io.EOF
+		}
+		p.pos += 2
+		// The value type is implicit (0x00 for string)
+		valueType = 0x00
+
+	case 0xFD: // Expiry time in milliseconds
+		var err error
+		expires, err = p.readUint32BigEndian()
+		if err != nil {
+			return err
+		}
+		valueType, err = p.readByte()
+		if err != nil {
+			return err
+		}
+	}
+
 	// Read key
 	key, err := p.readLengthEncodedString()
 	if err != nil {
@@ -228,39 +272,19 @@ func (p *RDBParser) parseKeyValue(opcode byte) error {
 
 	// Read value based on type
 	var value string
-	var expires int64 = 0
-
-	// Check for expiry
-	if opcode == 0xFC { // Expiry time in seconds
-		expires, err = p.readUint32()
-		if err != nil {
-			return err
-		}
-		expires *= 1000 // Convert to milliseconds
-		opcode, err = p.readByte()
-		if err != nil {
-			return err
-		}
-	} else if opcode == 0xFD { // Expiry time in milliseconds
-		expires, err = p.readUint32()
-		if err != nil {
-			return err
-		}
-		opcode, err = p.readByte()
-		if err != nil {
-			return err
-		}
-	}
-
-	// Parse value based on type
-	switch opcode {
+	switch valueType {
 	case 0x00: // String
 		value, err = p.readLengthEncodedString()
 		if err != nil {
 			return err
 		}
+	case 0x01: // String (alternative encoding)
+		value, err = p.readLengthEncodedString()
+		if err != nil {
+			return err
+		}
 	default:
-		return fmt.Errorf("unsupported value type: 0x%02X", opcode)
+		return fmt.Errorf("unsupported value type: 0x%02X", valueType)
 	}
 
 	// Store in memory
@@ -333,12 +357,12 @@ func (p *RDBParser) readLengthEncodedString() (string, error) {
 	return str, nil
 }
 
-func (p *RDBParser) readUint32() (int64, error) {
+func (p *RDBParser) readUint32BigEndian() (int64, error) {
 	if p.pos+4 > len(p.data) {
 		return 0, io.EOF
 	}
 
-	value := binary.LittleEndian.Uint32(p.data[p.pos : p.pos+4])
+	value := binary.BigEndian.Uint32(p.data[p.pos : p.pos+4])
 	p.pos += 4
 	return int64(value), nil
 }

@@ -42,6 +42,63 @@ func TestRDBParser(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:    "RDB with expiration timestamps",
+			hexData: "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fe00fb0505fc000c288ac70100000009626c7565626572727909626c75656265727279fc000c288ac7010000000a737472617762657272790662616e616e61fc000c288ac7010000000662616e616e6109726173706265727279fc009cef127e01000000056772617065056772617065fc000c288ac70100000009726173706265727279056d616e676fffac8c4b485b4c789e",
+			expected: map[string]string{
+				"blueberry":  "blueberry",
+				"strawberry": "banana",
+				"banana":     "raspberry",
+				"grape":      "grape",
+				"raspberry":  "mango",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "RDB with specific hexdump from user",
+			hexData: "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fe00fb0505fc000c288ac70100000009726173706265727279056d616e676ffc009cef127e01000000056170706c650662616e616e61fc000c288ac7010000000662616e616e61056772617065fc000c288ac701000000056d616e676f09626c75656265727279fc000c288ac7010000000970696e656170706c65066f72616e6765ff24da7ab32f8f235a",
+			expected: map[string]string{
+				"raspberry": "mango",
+				"apple":     "banana", // apple is loaded but expired
+				"banana":    "grape",
+				"mango":     "blueberry",
+				"pineapple": "orange",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "RDB with new hexdump from user",
+			hexData: "524544495330303131fa0a72656469732d62697473c040fa0972656469732d76657205372e322e30fe00fb0303fc009cef127e010000000970696e656170706c650662616e616e61fc000c288ac7010000000a73747261776265727279066f72616e6765fc000c288ac701000000056d616e676f0970696e656170706c65ffd8df7e4a4b906861",
+			expected: map[string]string{
+				"pineapple":  "banana",    // pineapple is loaded but not expired
+				"strawberry": "orange",    // strawberry is loaded but expired
+				"mango":      "pineapple", // mango is loaded but expired
+			},
+			wantErr: false,
+		},
+		{
+			name:    "RDB with latest hexdump from user",
+			hexData: "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fe00fb0404fc000c288ac7010000000a73747261776265727279056772617065fc009cef127e01000000056d616e676f066f72616e6765fc000c288ac701000000056170706c650470656172fc000c288ac7010000000662616e616e61056d616e676fff51db2234a3117faf",
+			expected: map[string]string{
+				"strawberry": "grape",  // strawberry is loaded but not expired
+				"mango":      "orange", // mango is loaded but not expired
+				"apple":      "pear",   // apple is loaded but not expired
+				"banana":     "mango",  // banana is loaded but not expired
+			},
+			wantErr: false,
+		},
+		{
+			name:    "RDB with blueberry hexdump from user",
+			hexData: "524544495330303131fa0972656469732d76657205372e322e30fa0a72656469732d62697473c040fe00fb0505fc000c288ac7010000000a73747261776265727279056772617065fc000c288ac7010000000970696e656170706c650470656172fc009cef127e0100000009626c7565626572727909726173706265727279fc000c288ac7010000000662616e616e610970696e656170706c65fc000c288ac70100000004706561720a73747261776265727279ffa48a15de7c461f05",
+			expected: map[string]string{
+				"strawberry": "grape",      // strawberry is loaded but not expired
+				"pineapple":  "pear",       // pineapple is loaded but not expired
+				"blueberry":  "raspberry",  // blueberry is loaded but expired
+				"banana":     "pineapple",  // banana is loaded but not expired
+				"pear":       "strawberry", // pear is loaded but not expired
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
