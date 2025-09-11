@@ -24,3 +24,11 @@ func (w *Writer) Write(v shared.Value) error {
 
 	return nil
 }
+
+// Flush flushes the underlying writer if it implements Flusher interface
+func (w *Writer) Flush() error {
+	if flusher, ok := w.writer.(interface{ Flush() error }); ok {
+		return flusher.Flush()
+	}
+	return nil
+}

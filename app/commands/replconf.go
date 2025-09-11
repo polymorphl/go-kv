@@ -30,6 +30,17 @@ func Replconf(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'replconf getack' command")
 	}
 
+	// Handle REPLCONF ACK <offset> command (from replicas to master)
+	if subcommand == "ACK" {
+		if len(args) >= 2 {
+			// Mark this replica as having acknowledged
+			shared.AcknowledgedReplicasSet(connID)
+			// Return NO_RESPONSE since this is an internal command
+			return shared.Value{Typ: shared.NO_RESPONSE, Str: ""}
+		}
+		return createErrorResponse("ERR wrong number of arguments for 'replconf ack' command")
+	}
+
 	// Register replica connection as soon as we receive REPLCONF
 	// This ensures the replica is registered before any commands are processed
 	if conn, exists := shared.ConnectionsGet(connID); exists {

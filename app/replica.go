@@ -179,6 +179,11 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 				fmt.Printf("Error writing REPLCONF GETACK response: %v\n", err)
 				return
 			}
+			// Flush to ensure the response is sent immediately
+			if err := writer.Flush(); err != nil {
+				fmt.Printf("Error flushing REPLCONF GETACK response: %v\n", err)
+				return
+			}
 			processedOffset += bytesConsumed
 			continue
 		}

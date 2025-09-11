@@ -48,6 +48,10 @@ var Connections = make(map[string]net.Conn)
 var connectionsMu sync.RWMutex
 var transactionsMu sync.RWMutex
 var replicasMu sync.RWMutex
+var acknowledgedReplicasMu sync.RWMutex
+
+// AcknowledgedReplicas tracks which replicas have acknowledged commands
+var AcknowledgedReplicas = make(map[string]bool)
 
 // CommandHandler represents a function that handles a Redis command
 type CommandHandler func(string, []Value) Value
@@ -109,8 +113,6 @@ func PropagateCommand(command string, args []Value) {
 			// Remove failed replica connection
 			ReplicasDelete(replicaID)
 			fmt.Printf("Failed to propagate command to replica %s: %v\n", replicaID, err)
-		} else {
-			fmt.Printf("Successfully propagated command to replica %s\n", replicaID)
 		}
 	}
 }
@@ -189,4 +191,54 @@ func ReplicasDelete(connID string) {
 	replicasMu.Lock()
 	delete(StoreState.Replicas, connID)
 	replicasMu.Unlock()
+}
+
+// AcknowledgedReplicasSet marks a replica as having acknowledged
+func AcknowledgedReplicasSet(connID string) {
+	acknowledgedReplicasMu.Lock()
+	AcknowledgedReplicas[connID] = true
+	acknowledgedReplicasMu.Unlock()
+}
+
+// AcknowledgedReplicasCount returns the number of replicas that have acknowledged
+func AcknowledgedReplicasCount() int {
+	acknowledgedReplicasMu.RLock()
+	count := len(AcknowledgedReplicas)
+	acknowledgedReplicasMu.RUnlock()
+	return count
+}
+
+// AcknowledgedReplicasClear clears all acknowledgments (used before sending new GETACK)
+func AcknowledgedReplicasClear() {
+	acknowledgedReplicasMu.Lock()
+	AcknowledgedReplicas = make(map[string]bool)
+	acknowledgedReplicasMu.Unlock()
+}
+
+// SendReplconfGetack sends REPLCONF GETACK * to all replicas
+func SendReplconfGetack() {
+	// Clear previous acknowledgments before sending new GETACK
+	AcknowledgedReplicasClear()
+
+	cmd := Value{Typ: "array", Array: []Value{
+		{Typ: "bulk", Bulk: "REPLCONF"},
+		{Typ: "bulk", Bulk: "GETACK"},
+		{Typ: "bulk", Bulk: "*"},
+	}}
+	bytes := cmd.Marshal()
+
+	replicasMu.RLock()
+	replicas := make(map[string]net.Conn, len(StoreState.Replicas))
+	for id, c := range StoreState.Replicas {
+		replicas[id] = c
+	}
+	replicasMu.RUnlock()
+
+	for replicaID, replicaConn := range replicas {
+		_, err := replicaConn.Write(bytes)
+		if err != nil {
+			ReplicasDelete(replicaID)
+			fmt.Printf("Failed to send GETACK to replica %s: %v\n", replicaID, err)
+		}
+	}
 }
