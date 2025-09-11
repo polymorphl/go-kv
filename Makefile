@@ -60,9 +60,9 @@ test-transaction: ## Run transaction command tests (MULTI, EXEC, DISCARD)
 	@echo "$(BLUE)Running transaction command tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestMulti|TestExec|TestDiscard" -timeout $(TEST_TIMEOUT)
 
-test-pubsub: ## Run pub/sub command tests (SUBSCRIBE)
+test-pubsub: ## Run pub/sub command tests (SUBSCRIBE, UNSUBSCRIBE)
 	@echo "$(BLUE)Running pub/sub command tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestSubscribe" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestSubscribe|TestUnsubscribe" -timeout $(TEST_TIMEOUT)
 
 test-replication: ## Run replication command tests (REPLCONF, PSYNC, INFO, WAIT)
 	@echo "$(BLUE)Running replication command tests...$(RESET)"
@@ -89,9 +89,9 @@ bench-stream: ## Run stream command benchmarks (XADD, XRANGE, XREAD)
 	@echo "$(BLUE)Running stream command benchmarks...$(RESET)"
 	$(GO_TEST) ./app/commands -bench="BenchmarkXadd|BenchmarkXrange|BenchmarkXread" -benchmem
 
-bench-pubsub: ## Run pub/sub command benchmarks (SUBSCRIBE)
+bench-pubsub: ## Run pub/sub command benchmarks (SUBSCRIBE, UNSUBSCRIBE)
 	@echo "$(BLUE)Running pub/sub command benchmarks...$(RESET)"
-	$(GO_TEST) ./app/commands -bench="BenchmarkSubscribe" -benchmem
+	$(GO_TEST) ./app/commands -bench="BenchmarkSubscribe|BenchmarkUnsubscribe" -benchmem
 
 bench-replication: ## Run replication command benchmarks (REPLCONF, PSYNC, INFO, WAIT)
 	@echo "$(BLUE)Running replication command benchmarks...$(RESET)"
@@ -130,16 +130,16 @@ deps: ## Download dependencies
 # Quick test commands for development
 quick-test: ## Run quick tests (excluding slow BLPOP tests)
 	@echo "$(BLUE)Running quick tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard|TestSubscribe" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard|TestSubscribe|TestUnsubscribe" -timeout $(TEST_TIMEOUT)
 
 # CI/CD helpers
 ci-test: ## Run tests suitable for CI (no blocking operations)
 	@echo "$(BLUE)Running CI tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard|TestSubscribe" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard|TestSubscribe|TestUnsubscribe" -timeout $(TEST_TIMEOUT)
 
 ci-bench: ## Run benchmarks suitable for CI
 	@echo "$(BLUE)Running CI benchmarks...$(RESET)"
-	$(GO_TEST) ./app/commands -bench="BenchmarkPing|BenchmarkEcho|BenchmarkGet|BenchmarkSet|BenchmarkIncr|BenchmarkType|BenchmarkLpush|BenchmarkRpush|BenchmarkLrange|BenchmarkLpop|BenchmarkLlen|BenchmarkXadd|BenchmarkXrange|BenchmarkXread|BenchmarkSubscribe" -benchmem
+	$(GO_TEST) ./app/commands -bench="BenchmarkPing|BenchmarkEcho|BenchmarkGet|BenchmarkSet|BenchmarkIncr|BenchmarkType|BenchmarkLpush|BenchmarkRpush|BenchmarkLrange|BenchmarkLpop|BenchmarkLlen|BenchmarkXadd|BenchmarkXrange|BenchmarkXread|BenchmarkSubscribe|BenchmarkUnsubscribe" -benchmem
 
 # Documentation
 test-coverage: ## Generate test coverage report
@@ -157,7 +157,7 @@ status: ## Show project status and test results
 	@echo "  • Lists: LPUSH, RPUSH, LRANGE, LPOP, LLEN, BLPOP"
 	@echo "  • Streams: XADD, XRANGE, XREAD"
 	@echo "  • Transactions: MULTI, EXEC, DISCARD"
-	@echo "  • Pub/Sub: SUBSCRIBE"
+	@echo "  • Pub/Sub: SUBSCRIBE, UNSUBSCRIBE"
 	@echo "  • Replication: REPLCONF, PSYNC, INFO, WAIT"
 	@echo ""
 	@echo "$(GREEN)Test coverage:$(RESET)"

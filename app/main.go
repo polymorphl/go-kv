@@ -115,18 +115,6 @@ func handleConnection(conn net.Conn) {
 		args := value.Array[1:]
 
 		writer := NewWriter(conn)
-		handler, ok := Handlers[command]
-
-		if !ok {
-			fmt.Println("Invalid command: ", command)
-			err := writer.Write(shared.Value{Typ: "string", Str: ""})
-			if err != nil {
-				fmt.Println("Error writing response:", err)
-				break
-			}
-			continue
-		}
-
 		// Use connection remote address as connection ID
 		connID := conn.RemoteAddr().String()
 
@@ -134,7 +122,7 @@ func handleConnection(conn net.Conn) {
 		if transaction, exists := shared.TransactionsGet(connID); exists {
 			// If it's a transaction command, execute it normally
 			if IsTransactionCommand(command) {
-				result := handler(connID, args)
+				result := shared.ExecuteCommand(command, connID, args)
 
 				// Propagate transaction commands to replicas
 				if shared.IsWriteCommand(command) {
@@ -159,7 +147,7 @@ func handleConnection(conn net.Conn) {
 			}
 		} else {
 			// No active transaction, execute command normally
-			result := handler(connID, args)
+			result := shared.ExecuteCommand(command, connID, args)
 
 			// Propagate write commands to replicas
 			if shared.IsWriteCommand(command) {

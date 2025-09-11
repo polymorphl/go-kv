@@ -40,6 +40,7 @@ This implementation supports the following Redis commands:
 
 ### Pub/Sub Operations
 - `SUBSCRIBE` - Subscribe to one or more channels for pub/sub messaging
+- `UNSUBSCRIBE` - Unsubscribe from one or more channels
 
 ### Replication Operations
 - `REPLCONF` - Configure replication parameters (listening-port, capa, GETACK, ACK)
@@ -171,6 +172,8 @@ DISCARD
 
 # Pub/Sub operations
 SUBSCRIBE channel1 channel2 channel3
+UNSUBSCRIBE channel1 channel2
+UNSUBSCRIBE  # Unsubscribe from all channels
 
 # Replication operations
 REPLCONF listening-port 6380
