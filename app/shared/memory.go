@@ -61,6 +61,11 @@ var CommandHandlers map[string]CommandHandler
 
 // ExecuteCommand executes a command using the shared handlers map
 func ExecuteCommand(command string, connID string, args []Value) Value {
+	// Check if client is in subscribed mode and command is not allowed
+	if SubscribedModeGet(connID) && !IsAllowedInSubscribedMode(command) {
+		return Value{Typ: "error", Str: fmt.Sprintf("ERR Can't execute '%s': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context", command)}
+	}
+
 	if handler, ok := CommandHandlers[command]; ok {
 		return handler(connID, args)
 	}
@@ -254,6 +259,13 @@ var subscriptionsMu sync.RWMutex
 // The key is the connection ID, the value is a slice of subscribed channels.
 var Subscriptions = make(map[string][]string)
 
+// subscribedModeMu is the mutex for the subscribed mode map
+var subscribedModeMu sync.RWMutex
+
+// SubscribedMode tracks which clients are in subscribed mode.
+// The key is the connection ID, the value is true if the client is in subscribed mode.
+var SubscribedMode = make(map[string]bool)
+
 // SubscriptionsSet adds a subscription for a connection ID
 func SubscriptionsSet(connID string, channel string) {
 	subscriptionsMu.Lock()
@@ -288,4 +300,44 @@ func SubscriptionsDelete(connID string) {
 	subscriptionsMu.Lock()
 	delete(Subscriptions, connID)
 	subscriptionsMu.Unlock()
+}
+
+// SubscriptionsSetChannels sets the entire subscription list for a connection ID
+func SubscriptionsSetChannels(connID string, channels []string) {
+	subscriptionsMu.Lock()
+	Subscriptions[connID] = channels
+	subscriptionsMu.Unlock()
+}
+
+// SubscribedMode helpers
+func SubscribedModeSet(connID string) {
+	subscribedModeMu.Lock()
+	SubscribedMode[connID] = true
+	subscribedModeMu.Unlock()
+}
+
+func SubscribedModeGet(connID string) bool {
+	subscribedModeMu.RLock()
+	defer subscribedModeMu.RUnlock()
+	return SubscribedMode[connID]
+}
+
+func SubscribedModeDelete(connID string) {
+	subscribedModeMu.Lock()
+	delete(SubscribedMode, connID)
+	subscribedModeMu.Unlock()
+}
+
+// IsAllowedInSubscribedMode checks if a command is allowed when client is in subscribed mode
+func IsAllowedInSubscribedMode(command string) bool {
+	allowedCommands := map[string]bool{
+		"SUBSCRIBE":    true,
+		"UNSUBSCRIBE":  true,
+		"PSUBSCRIBE":   true,
+		"PUNSUBSCRIBE": true,
+		"PING":         true,
+		"QUIT":         true,
+		"RESET":        true,
+	}
+	return allowedCommands[command]
 }

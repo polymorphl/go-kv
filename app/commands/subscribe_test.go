@@ -465,3 +465,97 @@ func TestSubscribeEdgeCases(t *testing.T) {
 		}
 	})
 }
+
+func TestSubscribeSubscribedMode(t *testing.T) {
+	t.Run("client enters subscribed mode after SUBSCRIBE", func(t *testing.T) {
+		connID := "test-conn-1"
+
+		// Initially not in subscribed mode
+		if shared.SubscribedModeGet(connID) {
+			t.Error("Client should not be in subscribed mode initially")
+		}
+
+		// Subscribe to a channel
+		args := []shared.Value{{Typ: "bulk", Bulk: "test-channel"}}
+		Subscribe(connID, args)
+
+		// Should now be in subscribed mode
+		if !shared.SubscribedModeGet(connID) {
+			t.Error("Client should be in subscribed mode after SUBSCRIBE")
+		}
+
+		// Clean up
+		shared.SubscribedModeDelete(connID)
+		shared.SubscriptionsDelete(connID)
+	})
+}
+
+func TestSubscribedModeCommandRestrictions(t *testing.T) {
+	t.Run("allowed commands work in subscribed mode", func(t *testing.T) {
+		connID := "test-conn-5"
+
+		// Subscribe to enter subscribed mode
+		args := []shared.Value{{Typ: "bulk", Bulk: "test-channel"}}
+		Subscribe(connID, args)
+
+		// Test allowed commands
+		allowedCommands := []string{"SUBSCRIBE", "UNSUBSCRIBE", "PING", "QUIT", "RESET"}
+
+		for _, cmd := range allowedCommands {
+			// These should not return error responses
+			result := shared.ExecuteCommand(cmd, connID, []shared.Value{})
+			if result.Typ == "error" {
+				t.Errorf("Command %s should be allowed in subscribed mode, got error: %s", cmd, result.Str)
+			}
+		}
+
+		// Clean up
+		shared.SubscribedModeDelete(connID)
+		shared.SubscriptionsDelete(connID)
+	})
+
+	t.Run("disallowed commands return error in subscribed mode", func(t *testing.T) {
+		connID := "test-conn-6"
+
+		// Subscribe to enter subscribed mode
+		args := []shared.Value{{Typ: "bulk", Bulk: "test-channel"}}
+		Subscribe(connID, args)
+
+		// Test disallowed commands
+		disallowedCommands := []string{"GET", "SET", "ECHO", "INCR", "LPUSH", "RPUSH", "XADD", "MULTI", "EXEC"}
+
+		for _, cmd := range disallowedCommands {
+			result := shared.ExecuteCommand(cmd, connID, []shared.Value{})
+			if result.Typ != "error" {
+				t.Errorf("Command %s should return error in subscribed mode, got: %v", cmd, result)
+			}
+			if result.Str != "ERR Can't execute '"+cmd+"': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context" {
+				t.Errorf("Command %s should return specific error message, got: %s", cmd, result.Str)
+			}
+		}
+
+		// Clean up
+		shared.SubscribedModeDelete(connID)
+		shared.SubscriptionsDelete(connID)
+	})
+
+	t.Run("commands work normally when not in subscribed mode", func(t *testing.T) {
+		connID := "test-conn-7"
+
+		// Should not be in subscribed mode initially
+		if shared.SubscribedModeGet(connID) {
+			t.Error("Client should not be in subscribed mode initially")
+		}
+
+		// Test that normal commands work
+		result := shared.ExecuteCommand("PING", connID, []shared.Value{})
+		if result.Typ == "error" {
+			t.Errorf("PING should work when not in subscribed mode, got error: %s", result.Str)
+		}
+
+		result = shared.ExecuteCommand("ECHO", connID, []shared.Value{{Typ: "bulk", Bulk: "hello"}})
+		if result.Typ == "error" {
+			t.Errorf("ECHO should work when not in subscribed mode, got error: %s", result.Str)
+		}
+	})
+}

@@ -25,6 +25,9 @@ func Subscribe(connID string, args []shared.Value) shared.Value {
 		shared.SubscriptionsSet(connID, channel)
 	}
 
+	// Set client in subscribed mode
+	shared.SubscribedModeSet(connID)
+
 	// Get current subscription count
 	channels, _ := shared.SubscriptionsGet(connID)
 	subscriptionCount := len(channels)
@@ -44,6 +47,6 @@ func Subscribe(connID string, args []shared.Value) shared.Value {
 		return responses[0]
 	}
 
-	// For multiple channels, return the first response (Redis behavior)
+	// For multiple channels, return the first response
 	return responses[0]
 }
