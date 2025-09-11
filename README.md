@@ -12,6 +12,7 @@ This implementation supports the following Redis commands:
 - `PING` - Test server connectivity
 - `ECHO` - Echo back the provided message
 - `TYPE` - Get the type of a key
+- `KEYS` - Get all keys matching a pattern
 - `CONFIG` - Get configuration parameters
 
 ### String Operations
@@ -136,6 +137,8 @@ CONFIG GET dir port
 SET mykey "Hello Redis"
 GET mykey
 INCR counter
+KEYS "*"
+KEYS "my*"
 
 # List operations
 LPUSH mylist "item1" "item2" "item3"
