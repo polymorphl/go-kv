@@ -180,3 +180,42 @@ func (ss *SortedSet) GetScore(member string) (float64, bool) {
 	score, exists := ss.Members[member]
 	return score, exists
 }
+
+// GetRank returns the rank (0-based index) of a member in the sorted set
+// Members are sorted by score in ascending order, then by member name lexicographically
+func (ss *SortedSet) GetRank(member string) (int, bool) {
+	_, exists := ss.Members[member]
+	if !exists {
+		return 0, false
+	}
+
+	// Create a slice of members with their scores for sorting
+	type memberScore struct {
+		member string
+		score  float64
+	}
+
+	members := make([]memberScore, 0, len(ss.Members))
+	for m, s := range ss.Members {
+		members = append(members, memberScore{m, s})
+	}
+
+	// Sort by score (ascending), then by member name (lexicographically)
+	for i := 0; i < len(members)-1; i++ {
+		for j := i + 1; j < len(members); j++ {
+			if members[i].score > members[j].score ||
+				(members[i].score == members[j].score && members[i].member > members[j].member) {
+				members[i], members[j] = members[j], members[i]
+			}
+		}
+	}
+
+	// Find the rank of the target member
+	for i, ms := range members {
+		if ms.member == member {
+			return i, true
+		}
+	}
+
+	return 0, false
+}
