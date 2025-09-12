@@ -49,6 +49,7 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"XADD":        commands.Xadd,
 	"XRANGE":      commands.Xrange,
 	"XREAD":       commands.Xread,
+	"ZADD":        commands.Zadd,
 }
 
 // init initializes the shared command handlers map

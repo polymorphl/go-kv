@@ -17,14 +17,27 @@ type StreamEntry struct {
 	Data map[string]string // Field-value pairs
 }
 
+// SortedSetMember represents a member in a sorted set with its score
+type SortedSetMember struct {
+	Score  float64
+	Member string
+}
+
+// SortedSet represents a Redis sorted set (ZSET)
+type SortedSet struct {
+	Members map[string]float64 // Map of member -> score for O(1) lookups
+	Size    int                // Number of members
+}
+
 // MemoryEntry represents a value stored in the in-memory database.
 // It can hold either a string value, an array of strings, or a linked list, with optional expiration.
 type MemoryEntry struct {
-	Value   string        // String value (used when Array is empty)
-	Array   []string      // Array of strings (used for list operations - kept for compatibility)
-	List    *LinkedList   // Linked list (used for optimized list operations)
-	Stream  []StreamEntry // Stream entries (used for stream operations)
-	Expires int64         // Unix timestamp in milliseconds, 0 means no expiry
+	Value     string        // String value (used when Array is empty)
+	Array     []string      // Array of strings (used for list operations - kept for compatibility)
+	List      *LinkedList   // Linked list (used for optimized list operations)
+	Stream    []StreamEntry // Stream entries (used for stream operations)
+	SortedSet *SortedSet    // Sorted set (used for sorted set operations)
+	Expires   int64         // Unix timestamp in milliseconds, 0 means no expiry
 }
 
 // QueuedCommand represents a command that is queued in a transaction.
@@ -140,4 +153,30 @@ func FromArray(arr []string) *LinkedList {
 		ll.AddToTail(value)
 	}
 	return ll
+}
+
+// NewSortedSet creates a new empty sorted set
+func NewSortedSet() *SortedSet {
+	return &SortedSet{
+		Members: make(map[string]float64),
+		Size:    0,
+	}
+}
+
+// Add adds a member with a score to the sorted set
+// Returns true if the member was added (new), false if it was updated (existing)
+func (ss *SortedSet) Add(member string, score float64) bool {
+	_, exists := ss.Members[member]
+	ss.Members[member] = score
+	if !exists {
+		ss.Size++
+		return true
+	}
+	return false
+}
+
+// GetScore returns the score of a member, or 0 and false if not found
+func (ss *SortedSet) GetScore(member string) (float64, bool) {
+	score, exists := ss.Members[member]
+	return score, exists
 }
