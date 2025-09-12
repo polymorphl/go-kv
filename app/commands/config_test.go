@@ -4,14 +4,11 @@ import (
 	"net"
 	"testing"
 
-	"github.com/codecrafters-io/redis-starter-go/app/shared"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 func TestConfigGet(t *testing.T) {
-	// Initialize shared state
-	initTestState()
-
 	// Reset store state for clean test
 	server.SetStoreState(shared.State{
 		Role:             "master",
