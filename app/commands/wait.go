@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -27,14 +28,14 @@ func Wait(connID string, args []shared.Value) shared.Value {
 	}
 
 	// Send GETACK to all replicas to prompt ACK responses
-	shared.SendReplconfGetack()
+	server.SendReplconfGetack()
 
 	// Wait for timeout or until we have enough acknowledgments
 	deadline := time.Now().Add(time.Duration(timeoutMs) * time.Millisecond)
 
 	for time.Now().Before(deadline) {
 		// Count how many replicas have acknowledged
-		ackCount := shared.AcknowledgedReplicasCount()
+		ackCount := server.AcknowledgedReplicasCount()
 
 		// If we have enough acknowledgments, return immediately
 		if ackCount >= numReplicas {
@@ -47,7 +48,7 @@ func Wait(connID string, args []shared.Value) shared.Value {
 
 	// Timeout reached, return current acknowledgment count
 	// But if no acknowledgments were received, return total replicas (fallback behavior)
-	finalAckCount := shared.AcknowledgedReplicasCount()
+	finalAckCount := server.AcknowledgedReplicasCount()
 	if finalAckCount == 0 {
 		return shared.Value{Typ: "integer", Num: len(shared.StoreState.Replicas)}
 	}

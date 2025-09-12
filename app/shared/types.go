@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"net"
+
 	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 )
 
@@ -52,6 +54,17 @@ type LinkedList struct {
 
 // CommandHandler represents a function that handles a Redis command
 type CommandHandler func(string, []protocol.Value) protocol.Value
+
+// State represents the server state including replication information
+type State struct {
+	Role             string
+	ReplicaOf        string
+	MasterReplID     string
+	MasterReplOffset int64
+	Replicas         map[string]net.Conn // Map of replica connection IDs to their connections
+	ConfigDir        string              // Directory where Redis stores its data
+	ConfigDbfilename string              // Database filename
+}
 
 // NewLinkedList creates a new empty linked list
 func NewLinkedList() *LinkedList {

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -19,7 +20,7 @@ func TestWait(t *testing.T) {
 	})
 
 	// Clear acknowledged replicas
-	shared.AcknowledgedReplicasClear()
+	server.AcknowledgedReplicasClear()
 
 	tests := []struct {
 		name        string
@@ -105,16 +106,16 @@ func TestWaitWithConnectedReplicas(t *testing.T) {
 	})
 
 	// Clear acknowledged replicas
-	shared.AcknowledgedReplicasClear()
+	server.AcknowledgedReplicasClear()
 
 	// Add mock replica connections
 	mockConn1 := &mockConn{}
 	mockConn2 := &mockConn{}
 	mockConn3 := &mockConn{}
 
-	shared.ReplicasSet("replica-1", mockConn1)
-	shared.ReplicasSet("replica-2", mockConn2)
-	shared.ReplicasSet("replica-3", mockConn3)
+	server.ReplicasSet("replica-1", mockConn1)
+	server.ReplicasSet("replica-2", mockConn2)
+	server.ReplicasSet("replica-3", mockConn3)
 
 	tests := []struct {
 		name        string
@@ -184,18 +185,18 @@ func TestWaitWithAcknowledgedReplicas(t *testing.T) {
 	})
 
 	// Clear acknowledged replicas
-	shared.AcknowledgedReplicasClear()
+	server.AcknowledgedReplicasClear()
 
 	// Add mock replica connections
 	mockConn1 := &mockConn{}
 	mockConn2 := &mockConn{}
 
-	shared.ReplicasSet("replica-1", mockConn1)
-	shared.ReplicasSet("replica-2", mockConn2)
+	server.ReplicasSet("replica-1", mockConn1)
+	server.ReplicasSet("replica-2", mockConn2)
 
 	// Simulate acknowledgments
-	shared.AcknowledgedReplicasSet("replica-1")
-	shared.AcknowledgedReplicasSet("replica-2")
+	server.AcknowledgedReplicasSet("replica-1")
+	server.AcknowledgedReplicasSet("replica-2")
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "2"},
@@ -236,7 +237,7 @@ func BenchmarkWait(b *testing.B) {
 	})
 
 	// Clear acknowledged replicas
-	shared.AcknowledgedReplicasClear()
+	server.AcknowledgedReplicasClear()
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "1"},

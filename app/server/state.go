@@ -2,21 +2,12 @@ package server
 
 import (
 	"net"
+
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
-// State represents the server state including replication information
-type State struct {
-	Role             string
-	ReplicaOf        string
-	MasterReplID     string
-	MasterReplOffset int64
-	Replicas         map[string]net.Conn // Map of replica connection IDs to their connections
-	ConfigDir        string              // Directory where Redis stores its data
-	ConfigDbfilename string              // Database filename
-}
-
 // Global server state
-var StoreState = &State{
+var StoreState = &shared.State{
 	Role:             "master",
 	ReplicaOf:        "",
 	MasterReplID:     "",
@@ -24,4 +15,9 @@ var StoreState = &State{
 	Replicas:         make(map[string]net.Conn),
 	ConfigDir:        "/tmp/redis-data",
 	ConfigDbfilename: "rdbfile",
+}
+
+// InitializeSharedState initializes the shared.StoreState with our server state
+func InitializeSharedState() {
+	shared.StoreState = StoreState
 }

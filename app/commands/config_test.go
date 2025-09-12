@@ -8,6 +8,9 @@ import (
 )
 
 func TestConfigGet(t *testing.T) {
+	// Initialize shared state
+	initTestState()
+
 	// Reset store state for clean test
 	shared.SetStoreState(shared.State{
 		Role:             "master",

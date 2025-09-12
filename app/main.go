@@ -53,6 +53,9 @@ func parseArgs() string {
 		server.StoreState.MasterReplID = generateReplID()
 	}
 
+	// Initialize shared state
+	server.InitializeSharedState()
+
 	return port
 }
 
@@ -118,8 +121,8 @@ func executeTransactionCommand(command string, connID string, args []protocol.Va
 		result := shared.ExecuteCommand(command, connID, args)
 
 		// Propagate transaction commands to replicas
-		if shared.IsWriteCommand(command) {
-			shared.PropagateCommand(command, args)
+		if server.IsWriteCommand(command) {
+			server.PropagateCommand(command, args)
 		}
 
 		// Only write response if it's not a NO_RESPONSE type
@@ -146,8 +149,8 @@ func executeNormalCommand(command string, connID string, args []protocol.Value, 
 	result := shared.ExecuteCommand(command, connID, args)
 
 	// Propagate write commands to replicas
-	if shared.IsWriteCommand(command) {
-		shared.PropagateCommand(command, args)
+	if server.IsWriteCommand(command) {
+		server.PropagateCommand(command, args)
 	}
 
 	// Only write response if it's not a NO_RESPONSE type

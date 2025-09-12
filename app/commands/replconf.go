@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -34,7 +35,7 @@ func Replconf(connID string, args []shared.Value) shared.Value {
 	if subcommand == "ACK" {
 		if len(args) >= 2 {
 			// Mark this replica as having acknowledged
-			shared.AcknowledgedReplicasSet(connID)
+			server.AcknowledgedReplicasSet(connID)
 			// Return NO_RESPONSE since this is an internal command
 			return shared.Value{Typ: shared.NO_RESPONSE, Str: ""}
 		}
@@ -46,7 +47,7 @@ func Replconf(connID string, args []shared.Value) shared.Value {
 	if conn, exists := shared.ConnectionsGet(connID); exists {
 		// Only register if not already registered
 		if _, alreadyRegistered := shared.StoreState.Replicas[connID]; !alreadyRegistered {
-			shared.ReplicasSet(connID, conn)
+			server.ReplicasSet(connID, conn)
 		}
 	}
 

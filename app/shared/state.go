@@ -1,20 +1,16 @@
 package shared
 
-import (
-	"github.com/codecrafters-io/redis-starter-go/app/server"
-)
-
-// State is an alias for server.State to maintain backward compatibility
-type State = server.State
-
 // StoreState provides access to the global server state
-var StoreState = server.StoreState
+// This will be initialized by the server package
+var StoreState *State
 
 // Helper functions for test compatibility
 func SetStoreState(state State) {
-	*server.StoreState = state
+	if StoreState != nil {
+		*StoreState = state
+	}
 }
 
 func GetStoreState() *State {
-	return server.StoreState
+	return StoreState
 }
