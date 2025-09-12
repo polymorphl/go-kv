@@ -86,78 +86,101 @@ func main() {
 	}
 }
 
+// registerConnection registers a connection and returns its ID
+func registerConnection(conn net.Conn) string {
+	connID := conn.RemoteAddr().String()
+	shared.ConnectionsSet(connID, conn)
+	return connID
+}
+
+// readAndValidateCommand reads a command from the connection and validates it
+func readAndValidateCommand(conn net.Conn) (string, []shared.Value, error) {
+	r := shared.NewResp(conn)
+	value, err := r.Read()
+	if err != nil {
+		return "", nil, err
+	}
+
+	if value.Typ != "array" {
+		return "", nil, fmt.Errorf("invalid request, expected array")
+	}
+
+	command := strings.ToUpper(value.Array[0].Bulk)
+	args := value.Array[1:]
+	return command, args, nil
+}
+
+// executeTransactionCommand executes a command within a transaction context
+func executeTransactionCommand(command string, connID string, args []shared.Value, writer *Writer) {
+	if IsTransactionCommand(command) {
+		result := shared.ExecuteCommand(command, connID, args)
+
+		// Propagate transaction commands to replicas
+		if shared.IsWriteCommand(command) {
+			shared.PropagateCommand(command, args)
+		}
+
+		// Only write response if it's not a NO_RESPONSE type
+		if result.Typ != shared.NO_RESPONSE {
+			writer.Write(result)
+		}
+	} else {
+		// Queue the command instead of executing it
+		transaction, _ := shared.TransactionsGet(connID)
+		transaction.Commands = append(transaction.Commands, shared.QueuedCommand{
+			Command: command,
+			Args:    args,
+		})
+		shared.TransactionsSet(connID, transaction)
+
+		// Return QUEUED response
+		result := shared.Value{Typ: "string", Str: "QUEUED"}
+		writer.Write(result)
+	}
+}
+
+// executeNormalCommand executes a command outside of transaction context
+func executeNormalCommand(command string, connID string, args []shared.Value, writer *Writer) {
+	result := shared.ExecuteCommand(command, connID, args)
+
+	// Propagate write commands to replicas
+	if shared.IsWriteCommand(command) {
+		shared.PropagateCommand(command, args)
+	}
+
+	// Only write response if it's not a NO_RESPONSE type
+	if result.Typ != shared.NO_RESPONSE {
+		writer.Write(result)
+	}
+}
+
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	// Register the connection (concurrency-safe)
-	connID := conn.RemoteAddr().String()
-	shared.ConnectionsSet(connID, conn)
+	connID := registerConnection(conn)
 	defer shared.ConnectionsDelete(connID)
 
 	for {
-		r := shared.NewResp(conn)
-		value, err := r.Read()
+		command, args, err := readAndValidateCommand(conn)
 		if err != nil {
 			if err == io.EOF {
 				fmt.Println("Client disconnected: ", conn.RemoteAddr().String())
 			} else {
-				fmt.Println("ERR IS", err)
+				fmt.Println("Error is: ", err)
 			}
 			return
 		}
 
-		if value.Typ != "array" {
-			fmt.Println("Invalid request, expected array")
-			continue
-		}
-
-		command := strings.ToUpper(value.Array[0].Bulk)
-		args := value.Array[1:]
-
+		// Create a writer for the connection
 		writer := NewWriter(conn)
-		// Use connection remote address as connection ID
-		connID := conn.RemoteAddr().String()
 
 		// Check if this connection is in a transaction (concurrency-safe)
-		if transaction, exists := shared.TransactionsGet(connID); exists {
-			// If it's a transaction command, execute it normally
-			if IsTransactionCommand(command) {
-				result := shared.ExecuteCommand(command, connID, args)
-
-				// Propagate transaction commands to replicas
-				if shared.IsWriteCommand(command) {
-					shared.PropagateCommand(command, args)
-				}
-
-				// Only write response if it's not a NO_RESPONSE type
-				if result.Typ != shared.NO_RESPONSE {
-					writer.Write(result)
-				}
-			} else {
-				// Queue the command instead of executing it
-				transaction.Commands = append(transaction.Commands, shared.QueuedCommand{
-					Command: command,
-					Args:    args,
-				})
-				shared.TransactionsSet(connID, transaction)
-
-				// Return QUEUED response
-				result := shared.Value{Typ: "string", Str: "QUEUED"}
-				writer.Write(result)
-			}
+		if _, exists := shared.TransactionsGet(connID); exists {
+			executeTransactionCommand(command, connID, args, writer)
 		} else {
 			// No active transaction, execute command normally
-			result := shared.ExecuteCommand(command, connID, args)
-
-			// Propagate write commands to replicas
-			if shared.IsWriteCommand(command) {
-				shared.PropagateCommand(command, args)
-			}
-
-			// Only write response if it's not a NO_RESPONSE type
-			if result.Typ != shared.NO_RESPONSE {
-				writer.Write(result)
-			}
+			executeNormalCommand(command, connID, args, writer)
 		}
 	}
 }
