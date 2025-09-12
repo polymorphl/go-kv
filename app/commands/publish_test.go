@@ -312,8 +312,8 @@ func (m *mockAddr) String() string  { return m.addr }
 func TestPublishMessageDelivery(t *testing.T) {
 	t.Run("publish delivers message to single subscriber", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -366,8 +366,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 
 	t.Run("publish delivers message to multiple subscribers", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -430,8 +430,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 
 	t.Run("publish delivers message only to subscribers of specific channel", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -497,8 +497,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 
 	t.Run("publish handles failed connections gracefully", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -542,8 +542,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 
 	t.Run("publish with unicode channel and message", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connection
 		conn1 := &MockConnection{
@@ -589,8 +589,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 func TestPublishMessageFormat(t *testing.T) {
 	t.Run("message format matches Redis protocol", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connection
 		conn1 := &MockConnection{
@@ -628,8 +628,8 @@ func TestPublishMessageFormat(t *testing.T) {
 func TestPublishConcurrentAccess(t *testing.T) {
 	t.Run("publish handles concurrent subscriptions and publishing", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.Subscriptions = make(map[string][]string)
-		shared.SubscribedMode = make(map[string]bool)
+		shared.SetSubscriptionsMap(make(map[string][]string))
+		shared.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create multiple mock connections
 		connections := make([]*MockConnection, 10)

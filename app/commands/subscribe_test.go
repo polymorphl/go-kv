@@ -96,7 +96,7 @@ func TestSubscribe(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear subscriptions before each test
-			shared.Subscriptions = make(map[string][]string)
+			shared.SetSubscriptionsMap(make(map[string][]string))
 
 			result := Subscribe(tt.connID, tt.args)
 
@@ -145,7 +145,7 @@ func TestSubscribe(t *testing.T) {
 // BenchmarkSubscribeSingleChannel benchmarks subscribing to a single channel
 func BenchmarkSubscribeSingleChannel(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "test-channel"}}
 
@@ -159,7 +159,7 @@ func BenchmarkSubscribeSingleChannel(b *testing.B) {
 // BenchmarkSubscribeMultipleChannels benchmarks subscribing to multiple channels
 func BenchmarkSubscribeMultipleChannels(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "channel1"},
@@ -179,7 +179,7 @@ func BenchmarkSubscribeMultipleChannels(b *testing.B) {
 // BenchmarkSubscribeDuplicateChannels benchmarks subscribing to duplicate channels
 func BenchmarkSubscribeDuplicateChannels(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "duplicate"},
@@ -197,7 +197,7 @@ func BenchmarkSubscribeDuplicateChannels(b *testing.B) {
 // BenchmarkSubscribeConcurrent benchmarks concurrent subscriptions
 func BenchmarkSubscribeConcurrent(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "concurrent-channel"}}
 
@@ -215,7 +215,7 @@ func BenchmarkSubscribeConcurrent(b *testing.B) {
 // BenchmarkSubscribeLargeChannelList benchmarks subscribing to many channels at once
 func BenchmarkSubscribeLargeChannelList(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	// Create a large list of channels
 	args := make([]shared.Value, 100)
@@ -233,7 +233,7 @@ func BenchmarkSubscribeLargeChannelList(b *testing.B) {
 // BenchmarkSubscribeUnicodeChannels benchmarks subscribing to unicode channel names
 func BenchmarkSubscribeUnicodeChannels(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "频道1"},
@@ -253,7 +253,7 @@ func BenchmarkSubscribeUnicodeChannels(b *testing.B) {
 // BenchmarkSubscribeMemoryUsage benchmarks memory usage with many subscriptions
 func BenchmarkSubscribeMemoryUsage(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "memory-test"}}
 
@@ -267,7 +267,7 @@ func BenchmarkSubscribeMemoryUsage(b *testing.B) {
 // BenchmarkSubscribeGetSubscriptions benchmarks getting subscription data
 func BenchmarkSubscribeGetSubscriptions(b *testing.B) {
 	// Setup: create many subscriptions
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	// Create 1000 connections with subscriptions
 	for i := 0; i < 1000; i++ {
@@ -289,7 +289,7 @@ func BenchmarkSubscribeGetSubscriptions(b *testing.B) {
 // BenchmarkSubscribeMixedWorkload benchmarks a mixed workload of different subscription patterns
 func BenchmarkSubscribeMixedWorkload(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	// Different subscription patterns
 	patterns := [][]shared.Value{
@@ -319,7 +319,7 @@ func BenchmarkSubscribeMixedWorkload(b *testing.B) {
 
 func TestSubscribeMultipleConnections(t *testing.T) {
 	// Clear subscriptions
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	// Test multiple connections subscribing to different channels
 	conn1 := "connection1"
@@ -379,7 +379,7 @@ func TestSubscribeMultipleConnections(t *testing.T) {
 
 func TestSubscribeConcurrent(t *testing.T) {
 	// Clear subscriptions
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	// Test concurrent subscriptions
 	done := make(chan bool, 10)
@@ -421,7 +421,7 @@ func TestSubscribeConcurrent(t *testing.T) {
 
 func TestSubscribeEdgeCases(t *testing.T) {
 	// Clear subscriptions
-	shared.Subscriptions = make(map[string][]string)
+	shared.SetSubscriptionsMap(make(map[string][]string))
 
 	t.Run("empty channel name", func(t *testing.T) {
 		result := Subscribe("conn1", []shared.Value{{Typ: "bulk", Bulk: ""}})
