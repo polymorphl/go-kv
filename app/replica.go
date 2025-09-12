@@ -7,12 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 // sendPing sends a PING command to the master
-func sendPing(conn net.Conn, writer *Writer, reader *shared.Resp) {
-	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendPing(conn net.Conn, writer *protocol.Writer, reader *protocol.Resp) {
+	err := writer.Write(protocol.Value{Typ: "array", Array: []protocol.Value{
 		{Typ: "bulk", Bulk: "PING"},
 	}})
 	if err != nil {
@@ -29,8 +30,8 @@ func sendPing(conn net.Conn, writer *Writer, reader *shared.Resp) {
 }
 
 // sendReplConfListeningPort sends a REPLCONF listening-port command to the master
-func sendReplConfListeningPort(conn net.Conn, writer *Writer, reader *shared.Resp, port string) {
-	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendReplConfListeningPort(conn net.Conn, writer *protocol.Writer, reader *protocol.Resp, port string) {
+	err := writer.Write(protocol.Value{Typ: "array", Array: []protocol.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
 		{Typ: "bulk", Bulk: "listening-port"},
 		{Typ: "bulk", Bulk: port},
@@ -49,8 +50,8 @@ func sendReplConfListeningPort(conn net.Conn, writer *Writer, reader *shared.Res
 }
 
 // sendReplConfCapaPsync2 sends a REPLCONF capa psync2 command to the master
-func sendReplConfCapaPsync2(conn net.Conn, writer *Writer, reader *shared.Resp) {
-	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendReplConfCapaPsync2(conn net.Conn, writer *protocol.Writer, reader *protocol.Resp) {
+	err := writer.Write(protocol.Value{Typ: "array", Array: []protocol.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
 		{Typ: "bulk", Bulk: "capa"},
 		{Typ: "bulk", Bulk: "psync2"},
@@ -69,8 +70,8 @@ func sendReplConfCapaPsync2(conn net.Conn, writer *Writer, reader *shared.Resp) 
 }
 
 // sendPsync sends a PSYNC command to the master
-func sendPsync(conn net.Conn, writer *Writer, reader *shared.Resp, masterReplID string, masterReplOffset int64) {
-	err := writer.Write(shared.Value{Typ: "array", Array: []shared.Value{
+func sendPsync(conn net.Conn, writer *protocol.Writer, reader *protocol.Resp, masterReplID string, masterReplOffset int64) {
+	err := writer.Write(protocol.Value{Typ: "array", Array: []protocol.Value{
 		{Typ: "bulk", Bulk: "PSYNC"},
 		{Typ: "bulk", Bulk: masterReplID},
 		{Typ: "bulk", Bulk: strconv.FormatInt(masterReplOffset, 10)},
@@ -108,8 +109,8 @@ func performReplicationHandshake(address, port string) {
 	}
 	// Note: We don't close the connection here - keep it alive for replication
 
-	writer := NewWriter(conn)
-	reader := shared.NewResp(conn)
+	writer := protocol.NewWriter(conn)
+	reader := protocol.NewResp(conn)
 
 	// Step 1: Send PING and wait for PONG response
 	sendPing(conn, writer, reader)
@@ -143,8 +144,8 @@ func connectToMaster(replicaPort string) {
 }
 
 // processPropagatedCommands processes commands propagated from the master
-func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
-	writer := NewWriter(conn)
+func processPropagatedCommands(conn net.Conn, reader *protocol.Resp) {
+	writer := protocol.NewWriter(conn)
 	var processedOffset int64 = 0
 
 	for {
@@ -170,7 +171,7 @@ func processPropagatedCommands(conn net.Conn, reader *shared.Resp) {
 
 		// For REPLCONF GETACK, respond with current offset before including this command
 		if command == "REPLCONF" && len(args) >= 1 && strings.ToUpper(args[0].Bulk) == "GETACK" {
-			ack := shared.Value{Typ: "array", Array: []shared.Value{
+			ack := protocol.Value{Typ: "array", Array: []protocol.Value{
 				{Typ: "bulk", Bulk: "REPLCONF"},
 				{Typ: "bulk", Bulk: "ACK"},
 				{Typ: "bulk", Bulk: strconv.FormatInt(processedOffset, 10)},

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -94,8 +95,8 @@ func registerConnection(conn net.Conn) string {
 }
 
 // readAndValidateCommand reads a command from the connection and validates it
-func readAndValidateCommand(conn net.Conn) (string, []shared.Value, error) {
-	r := shared.NewResp(conn)
+func readAndValidateCommand(conn net.Conn) (string, []protocol.Value, error) {
+	r := protocol.NewResp(conn)
 	value, err := r.Read()
 	if err != nil {
 		return "", nil, err
@@ -111,7 +112,7 @@ func readAndValidateCommand(conn net.Conn) (string, []shared.Value, error) {
 }
 
 // executeTransactionCommand executes a command within a transaction context
-func executeTransactionCommand(command string, connID string, args []shared.Value, writer *Writer) {
+func executeTransactionCommand(command string, connID string, args []protocol.Value, writer *protocol.Writer) {
 	if IsTransactionCommand(command) {
 		result := shared.ExecuteCommand(command, connID, args)
 
@@ -134,13 +135,13 @@ func executeTransactionCommand(command string, connID string, args []shared.Valu
 		shared.TransactionsSet(connID, transaction)
 
 		// Return QUEUED response
-		result := shared.Value{Typ: "string", Str: "QUEUED"}
+		result := protocol.Value{Typ: "string", Str: "QUEUED"}
 		writer.Write(result)
 	}
 }
 
 // executeNormalCommand executes a command outside of transaction context
-func executeNormalCommand(command string, connID string, args []shared.Value, writer *Writer) {
+func executeNormalCommand(command string, connID string, args []protocol.Value, writer *protocol.Writer) {
 	result := shared.ExecuteCommand(command, connID, args)
 
 	// Propagate write commands to replicas
@@ -173,7 +174,7 @@ func handleConnection(conn net.Conn) {
 		}
 
 		// Create a writer for the connection
-		writer := NewWriter(conn)
+		writer := protocol.NewWriter(conn)
 
 		// Check if this connection is in a transaction (concurrency-safe)
 		if _, exists := shared.TransactionsGet(connID); exists {

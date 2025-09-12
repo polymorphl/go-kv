@@ -4,7 +4,21 @@ import (
 	"fmt"
 	"net"
 	"sync"
+
+	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 )
+
+// Type aliases for backward compatibility
+type Value = protocol.Value
+type Resp = protocol.Resp
+type Writer = protocol.Writer
+
+// Function aliases for backward compatibility
+var NewResp = protocol.NewResp
+var NewWriter = protocol.NewWriter
+
+// Constant aliases for backward compatibility
+const NO_RESPONSE = protocol.NO_RESPONSE
 
 // StreamEntry represents a single entry in a Redis stream
 type StreamEntry struct {
@@ -25,7 +39,7 @@ type MemoryEntry struct {
 // QueuedCommand represents a command that is queued in a transaction.
 type QueuedCommand struct {
 	Command string
-	Args    []Value
+	Args    []protocol.Value
 }
 
 // Transaction represents a transaction that is being executed.
@@ -54,22 +68,22 @@ var acknowledgedReplicasMu sync.RWMutex
 var AcknowledgedReplicas = make(map[string]bool)
 
 // CommandHandler represents a function that handles a Redis command
-type CommandHandler func(string, []Value) Value
+type CommandHandler func(string, []protocol.Value) protocol.Value
 
 // CommandHandlers is a map of command names to their handler functions
 var CommandHandlers map[string]CommandHandler
 
 // ExecuteCommand executes a command using the shared handlers map
-func ExecuteCommand(command string, connID string, args []Value) Value {
+func ExecuteCommand(command string, connID string, args []protocol.Value) protocol.Value {
 	// Check if client is in subscribed mode and command is not allowed
 	if SubscribedModeGet(connID) && !IsAllowedInSubscribedMode(command) {
-		return Value{Typ: "error", Str: fmt.Sprintf("ERR Can't execute '%s': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context", command)}
+		return protocol.Value{Typ: "error", Str: fmt.Sprintf("ERR Can't execute '%s': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context", command)}
 	}
 
 	if handler, ok := CommandHandlers[command]; ok {
 		return handler(connID, args)
 	}
-	return Value{Typ: "string", Str: ""}
+	return protocol.Value{Typ: "string", Str: ""}
 }
 
 // IsWriteCommand checks if a command modifies data and should be propagated to replicas
@@ -90,14 +104,14 @@ func IsWriteCommand(command string) bool {
 }
 
 // PropagateCommand sends a command to all connected replicas
-func PropagateCommand(command string, args []Value) {
+func PropagateCommand(command string, args []protocol.Value) {
 	if StoreState.Role != "master" {
 		return
 	}
 
 	// Build the command array for propagation
-	commandArray := make([]Value, len(args)+1)
-	commandArray[0] = Value{Typ: "bulk", Bulk: command}
+	commandArray := make([]protocol.Value, len(args)+1)
+	commandArray[0] = protocol.Value{Typ: "bulk", Bulk: command}
 	for i, arg := range args {
 		commandArray[i+1] = arg
 	}
@@ -112,7 +126,7 @@ func PropagateCommand(command string, args []Value) {
 
 	// Send to all replicas using the snapshot
 	for replicaID, replicaConn := range snapshot {
-		bytes := Value{Typ: "array", Array: commandArray}.Marshal()
+		bytes := protocol.Value{Typ: "array", Array: commandArray}.Marshal()
 		_, err := replicaConn.Write(bytes)
 		if err != nil {
 			// Remove failed replica connection
@@ -229,7 +243,7 @@ func SendReplconfGetack() {
 	// Clear previous acknowledgments before sending new GETACK
 	AcknowledgedReplicasClear()
 
-	cmd := Value{Typ: "array", Array: []Value{
+	cmd := protocol.Value{Typ: "array", Array: []protocol.Value{
 		{Typ: "bulk", Bulk: "REPLCONF"},
 		{Typ: "bulk", Bulk: "GETACK"},
 		{Typ: "bulk", Bulk: "*"},
@@ -348,9 +362,9 @@ func SendMessageToSubscribers(channel string, message string) int {
 	subscribers := SubscriptionsGetSubscribersForChannel(channel)
 
 	// Create the message array: ["message", channel, message]
-	messageArray := Value{
+	messageArray := protocol.Value{
 		Typ: "array",
-		Array: []Value{
+		Array: []protocol.Value{
 			{Typ: "bulk", Bulk: "message"},
 			{Typ: "bulk", Bulk: channel},
 			{Typ: "bulk", Bulk: message},
