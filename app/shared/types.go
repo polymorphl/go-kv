@@ -252,3 +252,13 @@ func (ss *SortedSet) GetSortedMembers() []string {
 
 	return result
 }
+
+// Remove removes a member from the sorted set
+func (ss *SortedSet) Remove(member string) bool {
+	_, exists := ss.Members[member]
+	if !exists {
+		return false
+	}
+	ss.Size--
+	return true
+}
