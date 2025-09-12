@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -30,19 +31,19 @@ func TestUnsubscribeCommand(t *testing.T) {
 		}
 
 		// Should have one remaining subscription
-		channels, _ := shared.SubscriptionsGet(connID)
+		channels, _ := pubsub.SubscriptionsGet(connID)
 		if len(channels) != 1 || channels[0] != "channel2" {
 			t.Errorf("Expected 1 remaining subscription 'channel2', got %v", channels)
 		}
 
 		// Should still be in subscribed mode
-		if !shared.SubscribedModeGet(connID) {
+		if !pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should still be in subscribed mode")
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("unsubscribe from all channels", func(t *testing.T) {
@@ -61,19 +62,19 @@ func TestUnsubscribeCommand(t *testing.T) {
 		}
 
 		// Should have no remaining subscriptions
-		channels, _ := shared.SubscriptionsGet(connID)
+		channels, _ := pubsub.SubscriptionsGet(connID)
 		if len(channels) != 0 {
 			t.Errorf("Expected no remaining subscriptions, got %v", channels)
 		}
 
 		// Should not be in subscribed mode
-		if shared.SubscribedModeGet(connID) {
+		if pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should not be in subscribed mode after unsubscribing from all")
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("unsubscribe from non-existent channel", func(t *testing.T) {
@@ -93,14 +94,14 @@ func TestUnsubscribeCommand(t *testing.T) {
 		}
 
 		// Should still have original subscription
-		channels, _ := shared.SubscriptionsGet(connID)
+		channels, _ := pubsub.SubscriptionsGet(connID)
 		if len(channels) != 1 || channels[0] != "channel1" {
 			t.Errorf("Expected 1 remaining subscription 'channel1', got %v", channels)
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("unsubscribe when not subscribed", func(t *testing.T) {
@@ -119,8 +120,8 @@ func TestUnsubscribeCommand(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 }
 
@@ -133,7 +134,7 @@ func TestUnsubscribeSubscribedMode(t *testing.T) {
 		Subscribe(connID, args)
 
 		// Should be in subscribed mode
-		if !shared.SubscribedModeGet(connID) {
+		if !pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should be in subscribed mode after SUBSCRIBE")
 		}
 
@@ -141,13 +142,13 @@ func TestUnsubscribeSubscribedMode(t *testing.T) {
 		Unsubscribe(connID, []shared.Value{})
 
 		// Should no longer be in subscribed mode
-		if shared.SubscribedModeGet(connID) {
+		if pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should not be in subscribed mode after UNSUBSCRIBE all")
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("client exits subscribed mode after UNSUBSCRIBE last channel", func(t *testing.T) {
@@ -158,7 +159,7 @@ func TestUnsubscribeSubscribedMode(t *testing.T) {
 		Subscribe(connID, args)
 
 		// Should be in subscribed mode
-		if !shared.SubscribedModeGet(connID) {
+		if !pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should be in subscribed mode after SUBSCRIBE")
 		}
 
@@ -167,13 +168,13 @@ func TestUnsubscribeSubscribedMode(t *testing.T) {
 		Unsubscribe(connID, unsubArgs)
 
 		// Should no longer be in subscribed mode
-		if shared.SubscribedModeGet(connID) {
+		if pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should not be in subscribed mode after UNSUBSCRIBE last channel")
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("client stays in subscribed mode after UNSUBSCRIBE some channels", func(t *testing.T) {
@@ -184,7 +185,7 @@ func TestUnsubscribeSubscribedMode(t *testing.T) {
 		Subscribe(connID, args)
 
 		// Should be in subscribed mode
-		if !shared.SubscribedModeGet(connID) {
+		if !pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should be in subscribed mode after SUBSCRIBE")
 		}
 
@@ -193,19 +194,19 @@ func TestUnsubscribeSubscribedMode(t *testing.T) {
 		Unsubscribe(connID, unsubArgs)
 
 		// Should still be in subscribed mode
-		if !shared.SubscribedModeGet(connID) {
+		if !pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should still be in subscribed mode after UNSUBSCRIBE some channels")
 		}
 
 		// Should have one remaining subscription
-		channels, _ := shared.SubscriptionsGet(connID)
+		channels, _ := pubsub.SubscriptionsGet(connID)
 		if len(channels) != 1 || channels[0] != "channel2" {
 			t.Errorf("Expected 1 remaining subscription 'channel2', got %v", channels)
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 }
 
@@ -226,8 +227,8 @@ func BenchmarkUnsubscribeSingleChannel(b *testing.B) {
 	}
 
 	// Clean up
-	shared.SubscribedModeDelete(connID)
-	shared.SubscriptionsDelete(connID)
+	pubsub.SubscribedModeDelete(connID)
+	pubsub.SubscriptionsDelete(connID)
 }
 
 func BenchmarkUnsubscribeMultipleChannels(b *testing.B) {
@@ -246,8 +247,8 @@ func BenchmarkUnsubscribeMultipleChannels(b *testing.B) {
 	}
 
 	// Clean up
-	shared.SubscribedModeDelete(connID)
-	shared.SubscriptionsDelete(connID)
+	pubsub.SubscribedModeDelete(connID)
+	pubsub.SubscriptionsDelete(connID)
 }
 
 func BenchmarkUnsubscribeConcurrent(b *testing.B) {
@@ -265,8 +266,8 @@ func BenchmarkUnsubscribeConcurrent(b *testing.B) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 }
 
@@ -291,8 +292,8 @@ func BenchmarkUnsubscribeLargeChannelList(b *testing.B) {
 	}
 
 	// Clean up
-	shared.SubscribedModeDelete(connID)
-	shared.SubscriptionsDelete(connID)
+	pubsub.SubscribedModeDelete(connID)
+	pubsub.SubscriptionsDelete(connID)
 }
 
 func BenchmarkUnsubscribeMemoryUsage(b *testing.B) {
@@ -311,8 +312,8 @@ func BenchmarkUnsubscribeMemoryUsage(b *testing.B) {
 	}
 
 	// Clean up
-	shared.SubscribedModeDelete(connID)
-	shared.SubscriptionsDelete(connID)
+	pubsub.SubscribedModeDelete(connID)
+	pubsub.SubscriptionsDelete(connID)
 }
 
 func BenchmarkUnsubscribeMixedWorkload(b *testing.B) {
@@ -332,6 +333,6 @@ func BenchmarkUnsubscribeMixedWorkload(b *testing.B) {
 	}
 
 	// Clean up
-	shared.SubscribedModeDelete(connID)
-	shared.SubscriptionsDelete(connID)
+	pubsub.SubscribedModeDelete(connID)
+	pubsub.SubscriptionsDelete(connID)
 }

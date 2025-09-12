@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -96,7 +97,7 @@ func TestSubscribe(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear subscriptions before each test
-			shared.SetSubscriptionsMap(make(map[string][]string))
+			pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 			result := Subscribe(tt.connID, tt.args)
 
@@ -128,7 +129,7 @@ func TestSubscribe(t *testing.T) {
 			}
 
 			// Check subscription count
-			channels, exists := shared.SubscriptionsGet(tt.connID)
+			channels, exists := pubsub.SubscriptionsGet(tt.connID)
 			if tt.expectedCount > 0 {
 				if !exists {
 					t.Errorf("Expected subscription to exist for connection %s", tt.connID)
@@ -145,7 +146,7 @@ func TestSubscribe(t *testing.T) {
 // BenchmarkSubscribeSingleChannel benchmarks subscribing to a single channel
 func BenchmarkSubscribeSingleChannel(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "test-channel"}}
 
@@ -159,7 +160,7 @@ func BenchmarkSubscribeSingleChannel(b *testing.B) {
 // BenchmarkSubscribeMultipleChannels benchmarks subscribing to multiple channels
 func BenchmarkSubscribeMultipleChannels(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "channel1"},
@@ -179,7 +180,7 @@ func BenchmarkSubscribeMultipleChannels(b *testing.B) {
 // BenchmarkSubscribeDuplicateChannels benchmarks subscribing to duplicate channels
 func BenchmarkSubscribeDuplicateChannels(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "duplicate"},
@@ -197,7 +198,7 @@ func BenchmarkSubscribeDuplicateChannels(b *testing.B) {
 // BenchmarkSubscribeConcurrent benchmarks concurrent subscriptions
 func BenchmarkSubscribeConcurrent(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "concurrent-channel"}}
 
@@ -215,7 +216,7 @@ func BenchmarkSubscribeConcurrent(b *testing.B) {
 // BenchmarkSubscribeLargeChannelList benchmarks subscribing to many channels at once
 func BenchmarkSubscribeLargeChannelList(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	// Create a large list of channels
 	args := make([]shared.Value, 100)
@@ -233,7 +234,7 @@ func BenchmarkSubscribeLargeChannelList(b *testing.B) {
 // BenchmarkSubscribeUnicodeChannels benchmarks subscribing to unicode channel names
 func BenchmarkSubscribeUnicodeChannels(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "频道1"},
@@ -253,7 +254,7 @@ func BenchmarkSubscribeUnicodeChannels(b *testing.B) {
 // BenchmarkSubscribeMemoryUsage benchmarks memory usage with many subscriptions
 func BenchmarkSubscribeMemoryUsage(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "memory-test"}}
 
@@ -267,7 +268,7 @@ func BenchmarkSubscribeMemoryUsage(b *testing.B) {
 // BenchmarkSubscribeGetSubscriptions benchmarks getting subscription data
 func BenchmarkSubscribeGetSubscriptions(b *testing.B) {
 	// Setup: create many subscriptions
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	// Create 1000 connections with subscriptions
 	for i := 0; i < 1000; i++ {
@@ -282,14 +283,14 @@ func BenchmarkSubscribeGetSubscriptions(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		connID := fmt.Sprintf("conn%d", i%1000)
-		shared.SubscriptionsGet(connID)
+		pubsub.SubscriptionsGet(connID)
 	}
 }
 
 // BenchmarkSubscribeMixedWorkload benchmarks a mixed workload of different subscription patterns
 func BenchmarkSubscribeMixedWorkload(b *testing.B) {
 	// Clear subscriptions before benchmark
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	// Different subscription patterns
 	patterns := [][]shared.Value{
@@ -319,7 +320,7 @@ func BenchmarkSubscribeMixedWorkload(b *testing.B) {
 
 func TestSubscribeMultipleConnections(t *testing.T) {
 	// Clear subscriptions
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	// Test multiple connections subscribing to different channels
 	conn1 := "connection1"
@@ -351,9 +352,9 @@ func TestSubscribeMultipleConnections(t *testing.T) {
 	}
 
 	// Verify subscription counts
-	channels1, _ := shared.SubscriptionsGet(conn1)
-	channels2, _ := shared.SubscriptionsGet(conn2)
-	channels3, _ := shared.SubscriptionsGet(conn3)
+	channels1, _ := pubsub.SubscriptionsGet(conn1)
+	channels2, _ := pubsub.SubscriptionsGet(conn2)
+	channels3, _ := pubsub.SubscriptionsGet(conn3)
 
 	if len(channels1) != 1 {
 		t.Errorf("Expected conn1 to have 1 subscription, got %d", len(channels1))
@@ -379,7 +380,7 @@ func TestSubscribeMultipleConnections(t *testing.T) {
 
 func TestSubscribeConcurrent(t *testing.T) {
 	// Clear subscriptions
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	// Test concurrent subscriptions
 	done := make(chan bool, 10)
@@ -410,7 +411,7 @@ func TestSubscribeConcurrent(t *testing.T) {
 	// Verify all connections have correct subscriptions
 	for i := 0; i < 10; i++ {
 		connID := fmt.Sprintf("conn%d", i)
-		channels, exists := shared.SubscriptionsGet(connID)
+		channels, exists := pubsub.SubscriptionsGet(connID)
 		if !exists {
 			t.Errorf("Expected subscription to exist for %s", connID)
 		} else if len(channels) != 3 {
@@ -421,7 +422,7 @@ func TestSubscribeConcurrent(t *testing.T) {
 
 func TestSubscribeEdgeCases(t *testing.T) {
 	// Clear subscriptions
-	shared.SetSubscriptionsMap(make(map[string][]string))
+	pubsub.SetSubscriptionsMap(make(map[string][]string))
 
 	t.Run("empty channel name", func(t *testing.T) {
 		result := Subscribe("conn1", []shared.Value{{Typ: "bulk", Bulk: ""}})
@@ -429,7 +430,7 @@ func TestSubscribeEdgeCases(t *testing.T) {
 			t.Errorf("Expected array response for empty channel name")
 		}
 
-		channels, _ := shared.SubscriptionsGet("conn1")
+		channels, _ := pubsub.SubscriptionsGet("conn1")
 		if len(channels) != 1 || channels[0] != "" {
 			t.Errorf("Expected empty channel name to be stored")
 		}
@@ -446,7 +447,7 @@ func TestSubscribeEdgeCases(t *testing.T) {
 			t.Errorf("Expected array response for long channel name")
 		}
 
-		channels, _ := shared.SubscriptionsGet("conn2")
+		channels, _ := pubsub.SubscriptionsGet("conn2")
 		if len(channels) != 1 || channels[0] != longChannel {
 			t.Errorf("Expected long channel name to be stored correctly")
 		}
@@ -459,7 +460,7 @@ func TestSubscribeEdgeCases(t *testing.T) {
 			t.Errorf("Expected array response for special characters")
 		}
 
-		channels, _ := shared.SubscriptionsGet("conn3")
+		channels, _ := pubsub.SubscriptionsGet("conn3")
 		if len(channels) != 1 || channels[0] != specialChannel {
 			t.Errorf("Expected special characters to be stored correctly")
 		}
@@ -471,7 +472,7 @@ func TestSubscribeSubscribedMode(t *testing.T) {
 		connID := "test-conn-1"
 
 		// Initially not in subscribed mode
-		if shared.SubscribedModeGet(connID) {
+		if pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should not be in subscribed mode initially")
 		}
 
@@ -480,13 +481,13 @@ func TestSubscribeSubscribedMode(t *testing.T) {
 		Subscribe(connID, args)
 
 		// Should now be in subscribed mode
-		if !shared.SubscribedModeGet(connID) {
+		if !pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should be in subscribed mode after SUBSCRIBE")
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 }
 
@@ -510,8 +511,8 @@ func TestSubscribedModeCommandRestrictions(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("disallowed commands return error in subscribed mode", func(t *testing.T) {
@@ -535,15 +536,15 @@ func TestSubscribedModeCommandRestrictions(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("commands work normally when not in subscribed mode", func(t *testing.T) {
 		connID := "test-conn-7"
 
 		// Should not be in subscribed mode initially
-		if shared.SubscribedModeGet(connID) {
+		if pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should not be in subscribed mode initially")
 		}
 

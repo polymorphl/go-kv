@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -30,8 +31,8 @@ func TestPublish(t *testing.T) {
 
 	t.Run("publish to channel with no subscribers", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SubscriptionsDelete("test-conn-1")
-		shared.SubscriptionsDelete("test-conn-2")
+		pubsub.SubscriptionsDelete("test-conn-1")
+		pubsub.SubscriptionsDelete("test-conn-2")
 
 		result := Publish("test-conn", []shared.Value{
 			{Typ: "bulk", Bulk: "test-channel"},
@@ -63,8 +64,8 @@ func TestPublish(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("publish to channel with multiple subscribers", func(t *testing.T) {
@@ -90,12 +91,12 @@ func TestPublish(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID1)
-		shared.SubscribedModeDelete(connID2)
-		shared.SubscribedModeDelete(connID3)
-		shared.SubscriptionsDelete(connID1)
-		shared.SubscriptionsDelete(connID2)
-		shared.SubscriptionsDelete(connID3)
+		pubsub.SubscribedModeDelete(connID1)
+		pubsub.SubscribedModeDelete(connID2)
+		pubsub.SubscribedModeDelete(connID3)
+		pubsub.SubscriptionsDelete(connID1)
+		pubsub.SubscriptionsDelete(connID2)
+		pubsub.SubscriptionsDelete(connID3)
 	})
 
 	t.Run("publish to channel with mixed subscriptions", func(t *testing.T) {
@@ -133,12 +134,12 @@ func TestPublish(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID1)
-		shared.SubscribedModeDelete(connID2)
-		shared.SubscribedModeDelete(connID3)
-		shared.SubscriptionsDelete(connID1)
-		shared.SubscriptionsDelete(connID2)
-		shared.SubscriptionsDelete(connID3)
+		pubsub.SubscribedModeDelete(connID1)
+		pubsub.SubscribedModeDelete(connID2)
+		pubsub.SubscribedModeDelete(connID3)
+		pubsub.SubscriptionsDelete(connID1)
+		pubsub.SubscriptionsDelete(connID2)
+		pubsub.SubscriptionsDelete(connID3)
 	})
 
 	t.Run("publish to channel with client subscribed to multiple channels", func(t *testing.T) {
@@ -178,10 +179,10 @@ func TestPublish(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID1)
-		shared.SubscribedModeDelete(connID2)
-		shared.SubscriptionsDelete(connID1)
-		shared.SubscriptionsDelete(connID2)
+		pubsub.SubscribedModeDelete(connID1)
+		pubsub.SubscribedModeDelete(connID2)
+		pubsub.SubscriptionsDelete(connID1)
+		pubsub.SubscriptionsDelete(connID2)
 	})
 
 	t.Run("publish with unicode channel and message", func(t *testing.T) {
@@ -204,8 +205,8 @@ func TestPublish(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("publish after unsubscribe", func(t *testing.T) {
@@ -243,10 +244,10 @@ func TestPublish(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID1)
-		shared.SubscribedModeDelete(connID2)
-		shared.SubscriptionsDelete(connID1)
-		shared.SubscriptionsDelete(connID2)
+		pubsub.SubscribedModeDelete(connID1)
+		pubsub.SubscribedModeDelete(connID2)
+		pubsub.SubscriptionsDelete(connID1)
+		pubsub.SubscriptionsDelete(connID2)
 	})
 }
 
@@ -312,8 +313,8 @@ func (m *mockAddr) String() string  { return m.addr }
 func TestPublishMessageDelivery(t *testing.T) {
 	t.Run("publish delivers message to single subscriber", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -360,14 +361,14 @@ func TestPublishMessageDelivery(t *testing.T) {
 		// Clean up
 		shared.ConnectionsDelete("127.0.0.1:12345")
 		shared.ConnectionsDelete("127.0.0.1:12346")
-		shared.SubscriptionsDelete("127.0.0.1:12345")
-		shared.SubscribedModeDelete("127.0.0.1:12345")
+		pubsub.SubscriptionsDelete("127.0.0.1:12345")
+		pubsub.SubscribedModeDelete("127.0.0.1:12345")
 	})
 
 	t.Run("publish delivers message to multiple subscribers", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -420,18 +421,18 @@ func TestPublishMessageDelivery(t *testing.T) {
 		shared.ConnectionsDelete("127.0.0.1:12345")
 		shared.ConnectionsDelete("127.0.0.1:12346")
 		shared.ConnectionsDelete("127.0.0.1:12347")
-		shared.SubscriptionsDelete("127.0.0.1:12345")
-		shared.SubscriptionsDelete("127.0.0.1:12346")
-		shared.SubscriptionsDelete("127.0.0.1:12347")
-		shared.SubscribedModeDelete("127.0.0.1:12345")
-		shared.SubscribedModeDelete("127.0.0.1:12346")
-		shared.SubscribedModeDelete("127.0.0.1:12347")
+		pubsub.SubscriptionsDelete("127.0.0.1:12345")
+		pubsub.SubscriptionsDelete("127.0.0.1:12346")
+		pubsub.SubscriptionsDelete("127.0.0.1:12347")
+		pubsub.SubscribedModeDelete("127.0.0.1:12345")
+		pubsub.SubscribedModeDelete("127.0.0.1:12346")
+		pubsub.SubscribedModeDelete("127.0.0.1:12347")
 	})
 
 	t.Run("publish delivers message only to subscribers of specific channel", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -487,18 +488,18 @@ func TestPublishMessageDelivery(t *testing.T) {
 		shared.ConnectionsDelete("127.0.0.1:12345")
 		shared.ConnectionsDelete("127.0.0.1:12346")
 		shared.ConnectionsDelete("127.0.0.1:12347")
-		shared.SubscriptionsDelete("127.0.0.1:12345")
-		shared.SubscriptionsDelete("127.0.0.1:12346")
-		shared.SubscriptionsDelete("127.0.0.1:12347")
-		shared.SubscribedModeDelete("127.0.0.1:12345")
-		shared.SubscribedModeDelete("127.0.0.1:12346")
-		shared.SubscribedModeDelete("127.0.0.1:12347")
+		pubsub.SubscriptionsDelete("127.0.0.1:12345")
+		pubsub.SubscriptionsDelete("127.0.0.1:12346")
+		pubsub.SubscriptionsDelete("127.0.0.1:12347")
+		pubsub.SubscribedModeDelete("127.0.0.1:12345")
+		pubsub.SubscribedModeDelete("127.0.0.1:12346")
+		pubsub.SubscribedModeDelete("127.0.0.1:12347")
 	})
 
 	t.Run("publish handles failed connections gracefully", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connections
 		conn1 := &MockConnection{
@@ -534,16 +535,16 @@ func TestPublishMessageDelivery(t *testing.T) {
 
 		// Clean up
 		shared.ConnectionsDelete("127.0.0.1:12345")
-		shared.SubscriptionsDelete("127.0.0.1:12345")
-		shared.SubscriptionsDelete("127.0.0.1:12346")
-		shared.SubscribedModeDelete("127.0.0.1:12345")
-		shared.SubscribedModeDelete("127.0.0.1:12346")
+		pubsub.SubscriptionsDelete("127.0.0.1:12345")
+		pubsub.SubscriptionsDelete("127.0.0.1:12346")
+		pubsub.SubscribedModeDelete("127.0.0.1:12345")
+		pubsub.SubscribedModeDelete("127.0.0.1:12346")
 	})
 
 	t.Run("publish with unicode channel and message", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connection
 		conn1 := &MockConnection{
@@ -581,16 +582,16 @@ func TestPublishMessageDelivery(t *testing.T) {
 
 		// Clean up
 		shared.ConnectionsDelete("127.0.0.1:12345")
-		shared.SubscriptionsDelete("127.0.0.1:12345")
-		shared.SubscribedModeDelete("127.0.0.1:12345")
+		pubsub.SubscriptionsDelete("127.0.0.1:12345")
+		pubsub.SubscribedModeDelete("127.0.0.1:12345")
 	})
 }
 
 func TestPublishMessageFormat(t *testing.T) {
 	t.Run("message format matches Redis protocol", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create mock connection
 		conn1 := &MockConnection{
@@ -620,16 +621,16 @@ func TestPublishMessageFormat(t *testing.T) {
 
 		// Clean up
 		shared.ConnectionsDelete("127.0.0.1:12345")
-		shared.SubscriptionsDelete("127.0.0.1:12345")
-		shared.SubscribedModeDelete("127.0.0.1:12345")
+		pubsub.SubscriptionsDelete("127.0.0.1:12345")
+		pubsub.SubscribedModeDelete("127.0.0.1:12345")
 	})
 }
 
 func TestPublishConcurrentAccess(t *testing.T) {
 	t.Run("publish handles concurrent subscriptions and publishing", func(t *testing.T) {
 		// Clean up any existing subscriptions
-		shared.SetSubscriptionsMap(make(map[string][]string))
-		shared.SetSubscribedModeMap(make(map[string]bool))
+		pubsub.SetSubscriptionsMap(make(map[string][]string))
+		pubsub.SetSubscribedModeMap(make(map[string]bool))
 
 		// Create multiple mock connections
 		connections := make([]*MockConnection, 10)
@@ -680,8 +681,8 @@ func TestPublishConcurrentAccess(t *testing.T) {
 		// Clean up
 		for _, conn := range connections {
 			shared.ConnectionsDelete(conn.remoteAddr)
-			shared.SubscriptionsDelete(conn.remoteAddr)
-			shared.SubscribedModeDelete(conn.remoteAddr)
+			pubsub.SubscriptionsDelete(conn.remoteAddr)
+			pubsub.SubscribedModeDelete(conn.remoteAddr)
 		}
 	})
 }

@@ -3,6 +3,7 @@ package commands
 import (
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -81,8 +82,8 @@ func TestPingInSubscribedMode(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("ping with message in subscribed mode", func(t *testing.T) {
@@ -121,15 +122,15 @@ func TestPingInSubscribedMode(t *testing.T) {
 		}
 
 		// Clean up
-		shared.SubscribedModeDelete(connID)
-		shared.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
 	})
 
 	t.Run("ping works normally when not in subscribed mode", func(t *testing.T) {
 		connID := "test-conn-normal"
 
 		// Should not be in subscribed mode initially
-		if shared.SubscribedModeGet(connID) {
+		if pubsub.SubscribedModeGet(connID) {
 			t.Error("Client should not be in subscribed mode initially")
 		}
 

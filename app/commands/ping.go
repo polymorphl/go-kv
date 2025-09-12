@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // ping handles the PING command.
 // Usage: PING [message]
@@ -9,7 +12,7 @@ import "github.com/codecrafters-io/redis-starter-go/app/shared"
 // This is typically used to test if the server is alive and responsive.
 func Ping(connID string, args []shared.Value) shared.Value {
 	// Check if client is in subscribed mode
-	if shared.SubscribedModeGet(connID) {
+	if pubsub.SubscribedModeGet(connID) {
 		// In subscribed mode, return array with "pong" and empty bulk string
 		return shared.Value{
 			Typ: "array",

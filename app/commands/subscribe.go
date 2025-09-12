@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -22,14 +23,14 @@ func Subscribe(connID string, args []shared.Value) shared.Value {
 	// Register subscriptions for all channels
 	for _, arg := range args {
 		channel := arg.Bulk
-		shared.SubscriptionsSet(connID, channel)
+		pubsub.SubscriptionsSet(connID, channel)
 	}
 
 	// Set client in subscribed mode
-	shared.SubscribedModeSet(connID)
+	pubsub.SubscribedModeSet(connID)
 
 	// Get current subscription count
-	channels, _ := shared.SubscriptionsGet(connID)
+	channels, _ := pubsub.SubscriptionsGet(connID)
 	subscriptionCount := len(channels)
 
 	// Return response for each subscribed channel

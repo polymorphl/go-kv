@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -18,7 +19,7 @@ import (
 //	UNSUBSCRIBE                         // Unsubscribe from all channels
 func Unsubscribe(connID string, args []shared.Value) shared.Value {
 	// Get current subscriptions
-	channels, hasSubscriptions := shared.SubscriptionsGet(connID)
+	channels, hasSubscriptions := pubsub.SubscriptionsGet(connID)
 	if !hasSubscriptions {
 		// Client has no subscriptions, return empty response
 		return shared.Value{Typ: "array", Array: []shared.Value{
@@ -31,8 +32,8 @@ func Unsubscribe(connID string, args []shared.Value) shared.Value {
 	// If no channels specified, unsubscribe from all
 	if len(args) == 0 {
 		// Unsubscribe from all channels
-		shared.SubscriptionsDelete(connID)
-		shared.SubscribedModeDelete(connID)
+		pubsub.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
 
 		// Return response for each previously subscribed channel
 		var responses []shared.Value
@@ -61,7 +62,7 @@ func Unsubscribe(connID string, args []shared.Value) shared.Value {
 	for _, arg := range args {
 		channel := arg.Bulk
 		// Remove channel from subscriptions if it exists
-		channels, _ := shared.SubscriptionsGet(connID)
+		channels, _ := pubsub.SubscriptionsGet(connID)
 		var newChannels []string
 		found := false
 		for _, existingChannel := range channels {
@@ -76,17 +77,17 @@ func Unsubscribe(connID string, args []shared.Value) shared.Value {
 		if found {
 			if len(newChannels) == 0 {
 				// No more subscriptions, remove from subscribed mode
-				shared.SubscriptionsDelete(connID)
-				shared.SubscribedModeDelete(connID)
+				pubsub.SubscriptionsDelete(connID)
+				pubsub.SubscribedModeDelete(connID)
 			} else {
 				// Update subscriptions with remaining channels
-				shared.SubscriptionsSetChannels(connID, newChannels)
+				pubsub.SubscriptionsSetChannels(connID, newChannels)
 			}
 		}
 	}
 
 	// Get remaining subscription count
-	remainingChannels, _ := shared.SubscriptionsGet(connID)
+	remainingChannels, _ := pubsub.SubscriptionsGet(connID)
 	remainingCount := len(remainingChannels)
 
 	// Return response for each unsubscribed channel

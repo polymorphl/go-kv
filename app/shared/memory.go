@@ -37,7 +37,7 @@ var CommandHandlers map[string]CommandHandler
 // ExecuteCommand executes a command using the shared handlers map
 func ExecuteCommand(command string, connID string, args []protocol.Value) protocol.Value {
 	// Check if client is in subscribed mode and command is not allowed
-	if SubscribedModeGet(connID) && !IsAllowedInSubscribedMode(command) {
+	if pubsub.SubscribedModeGet(connID) && !pubsub.IsAllowedInSubscribedMode(command) {
 		return protocol.Value{Typ: "error", Str: fmt.Sprintf("ERR Can't execute '%s': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context", command)}
 	}
 
@@ -85,84 +85,4 @@ func TransactionsDelete(connID string) {
 	transactionsMu.Lock()
 	delete(Transactions, connID)
 	transactionsMu.Unlock()
-}
-
-// Wrapper functions for pubsub functionality
-// These maintain backward compatibility while delegating to the pubsub package
-
-// SubscriptionsSet adds a subscription for a connection ID
-func SubscriptionsSet(connID string, channel string) {
-	pubsub.SubscriptionsSet(connID, channel)
-}
-
-// SubscriptionsGet gets all subscriptions for a connection ID
-func SubscriptionsGet(connID string) ([]string, bool) {
-	return pubsub.SubscriptionsGet(connID)
-}
-
-// SubscriptionsDelete deletes a subscription for a connection ID
-func SubscriptionsDelete(connID string) {
-	pubsub.SubscriptionsDelete(connID)
-}
-
-// SubscriptionsSetChannels sets the entire subscription list for a connection ID
-func SubscriptionsSetChannels(connID string, channels []string) {
-	pubsub.SubscriptionsSetChannels(connID, channels)
-}
-
-// SubscriptionsCountForChannel counts the number of clients subscribed to a specific channel
-func SubscriptionsCountForChannel(channel string) int {
-	return pubsub.SubscriptionsCountForChannel(channel)
-}
-
-// SubscriptionsGetSubscribersForChannel returns all connection IDs subscribed to a specific channel
-func SubscriptionsGetSubscribersForChannel(channel string) []string {
-	return pubsub.SubscriptionsGetSubscribersForChannel(channel)
-}
-
-// SendMessageToSubscribers sends a message to all subscribers of a channel
-func SendMessageToSubscribers(channel string, message string) int {
-	return pubsub.SendMessageToSubscribers(channel, message, ConnectionsGet, ConnectionsDelete, SubscriptionsDelete, SubscribedModeDelete)
-}
-
-// SubscribedMode helpers
-func SubscribedModeSet(connID string) {
-	pubsub.SubscribedModeSet(connID)
-}
-
-// SubscribedModeGet gets the subscribed mode for a connection ID
-func SubscribedModeGet(connID string) bool {
-	return pubsub.SubscribedModeGet(connID)
-}
-
-func SubscribedModeDelete(connID string) {
-	pubsub.SubscribedModeDelete(connID)
-}
-
-// IsAllowedInSubscribedMode checks if a command is allowed when client is in subscribed mode
-func IsAllowedInSubscribedMode(command string) bool {
-	return pubsub.IsAllowedInSubscribedMode(command)
-}
-
-// Test helper functions to access global variables for testing
-// These are needed for backward compatibility with existing tests
-
-// GetSubscriptionsMap returns the global subscriptions map for testing
-func GetSubscriptionsMap() map[string][]string {
-	return pubsub.Subscriptions
-}
-
-// GetSubscribedModeMap returns the global subscribed mode map for testing
-func GetSubscribedModeMap() map[string]bool {
-	return pubsub.SubscribedMode
-}
-
-// SetSubscriptionsMap sets the global subscriptions map for testing
-func SetSubscriptionsMap(subscriptions map[string][]string) {
-	pubsub.Subscriptions = subscriptions
-}
-
-// SetSubscribedModeMap sets the global subscribed mode map for testing
-func SetSubscribedModeMap(subscribedMode map[string]bool) {
-	pubsub.SubscribedMode = subscribedMode
 }

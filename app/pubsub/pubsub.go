@@ -173,3 +173,26 @@ func IsAllowedInSubscribedMode(command string) bool {
 	}
 	return allowedCommands[command]
 }
+
+// Test helper functions to access global variables for testing
+// These are needed for backward compatibility with existing tests
+
+// GetSubscriptionsMap returns the global subscriptions map for testing
+func GetSubscriptionsMap() map[string][]string {
+	return Subscriptions
+}
+
+// GetSubscribedModeMap returns the global subscribed mode map for testing
+func GetSubscribedModeMap() map[string]bool {
+	return SubscribedMode
+}
+
+// SetSubscriptionsMap sets the global subscriptions map for testing
+func SetSubscriptionsMap(subscriptions map[string][]string) {
+	Subscriptions = subscriptions
+}
+
+// SetSubscribedModeMap sets the global subscribed mode map for testing
+func SetSubscribedModeMap(subscribedMode map[string]bool) {
+	SubscribedMode = subscribedMode
+}
