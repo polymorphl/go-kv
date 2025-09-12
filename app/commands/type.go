@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // typeCmd handles the TYPE command.
 // Usage: TYPE key
@@ -22,7 +25,7 @@ func Type(connID string, args []shared.Value) shared.Value {
 	}
 
 	key := args[0].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	if !exists {
 		return shared.Value{Typ: "string", Str: "none"}

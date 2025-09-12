@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestLlen(t *testing.T) {
@@ -26,7 +27,7 @@ func TestLlen(t *testing.T) {
 				{Typ: "bulk", Bulk: "mylist"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c", "d", "e"},
 					Expires: 0,
 				}
@@ -34,7 +35,7 @@ func TestLlen(t *testing.T) {
 			expected: shared.Value{Typ: "integer", Num: 5},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LLEN")
 				}
@@ -50,7 +51,7 @@ func TestLlen(t *testing.T) {
 				{Typ: "bulk", Bulk: "emptylist"},
 			},
 			setup: func() {
-				shared.Memory["emptylist"] = shared.MemoryEntry{
+				server.Memory["emptylist"] = shared.MemoryEntry{
 					Array:   []string{},
 					Expires: 0,
 				}
@@ -58,7 +59,7 @@ func TestLlen(t *testing.T) {
 			expected: shared.Value{Typ: "integer", Num: 0},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["emptylist"]
+				entry, exists := server.Memory["emptylist"]
 				if !exists {
 					t.Error("List should still exist after LLEN")
 				}
@@ -84,7 +85,7 @@ func TestLlen(t *testing.T) {
 				{Typ: "bulk", Bulk: "singlelist"},
 			},
 			setup: func() {
-				shared.Memory["singlelist"] = shared.MemoryEntry{
+				server.Memory["singlelist"] = shared.MemoryEntry{
 					Array:   []string{"only"},
 					Expires: 0,
 				}
@@ -92,7 +93,7 @@ func TestLlen(t *testing.T) {
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["singlelist"]
+				entry, exists := server.Memory["singlelist"]
 				if !exists {
 					t.Error("List should still exist after LLEN")
 				}
@@ -113,7 +114,7 @@ func TestLlen(t *testing.T) {
 				for i := 0; i < 1000; i++ {
 					list[i] = fmt.Sprintf("item-%d", i)
 				}
-				shared.Memory["largelist"] = shared.MemoryEntry{
+				server.Memory["largelist"] = shared.MemoryEntry{
 					Array:   list,
 					Expires: 0,
 				}
@@ -121,7 +122,7 @@ func TestLlen(t *testing.T) {
 			expected: shared.Value{Typ: "integer", Num: 1000},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["largelist"]
+				entry, exists := server.Memory["largelist"]
 				if !exists {
 					t.Error("List should still exist after LLEN")
 				}
@@ -137,7 +138,7 @@ func TestLlen(t *testing.T) {
 				{Typ: "bulk", Bulk: "unicodelist"},
 			},
 			setup: func() {
-				shared.Memory["unicodelist"] = shared.MemoryEntry{
+				server.Memory["unicodelist"] = shared.MemoryEntry{
 					Array:   []string{"Hello 世界", "🌍", "测试", "end"},
 					Expires: 0,
 				}
@@ -145,7 +146,7 @@ func TestLlen(t *testing.T) {
 			expected: shared.Value{Typ: "integer", Num: 4},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["unicodelist"]
+				entry, exists := server.Memory["unicodelist"]
 				if !exists {
 					t.Error("List should still exist after LLEN")
 				}
@@ -201,7 +202,7 @@ func TestLlen(t *testing.T) {
 
 func BenchmarkLlen(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
 		Expires: 0,
 	}
@@ -219,7 +220,7 @@ func BenchmarkLlen(b *testing.B) {
 
 func BenchmarkLlenEmpty(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{},
 		Expires: 0,
 	}
@@ -256,7 +257,7 @@ func BenchmarkLlenLarge(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		list[i] = fmt.Sprintf("item-%d", i)
 	}
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   list,
 		Expires: 0,
 	}

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestLpush(t *testing.T) {
@@ -28,7 +29,7 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				_, exists := shared.Memory["newlist"]
+				_, exists := server.Memory["newlist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -53,7 +54,7 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 3},
 			verify: func() {
-				_, exists := shared.Memory["newlist"]
+				_, exists := server.Memory["newlist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -78,7 +79,7 @@ func TestLpush(t *testing.T) {
 				{Typ: "bulk", Bulk: "newfirst"},
 			},
 			setup: func() {
-				shared.Memory["existinglist"] = shared.MemoryEntry{
+				server.Memory["existinglist"] = shared.MemoryEntry{
 					Value:   "",
 					Array:   []string{"old1", "old2"},
 					Expires: 0,
@@ -86,7 +87,7 @@ func TestLpush(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "integer", Num: 3},
 			verify: func() {
-				_, exists := shared.Memory["existinglist"]
+				_, exists := server.Memory["existinglist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -110,7 +111,7 @@ func TestLpush(t *testing.T) {
 				{Typ: "bulk", Bulk: "first"},
 			},
 			setup: func() {
-				shared.Memory["emptylist"] = shared.MemoryEntry{
+				server.Memory["emptylist"] = shared.MemoryEntry{
 					Value:   "",
 					Array:   []string{},
 					Expires: 0,
@@ -118,7 +119,7 @@ func TestLpush(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				_, exists := shared.Memory["emptylist"]
+				_, exists := server.Memory["emptylist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -139,11 +140,11 @@ func TestLpush(t *testing.T) {
 				{Typ: "bulk", Bulk: "first"},
 			},
 			setup: func() {
-				shared.Memory["stringkey"] = shared.MemoryEntry{Value: "old string", Expires: 0}
+				server.Memory["stringkey"] = shared.MemoryEntry{Value: "old string", Expires: 0}
 			},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				_, exists := shared.Memory["stringkey"]
+				_, exists := server.Memory["stringkey"]
 				if !exists {
 					t.Error("Key should exist after LPUSH")
 				}
@@ -155,7 +156,7 @@ func TestLpush(t *testing.T) {
 					t.Errorf("Expected 'first', got '%s'", array[0])
 				}
 				// Original string value should be cleared
-				entry := shared.Memory["stringkey"]
+				entry := server.Memory["stringkey"]
 				if entry.Value != "" {
 					t.Errorf("Expected empty string value, got '%s'", entry.Value)
 				}
@@ -171,7 +172,7 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				_, exists := shared.Memory["emptylist"]
+				_, exists := server.Memory["emptylist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -195,7 +196,7 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 2},
 			verify: func() {
-				_, exists := shared.Memory["unicodelist"]
+				_, exists := server.Memory["unicodelist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -235,7 +236,7 @@ func TestLpush(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 5},
 			verify: func() {
-				_, exists := shared.Memory["largelist"]
+				_, exists := server.Memory["largelist"]
 				if !exists {
 					t.Error("List should exist after LPUSH")
 				}
@@ -312,7 +313,7 @@ func BenchmarkLpushMultiple(b *testing.B) {
 
 func BenchmarkLpushToExisting(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Value:   "",
 		Array:   []string{"existing1", "existing2"},
 		Expires: 0,

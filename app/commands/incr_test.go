@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestIncr(t *testing.T) {
@@ -27,7 +28,7 @@ func TestIncr(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				entry, exists := shared.Memory["newcounter"]
+				entry, exists := server.Memory["newcounter"]
 				if !exists {
 					t.Error("Key should exist after INCR")
 				}
@@ -43,11 +44,11 @@ func TestIncr(t *testing.T) {
 				{Typ: "bulk", Bulk: "existingcounter"},
 			},
 			setup: func() {
-				shared.Memory["existingcounter"] = shared.MemoryEntry{Value: "5", Expires: 0}
+				server.Memory["existingcounter"] = shared.MemoryEntry{Value: "5", Expires: 0}
 			},
 			expected: shared.Value{Typ: "integer", Num: 6},
 			verify: func() {
-				entry, exists := shared.Memory["existingcounter"]
+				entry, exists := server.Memory["existingcounter"]
 				if !exists {
 					t.Error("Key should exist after INCR")
 				}
@@ -63,11 +64,11 @@ func TestIncr(t *testing.T) {
 				{Typ: "bulk", Bulk: "zerocounter"},
 			},
 			setup: func() {
-				shared.Memory["zerocounter"] = shared.MemoryEntry{Value: "0", Expires: 0}
+				server.Memory["zerocounter"] = shared.MemoryEntry{Value: "0", Expires: 0}
 			},
 			expected: shared.Value{Typ: "integer", Num: 1},
 			verify: func() {
-				entry, exists := shared.Memory["zerocounter"]
+				entry, exists := server.Memory["zerocounter"]
 				if !exists {
 					t.Error("Key should exist after INCR")
 				}
@@ -83,11 +84,11 @@ func TestIncr(t *testing.T) {
 				{Typ: "bulk", Bulk: "negativecounter"},
 			},
 			setup: func() {
-				shared.Memory["negativecounter"] = shared.MemoryEntry{Value: "-5", Expires: 0}
+				server.Memory["negativecounter"] = shared.MemoryEntry{Value: "-5", Expires: 0}
 			},
 			expected: shared.Value{Typ: "integer", Num: -4},
 			verify: func() {
-				entry, exists := shared.Memory["negativecounter"]
+				entry, exists := server.Memory["negativecounter"]
 				if !exists {
 					t.Error("Key should exist after INCR")
 				}
@@ -103,11 +104,11 @@ func TestIncr(t *testing.T) {
 				{Typ: "bulk", Bulk: "largecounter"},
 			},
 			setup: func() {
-				shared.Memory["largecounter"] = shared.MemoryEntry{Value: "999999", Expires: 0}
+				server.Memory["largecounter"] = shared.MemoryEntry{Value: "999999", Expires: 0}
 			},
 			expected: shared.Value{Typ: "integer", Num: 1000000},
 			verify: func() {
-				entry, exists := shared.Memory["largecounter"]
+				entry, exists := server.Memory["largecounter"]
 				if !exists {
 					t.Error("Key should exist after INCR")
 				}
@@ -123,12 +124,12 @@ func TestIncr(t *testing.T) {
 				{Typ: "bulk", Bulk: "stringcounter"},
 			},
 			setup: func() {
-				shared.Memory["stringcounter"] = shared.MemoryEntry{Value: "hello", Expires: 0}
+				server.Memory["stringcounter"] = shared.MemoryEntry{Value: "hello", Expires: 0}
 			},
 			expected: shared.Value{Typ: "error", Str: "ERR value is not an integer or out of range"},
 			verify: func() {
 				// Value should remain unchanged after error
-				entry, exists := shared.Memory["stringcounter"]
+				entry, exists := server.Memory["stringcounter"]
 				if !exists {
 					t.Error("Key should still exist after error")
 				}
@@ -144,7 +145,7 @@ func TestIncr(t *testing.T) {
 				{Typ: "bulk", Bulk: "arraycounter"},
 			},
 			setup: func() {
-				shared.Memory["arraycounter"] = shared.MemoryEntry{
+				server.Memory["arraycounter"] = shared.MemoryEntry{
 					Value:   "",
 					Array:   []string{"item1", "item2"},
 					Expires: 0,
@@ -153,7 +154,7 @@ func TestIncr(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR value is not an integer or out of range"},
 			verify: func() {
 				// Array should remain unchanged
-				entry, exists := shared.Memory["arraycounter"]
+				entry, exists := server.Memory["arraycounter"]
 				if !exists {
 					t.Error("Key should still exist after error")
 				}
@@ -198,7 +199,7 @@ func TestIncr(t *testing.T) {
 
 func BenchmarkIncr(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchcounter"] = shared.MemoryEntry{Value: "0", Expires: 0}
+	server.Memory["benchcounter"] = shared.MemoryEntry{Value: "0", Expires: 0}
 
 	connID := "benchmark-conn"
 	args := []shared.Value{
@@ -227,7 +228,7 @@ func BenchmarkIncrNewKey(b *testing.B) {
 
 func BenchmarkIncrLargeNumber(b *testing.B) {
 	clearMemory()
-	shared.Memory["largecounter"] = shared.MemoryEntry{Value: "999999", Expires: 0}
+	server.Memory["largecounter"] = shared.MemoryEntry{Value: "999999", Expires: 0}
 
 	connID := "benchmark-conn"
 	args := []shared.Value{
@@ -242,7 +243,7 @@ func BenchmarkIncrLargeNumber(b *testing.B) {
 
 func BenchmarkIncrNegativeNumber(b *testing.B) {
 	clearMemory()
-	shared.Memory["negativecounter"] = shared.MemoryEntry{Value: "-1000", Expires: 0}
+	server.Memory["negativecounter"] = shared.MemoryEntry{Value: "-1000", Expires: 0}
 
 	connID := "benchmark-conn"
 	args := []shared.Value{

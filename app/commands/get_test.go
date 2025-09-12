@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestGet(t *testing.T) {
@@ -25,7 +26,7 @@ func TestGet(t *testing.T) {
 				{Typ: "bulk", Bulk: "mykey"},
 			},
 			setup: func() {
-				shared.Memory["mykey"] = shared.MemoryEntry{Value: "Hello World", Expires: 0}
+				server.Memory["mykey"] = shared.MemoryEntry{Value: "Hello World", Expires: 0}
 			},
 			expected: shared.Value{Typ: "string", Str: "Hello World"},
 		},
@@ -45,7 +46,7 @@ func TestGet(t *testing.T) {
 				{Typ: "bulk", Bulk: "expiredkey"},
 			},
 			setup: func() {
-				shared.Memory["expiredkey"] = shared.MemoryEntry{
+				server.Memory["expiredkey"] = shared.MemoryEntry{
 					Value:   "expired value",
 					Expires: time.Now().UnixMilli() - 1000, // Expired 1 second ago
 				}
@@ -59,7 +60,7 @@ func TestGet(t *testing.T) {
 				{Typ: "bulk", Bulk: "arraykey"},
 			},
 			setup: func() {
-				shared.Memory["arraykey"] = shared.MemoryEntry{
+				server.Memory["arraykey"] = shared.MemoryEntry{
 					Value:   "",
 					Array:   []string{"item1", "item2"},
 					Expires: 0,
@@ -74,7 +75,7 @@ func TestGet(t *testing.T) {
 				{Typ: "bulk", Bulk: "emptykey"},
 			},
 			setup: func() {
-				shared.Memory["emptykey"] = shared.MemoryEntry{Value: "", Expires: 0}
+				server.Memory["emptykey"] = shared.MemoryEntry{Value: "", Expires: 0}
 			},
 			expected: shared.Value{Typ: "string", Str: ""},
 		},
@@ -111,7 +112,7 @@ func TestGet(t *testing.T) {
 
 func BenchmarkGet(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchkey"] = shared.MemoryEntry{Value: "Hello World", Expires: 0}
+	server.Memory["benchkey"] = shared.MemoryEntry{Value: "Hello World", Expires: 0}
 
 	connID := "benchmark-conn"
 	args := []shared.Value{
@@ -140,7 +141,7 @@ func BenchmarkGetNonExistent(b *testing.B) {
 
 func BenchmarkGetExpired(b *testing.B) {
 	clearMemory()
-	shared.Memory["expiredkey"] = shared.MemoryEntry{
+	server.Memory["expiredkey"] = shared.MemoryEntry{
 		Value:   "expired value",
 		Expires: time.Now().UnixMilli() - 1000,
 	}

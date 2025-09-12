@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // Keys handles the KEYS command.
@@ -33,7 +34,7 @@ func Keys(connID string, args []shared.Value) shared.Value {
 	var matchingKeys []string
 
 	// Iterate through all keys in memory
-	for key, entry := range shared.Memory {
+	for key, entry := range server.Memory {
 		// Check if key has expired and skip it if so
 		if entry.Expires > 0 && time.Now().UnixMilli() > entry.Expires {
 			continue

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestXadd(t *testing.T) {
@@ -30,7 +31,7 @@ func TestXadd(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "bulk", Bulk: "1-0"},
 			verify: func() {
-				entry, exists := shared.Memory["mystream"]
+				entry, exists := server.Memory["mystream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -57,7 +58,7 @@ func TestXadd(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "bulk", Bulk: "*"}, // Will be replaced with actual ID
 			verify: func() {
-				entry, exists := shared.Memory["mystream"]
+				entry, exists := server.Memory["mystream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -90,7 +91,7 @@ func TestXadd(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "bulk", Bulk: "2-0"},
 			verify: func() {
-				entry, exists := shared.Memory["mystream"]
+				entry, exists := server.Memory["mystream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -119,7 +120,7 @@ func TestXadd(t *testing.T) {
 				{Typ: "bulk", Bulk: "World"},
 			},
 			setup: func() {
-				shared.Memory["existingstream"] = shared.MemoryEntry{
+				server.Memory["existingstream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 					},
@@ -128,7 +129,7 @@ func TestXadd(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "bulk", Bulk: "3-0"},
 			verify: func() {
-				entry, exists := shared.Memory["existingstream"]
+				entry, exists := server.Memory["existingstream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -156,7 +157,7 @@ func TestXadd(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR The ID specified in XADD must be greater than 0-0"},
 			verify: func() {
 				// Stream should not exist after error
-				if _, exists := shared.Memory["mystream"]; exists {
+				if _, exists := server.Memory["mystream"]; exists {
 					t.Error("Stream should not exist after error")
 				}
 			},
@@ -171,7 +172,7 @@ func TestXadd(t *testing.T) {
 				{Typ: "bulk", Bulk: "Old"},
 			},
 			setup: func() {
-				shared.Memory["existingstream"] = shared.MemoryEntry{
+				server.Memory["existingstream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "2-0", Data: map[string]string{"message": "New"}},
 					},
@@ -181,7 +182,7 @@ func TestXadd(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR The ID specified in XADD is equal or smaller than the target stream top item"},
 			verify: func() {
 				// Stream should remain unchanged
-				entry, exists := shared.Memory["existingstream"]
+				entry, exists := server.Memory["existingstream"]
 				if !exists {
 					t.Error("Stream should still exist after error")
 				}
@@ -202,7 +203,7 @@ func TestXadd(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "bulk", Bulk: "1000-0"},
 			verify: func() {
-				entry, exists := shared.Memory["mystream"]
+				entry, exists := server.Memory["mystream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -224,7 +225,7 @@ func TestXadd(t *testing.T) {
 				{Typ: "bulk", Bulk: "Second"},
 			},
 			setup: func() {
-				shared.Memory["existingstream"] = shared.MemoryEntry{
+				server.Memory["existingstream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1000-0", Data: map[string]string{"message": "First"}},
 					},
@@ -233,7 +234,7 @@ func TestXadd(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "bulk", Bulk: "1000-1"},
 			verify: func() {
-				entry, exists := shared.Memory["existingstream"]
+				entry, exists := server.Memory["existingstream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -268,7 +269,7 @@ func TestXadd(t *testing.T) {
 			setup:    func() {},
 			expected: shared.Value{Typ: "bulk", Bulk: "4-0"},
 			verify: func() {
-				entry, exists := shared.Memory["mystream"]
+				entry, exists := server.Memory["mystream"]
 				if !exists {
 					t.Error("Stream should exist after XADD")
 				}
@@ -369,7 +370,7 @@ func BenchmarkXaddMultipleFields(b *testing.B) {
 
 func BenchmarkXaddToExistingStream(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "existing"}},
 		},

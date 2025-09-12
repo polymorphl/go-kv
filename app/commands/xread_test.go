@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestXread(t *testing.T) {
@@ -27,7 +28,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "0-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -60,7 +61,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "1-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -96,13 +97,13 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "0-0"},
 			},
 			setup: func() {
-				shared.Memory["stream1"] = shared.MemoryEntry{
+				server.Memory["stream1"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 					},
 					Expires: 0,
 				}
-				shared.Memory["stream2"] = shared.MemoryEntry{
+				server.Memory["stream2"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
 					},
@@ -133,7 +134,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "$"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -175,7 +176,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "0-0"},
 			},
 			setup: func() {
-				shared.Memory["emptystream"] = shared.MemoryEntry{
+				server.Memory["emptystream"] = shared.MemoryEntry{
 					Stream:  []shared.StreamEntry{},
 					Expires: 0,
 				}
@@ -194,7 +195,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "0-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 					},
@@ -227,7 +228,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "$"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 					},
@@ -269,7 +270,7 @@ func TestXread(t *testing.T) {
 				{Typ: "bulk", Bulk: "0-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{
 							"消息": "你好世界 🌍",
@@ -316,7 +317,7 @@ func TestXread(t *testing.T) {
 
 func BenchmarkXread(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 			{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -342,14 +343,14 @@ func BenchmarkXread(b *testing.B) {
 
 func BenchmarkXreadMultipleStreams(b *testing.B) {
 	clearMemory()
-	shared.Memory["stream1"] = shared.MemoryEntry{
+	server.Memory["stream1"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 			{ID: "2-0", Data: map[string]string{"message": "World"}},
 		},
 		Expires: 0,
 	}
-	shared.Memory["stream2"] = shared.MemoryEntry{
+	server.Memory["stream2"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Test"}},
 			{ID: "2-0", Data: map[string]string{"message": "Extra"}},
@@ -374,7 +375,7 @@ func BenchmarkXreadMultipleStreams(b *testing.B) {
 
 func BenchmarkXreadWithDollar(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 			{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -413,7 +414,7 @@ func BenchmarkXreadNonExistent(b *testing.B) {
 
 func BenchmarkXreadWithBlocking(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 		},

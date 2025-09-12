@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestLrange(t *testing.T) {
@@ -28,7 +29,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "2"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c", "d", "e"},
 					Expires: 0,
 				}
@@ -40,7 +41,7 @@ func TestLrange(t *testing.T) {
 			}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -58,7 +59,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "-1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -70,7 +71,7 @@ func TestLrange(t *testing.T) {
 			}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -88,7 +89,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "-1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c", "d", "e"},
 					Expires: 0,
 				}
@@ -100,7 +101,7 @@ func TestLrange(t *testing.T) {
 			}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -118,7 +119,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -128,7 +129,7 @@ func TestLrange(t *testing.T) {
 			}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -146,7 +147,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -154,7 +155,7 @@ func TestLrange(t *testing.T) {
 			expected: shared.Value{Typ: "array", Array: []shared.Value{}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -172,7 +173,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "15"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -180,7 +181,7 @@ func TestLrange(t *testing.T) {
 			expected: shared.Value{Typ: "array", Array: []shared.Value{}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -210,7 +211,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["emptylist"] = shared.MemoryEntry{
+				server.Memory["emptylist"] = shared.MemoryEntry{
 					Array:   []string{},
 					Expires: 0,
 				}
@@ -218,7 +219,7 @@ func TestLrange(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "WRONGTYPE Operation against a key holding the wrong kind of value"},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["emptylist"]
+				entry, exists := server.Memory["emptylist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -236,7 +237,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["stringkey"] = shared.MemoryEntry{
+				server.Memory["stringkey"] = shared.MemoryEntry{
 					Value:   "hello",
 					Expires: 0,
 				}
@@ -244,7 +245,7 @@ func TestLrange(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "WRONGTYPE Operation against a key holding the wrong kind of value"},
 			verify: func() {
 				// Verify the string value is unchanged
-				entry, exists := shared.Memory["stringkey"]
+				entry, exists := server.Memory["stringkey"]
 				if !exists {
 					t.Error("String should still exist after error")
 				}
@@ -262,7 +263,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -270,7 +271,7 @@ func TestLrange(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR value is not an integer or out of range"},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after error")
 				}
@@ -288,7 +289,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "invalid"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -296,7 +297,7 @@ func TestLrange(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR value is not an integer or out of range"},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after error")
 				}
@@ -325,7 +326,7 @@ func TestLrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["unicodelist"] = shared.MemoryEntry{
+				server.Memory["unicodelist"] = shared.MemoryEntry{
 					Array:   []string{"Hello 世界", "🌍", "测试"},
 					Expires: 0,
 				}
@@ -336,7 +337,7 @@ func TestLrange(t *testing.T) {
 			}},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["unicodelist"]
+				entry, exists := server.Memory["unicodelist"]
 				if !exists {
 					t.Error("List should still exist after LRANGE")
 				}
@@ -381,7 +382,7 @@ func TestLrange(t *testing.T) {
 
 func BenchmarkLrange(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
 		Expires: 0,
 	}
@@ -401,7 +402,7 @@ func BenchmarkLrange(b *testing.B) {
 
 func BenchmarkLrangeAll(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
 		Expires: 0,
 	}
@@ -421,7 +422,7 @@ func BenchmarkLrangeAll(b *testing.B) {
 
 func BenchmarkLrangeNegativeIndices(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
 		Expires: 0,
 	}
@@ -462,7 +463,7 @@ func BenchmarkLrangeLargeList(b *testing.B) {
 	for i := 0; i < 1000; i++ {
 		list[i] = fmt.Sprintf("item-%d", i)
 	}
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   list,
 		Expires: 0,
 	}

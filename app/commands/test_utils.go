@@ -8,8 +8,8 @@ import (
 
 // clearMemory clears all entries from the shared memory for testing
 func clearMemory() {
-	for k := range shared.Memory {
-		delete(shared.Memory, k)
+	for k := range server.Memory {
+		delete(server.Memory, k)
 	}
 }
 
@@ -22,7 +22,7 @@ func clearTransactions() {
 
 // getListAsArray gets list as array for testing (works with both linked list and array)
 func getListAsArray(key string) []string {
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 	if !exists {
 		return nil
 	}

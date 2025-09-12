@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // StreamID represents a parsed Redis stream ID with timestamp and sequence
@@ -228,7 +229,7 @@ func Xadd(connID string, args []shared.Value) shared.Value {
 
 	key := args[0].Bulk
 	id := args[1].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	var actualID string
 	var streamIDs []string
@@ -253,7 +254,7 @@ func Xadd(connID string, args []shared.Value) shared.Value {
 	} else {
 		entry.Stream = append(entry.Stream, streamEntry)
 	}
-	shared.Memory[key] = entry
+	server.Memory[key] = entry
 
 	return shared.Value{Typ: "bulk", Bulk: actualID}
 }

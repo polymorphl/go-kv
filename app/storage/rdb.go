@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -48,7 +49,7 @@ func ParseRDBData(data []byte) error {
 	}
 
 	// Clear existing memory before loading RDB data
-	shared.Memory = make(map[string]shared.MemoryEntry)
+	server.Memory = make(map[string]shared.MemoryEntry)
 
 	parser := NewRDBParser(data)
 	return parser.parse()
@@ -290,7 +291,7 @@ func (p *RDBParser) parseKeyValue(opcode byte) error {
 	}
 
 	// Store in memory
-	shared.Memory[key] = shared.MemoryEntry{
+	server.Memory[key] = shared.MemoryEntry{
 		Value:   value,
 		Expires: expires,
 	}

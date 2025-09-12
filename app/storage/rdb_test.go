@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -106,7 +107,7 @@ func TestRDBParser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear memory before each test
-			shared.Memory = make(map[string]shared.MemoryEntry)
+			server.Memory = make(map[string]shared.MemoryEntry)
 
 			var data []byte
 			var err error
@@ -134,7 +135,7 @@ func TestRDBParser(t *testing.T) {
 
 			// Check that all expected keys are present
 			for expectedKey, expectedValue := range tt.expected {
-				entry, exists := shared.Memory[expectedKey]
+				entry, exists := server.Memory[expectedKey]
 				if !exists {
 					t.Errorf("Expected key '%s' not found in memory", expectedKey)
 					continue
@@ -145,9 +146,9 @@ func TestRDBParser(t *testing.T) {
 			}
 
 			// Check that no unexpected keys are present
-			if len(shared.Memory) != len(tt.expected) {
-				t.Errorf("Expected %d keys in memory, got %d", len(tt.expected), len(shared.Memory))
-				for key, entry := range shared.Memory {
+			if len(server.Memory) != len(tt.expected) {
+				t.Errorf("Expected %d keys in memory, got %d", len(tt.expected), len(server.Memory))
+				for key, entry := range server.Memory {
 					t.Errorf("Unexpected key: %s = %s", key, entry.Value)
 				}
 			}
@@ -195,7 +196,7 @@ func TestLoadRDBFile(t *testing.T) {
 			tempFile := filepath.Join(tempDir, "test.rdb")
 
 			// Clear memory before each test
-			shared.Memory = make(map[string]shared.MemoryEntry)
+			server.Memory = make(map[string]shared.MemoryEntry)
 
 			// Setup file if needed
 			if tt.setupFile {
@@ -232,7 +233,7 @@ func TestLoadRDBFile(t *testing.T) {
 
 			// Check that all expected keys are present
 			for expectedKey, expectedValue := range tt.expected {
-				entry, exists := shared.Memory[expectedKey]
+				entry, exists := server.Memory[expectedKey]
 				if !exists {
 					t.Errorf("Expected key '%s' not found in memory", expectedKey)
 					continue
@@ -243,9 +244,9 @@ func TestLoadRDBFile(t *testing.T) {
 			}
 
 			// Check that no unexpected keys are present
-			if len(shared.Memory) != len(tt.expected) {
-				t.Errorf("Expected %d keys in memory, got %d", len(tt.expected), len(shared.Memory))
-				for key, entry := range shared.Memory {
+			if len(server.Memory) != len(tt.expected) {
+				t.Errorf("Expected %d keys in memory, got %d", len(tt.expected), len(server.Memory))
+				for key, entry := range server.Memory {
 					t.Errorf("Unexpected key: %s = %s", key, entry.Value)
 				}
 			}
@@ -274,7 +275,7 @@ func TestRDBParserEdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear memory before each test
-			shared.Memory = make(map[string]shared.MemoryEntry)
+			server.Memory = make(map[string]shared.MemoryEntry)
 
 			data, err := hex.DecodeString(tt.hexData)
 			if err != nil {
@@ -314,7 +315,7 @@ func TestRDBParserLengthEncoding(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Clear memory before each test
-			shared.Memory = make(map[string]shared.MemoryEntry)
+			server.Memory = make(map[string]shared.MemoryEntry)
 
 			data, err := hex.DecodeString(tt.hexData)
 			if err != nil {
@@ -329,7 +330,7 @@ func TestRDBParserLengthEncoding(t *testing.T) {
 
 			// Check that all expected keys are present
 			for expectedKey, expectedValue := range tt.expected {
-				entry, exists := shared.Memory[expectedKey]
+				entry, exists := server.Memory[expectedKey]
 				if !exists {
 					t.Errorf("Expected key '%s' not found in memory", expectedKey)
 					continue
@@ -352,7 +353,7 @@ func BenchmarkRDBParser(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		shared.Memory = make(map[string]shared.MemoryEntry)
+		server.Memory = make(map[string]shared.MemoryEntry)
 		ParseRDBData(data)
 	}
 }
@@ -367,7 +368,7 @@ func BenchmarkRDBParserLarge(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		shared.Memory = make(map[string]shared.MemoryEntry)
+		server.Memory = make(map[string]shared.MemoryEntry)
 		ParseRDBData(data)
 	}
 }

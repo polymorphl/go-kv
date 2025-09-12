@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestType(t *testing.T) {
@@ -25,7 +26,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "stringkey"},
 			},
 			setup: func() {
-				shared.Memory["stringkey"] = shared.MemoryEntry{Value: "hello world", Expires: 0}
+				server.Memory["stringkey"] = shared.MemoryEntry{Value: "hello world", Expires: 0}
 			},
 			expected: shared.Value{Typ: "string", Str: "string"},
 		},
@@ -36,7 +37,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "listkey"},
 			},
 			setup: func() {
-				shared.Memory["listkey"] = shared.MemoryEntry{
+				server.Memory["listkey"] = shared.MemoryEntry{
 					Value:   "",
 					Array:   []string{"item1", "item2", "item3"},
 					Expires: 0,
@@ -51,7 +52,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "streamkey"},
 			},
 			setup: func() {
-				shared.Memory["streamkey"] = shared.MemoryEntry{
+				server.Memory["streamkey"] = shared.MemoryEntry{
 					Value: "",
 					Stream: []shared.StreamEntry{
 						{ID: "1234567890-0", Data: map[string]string{"field1": "value1", "field2": "value2"}},
@@ -77,7 +78,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "emptykey"},
 			},
 			setup: func() {
-				shared.Memory["emptykey"] = shared.MemoryEntry{Value: "", Expires: 0}
+				server.Memory["emptykey"] = shared.MemoryEntry{Value: "", Expires: 0}
 			},
 			expected: shared.Value{Typ: "string", Str: "none"},
 		},
@@ -88,7 +89,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "emptylist"},
 			},
 			setup: func() {
-				shared.Memory["emptylist"] = shared.MemoryEntry{
+				server.Memory["emptylist"] = shared.MemoryEntry{
 					Value:   "",
 					Array:   []string{},
 					Expires: 0,
@@ -103,7 +104,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "emptystream"},
 			},
 			setup: func() {
-				shared.Memory["emptystream"] = shared.MemoryEntry{
+				server.Memory["emptystream"] = shared.MemoryEntry{
 					Value:   "",
 					Stream:  []shared.StreamEntry{},
 					Expires: 0,
@@ -118,7 +119,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "expiredkey"},
 			},
 			setup: func() {
-				shared.Memory["expiredkey"] = shared.MemoryEntry{
+				server.Memory["expiredkey"] = shared.MemoryEntry{
 					Value:   "expired value",
 					Expires: time.Now().UnixMilli() - 1000, // Expired 1 second ago
 				}
@@ -139,7 +140,7 @@ func TestType(t *testing.T) {
 				{Typ: "bulk", Bulk: "unicodekey"},
 			},
 			setup: func() {
-				shared.Memory["unicodekey"] = shared.MemoryEntry{Value: "Hello 世界 🌍", Expires: 0}
+				server.Memory["unicodekey"] = shared.MemoryEntry{Value: "Hello 世界 🌍", Expires: 0}
 			},
 			expected: shared.Value{Typ: "string", Str: "string"},
 		},
@@ -169,7 +170,7 @@ func TestType(t *testing.T) {
 
 func BenchmarkType(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchkey"] = shared.MemoryEntry{Value: "Hello World", Expires: 0}
+	server.Memory["benchkey"] = shared.MemoryEntry{Value: "Hello World", Expires: 0}
 
 	connID := "benchmark-conn"
 	args := []shared.Value{
@@ -184,7 +185,7 @@ func BenchmarkType(b *testing.B) {
 
 func BenchmarkTypeList(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Value:   "",
 		Array:   []string{"item1", "item2", "item3"},
 		Expires: 0,
@@ -203,7 +204,7 @@ func BenchmarkTypeList(b *testing.B) {
 
 func BenchmarkTypeStream(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Value: "",
 		Stream: []shared.StreamEntry{
 			{ID: "1234567890-0", Data: map[string]string{"field1": "value1", "field2": "value2"}},

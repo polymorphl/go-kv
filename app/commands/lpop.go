@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // lpop handles the LPOP command.
@@ -39,7 +40,7 @@ func Lpop(connID string, args []shared.Value) shared.Value {
 	}
 
 	key := args[0].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	if !exists {
 		return shared.Value{Typ: "null", Str: ""}
@@ -94,7 +95,7 @@ func Lpop(connID string, args []shared.Value) shared.Value {
 			value = entry.Array[0]
 			entry.Array = entry.Array[1:]
 		}
-		shared.Memory[key] = entry
+		server.Memory[key] = entry
 		return shared.Value{Typ: "string", Str: value}
 	}
 
@@ -112,7 +113,7 @@ func Lpop(connID string, args []shared.Value) shared.Value {
 		}
 		entry.Array = entry.Array[count:]
 	}
-	shared.Memory[key] = entry
+	server.Memory[key] = entry
 
 	return shared.Value{Typ: "array", Array: result}
 }

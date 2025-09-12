@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // blpop handles the BLPOP command.
@@ -46,7 +47,7 @@ func Blpop(connID string, args []shared.Value) shared.Value {
 	checkAndPop := func() *shared.Value {
 		for i := 0; i < len(args)-1; i++ {
 			key := args[i].Bulk
-			entry, exists := shared.Memory[key]
+			entry, exists := server.Memory[key]
 
 			if exists {
 				var value string
@@ -64,7 +65,7 @@ func Blpop(connID string, args []shared.Value) shared.Value {
 				}
 
 				if found {
-					shared.Memory[key] = entry
+					server.Memory[key] = entry
 
 					// Return [key, value] array
 					return &shared.Value{Typ: "array", Array: []shared.Value{

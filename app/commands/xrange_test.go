@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestXrange(t *testing.T) {
@@ -28,7 +29,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "+"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -59,7 +60,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "3-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -97,7 +98,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "+"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -128,7 +129,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "2-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 						{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -171,7 +172,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "+"},
 			},
 			setup: func() {
-				shared.Memory["emptystream"] = shared.MemoryEntry{
+				server.Memory["emptystream"] = shared.MemoryEntry{
 					Stream:  []shared.StreamEntry{},
 					Expires: 0,
 				}
@@ -188,7 +189,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "1-0"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 					},
@@ -217,7 +218,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "+"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{
 							"temperature": "25",
@@ -265,7 +266,7 @@ func TestXrange(t *testing.T) {
 				{Typ: "bulk", Bulk: "+"},
 			},
 			setup: func() {
-				shared.Memory["mystream"] = shared.MemoryEntry{
+				server.Memory["mystream"] = shared.MemoryEntry{
 					Stream: []shared.StreamEntry{
 						{ID: "1-0", Data: map[string]string{
 							"消息": "你好世界 🌍",
@@ -312,7 +313,7 @@ func TestXrange(t *testing.T) {
 
 func BenchmarkXrange(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 			{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -338,7 +339,7 @@ func BenchmarkXrange(b *testing.B) {
 
 func BenchmarkXrangeSpecificRange(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream: []shared.StreamEntry{
 			{ID: "1-0", Data: map[string]string{"message": "Hello"}},
 			{ID: "2-0", Data: map[string]string{"message": "World"}},
@@ -391,7 +392,7 @@ func BenchmarkXrangeLargeStream(b *testing.B) {
 			},
 		}
 	}
-	shared.Memory["benchstream"] = shared.MemoryEntry{
+	server.Memory["benchstream"] = shared.MemoryEntry{
 		Stream:  stream,
 		Expires: 0,
 	}

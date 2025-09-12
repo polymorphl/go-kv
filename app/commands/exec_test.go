@@ -5,6 +5,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestExec(t *testing.T) {
@@ -86,7 +87,7 @@ func TestExec(t *testing.T) {
 					t.Error("Transaction should be cleared after EXEC")
 				}
 				// Command should have been executed
-				entry, exists := shared.Memory["key1"]
+				entry, exists := server.Memory["key1"]
 				if !exists {
 					t.Error("Key should exist after EXEC")
 				}
@@ -119,7 +120,7 @@ func TestExec(t *testing.T) {
 					t.Error("Transaction should be cleared after EXEC")
 				}
 				// Commands should have been executed
-				entry1, exists := shared.Memory["key1"]
+				entry1, exists := server.Memory["key1"]
 				if !exists {
 					t.Error("Key1 should exist after EXEC")
 				}
@@ -127,7 +128,7 @@ func TestExec(t *testing.T) {
 					t.Errorf("Expected value 'value1', got '%s'", entry1.Value)
 				}
 
-				entry2, exists := shared.Memory["key2"]
+				entry2, exists := server.Memory["key2"]
 				if !exists {
 					t.Error("Key2 should exist after EXEC")
 				}
@@ -173,7 +174,7 @@ func TestExec(t *testing.T) {
 					t.Error("Transaction should be cleared after EXEC")
 				}
 				// Key should not exist due to error
-				if _, exists := shared.Memory["key1"]; exists {
+				if _, exists := server.Memory["key1"]; exists {
 					t.Error("Key should not exist after error")
 				}
 			},
@@ -254,7 +255,7 @@ func TestExecTransactionClearing(t *testing.T) {
 		t.Errorf("EXEC should return array with one result, got %v", result)
 	}
 
-	entry, exists := shared.Memory["testkey"]
+	entry, exists := server.Memory["testkey"]
 	if !exists {
 		t.Error("Key should exist after EXEC")
 	}
@@ -306,7 +307,7 @@ func TestExecMultipleConnections(t *testing.T) {
 	}
 
 	// Verify both commands were executed
-	entry1, exists := shared.Memory["key1"]
+	entry1, exists := server.Memory["key1"]
 	if !exists {
 		t.Error("Key1 should exist after EXEC")
 	}
@@ -314,7 +315,7 @@ func TestExecMultipleConnections(t *testing.T) {
 		t.Errorf("Expected value 'value1', got '%s'", entry1.Value)
 	}
 
-	entry2, exists := shared.Memory["key2"]
+	entry2, exists := server.Memory["key2"]
 	if !exists {
 		t.Error("Key2 should exist after EXEC")
 	}

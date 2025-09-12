@@ -17,6 +17,9 @@ var StoreState = &shared.State{
 	ConfigDbfilename: "rdbfile",
 }
 
+// Memory is the global in-memory database that stores all key-value pairs.
+var Memory = make(map[string]shared.MemoryEntry)
+
 // InitializeSharedState initializes the shared.StoreState with our server state
 func InitializeSharedState() {
 	shared.StoreState = StoreState

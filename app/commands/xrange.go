@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // compareStrings performs a simple string comparison.
@@ -125,7 +126,7 @@ func Xrange(connID string, args []shared.Value) shared.Value {
 	start := args[1].Bulk
 	end := args[2].Bulk
 
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 	if !exists {
 		// Empty stream - return empty array
 		return shared.Value{Typ: "array", Array: []shared.Value{}}

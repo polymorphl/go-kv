@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // llen handles the LLEN command.
 // Usage: LLEN key
@@ -24,7 +27,7 @@ func Llen(connID string, args []shared.Value) shared.Value {
 	}
 
 	key := args[0].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	if !exists {
 		return shared.Value{Typ: "integer", Num: 0}

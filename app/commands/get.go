@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // get handles the GET command.
@@ -24,7 +25,7 @@ func Get(connID string, args []shared.Value) shared.Value {
 	}
 
 	key := args[0].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	if !exists {
 		return shared.Value{Typ: "null", Str: ""}
@@ -32,7 +33,7 @@ func Get(connID string, args []shared.Value) shared.Value {
 
 	// Check if key has expired and remove it if so
 	if entry.Expires > 0 && time.Now().UnixMilli() > entry.Expires {
-		delete(shared.Memory, key)
+		delete(server.Memory, key)
 		return shared.Value{Typ: "null", Str: ""}
 	}
 

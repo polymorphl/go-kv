@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestBlpop(t *testing.T) {
@@ -26,7 +27,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b", "c"},
 					Expires: 0,
 				}
@@ -36,7 +37,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "string", Str: "a"},
 			}},
 			verify: func() {
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after BLPOP")
 				}
@@ -57,11 +58,11 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["list1"] = shared.MemoryEntry{
+				server.Memory["list1"] = shared.MemoryEntry{
 					Array:   []string{"first"},
 					Expires: 0,
 				}
-				shared.Memory["list2"] = shared.MemoryEntry{
+				server.Memory["list2"] = shared.MemoryEntry{
 					Array:   []string{"second"},
 					Expires: 0,
 				}
@@ -72,7 +73,7 @@ func TestBlpop(t *testing.T) {
 			}},
 			verify: func() {
 				// Verify list1 is popped from
-				entry1, exists := shared.Memory["list1"]
+				entry1, exists := server.Memory["list1"]
 				if !exists {
 					t.Error("List1 should still exist after BLPOP")
 				}
@@ -81,7 +82,7 @@ func TestBlpop(t *testing.T) {
 				}
 
 				// Verify list2 is unchanged
-				entry2, exists := shared.Memory["list2"]
+				entry2, exists := server.Memory["list2"]
 				if !exists {
 					t.Error("List2 should still exist after BLPOP")
 				}
@@ -98,7 +99,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "0.1"}, // 100ms timeout
 			},
 			setup: func() {
-				shared.Memory["emptylist"] = shared.MemoryEntry{
+				server.Memory["emptylist"] = shared.MemoryEntry{
 					Array:   []string{},
 					Expires: 0,
 				}
@@ -106,7 +107,7 @@ func TestBlpop(t *testing.T) {
 			expected: shared.Value{Typ: "null_array", Str: ""},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["emptylist"]
+				entry, exists := server.Memory["emptylist"]
 				if !exists {
 					t.Error("List should still exist after BLPOP timeout")
 				}
@@ -134,7 +135,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "0.001"}, // 1ms timeout
 			},
 			setup: func() {
-				shared.Memory["emptylist"] = shared.MemoryEntry{
+				server.Memory["emptylist"] = shared.MemoryEntry{
 					Array:   []string{},
 					Expires: 0,
 				}
@@ -142,7 +143,7 @@ func TestBlpop(t *testing.T) {
 			expected: shared.Value{Typ: "null_array", Str: ""},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["emptylist"]
+				entry, exists := server.Memory["emptylist"]
 				if !exists {
 					t.Error("List should still exist after BLPOP")
 				}
@@ -159,7 +160,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "0.5"}, // 500ms timeout
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b"},
 					Expires: 0,
 				}
@@ -169,7 +170,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "string", Str: "a"},
 			}},
 			verify: func() {
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after BLPOP")
 				}
@@ -186,7 +187,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "-1"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b"},
 					Expires: 0,
 				}
@@ -194,7 +195,7 @@ func TestBlpop(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR timeout is not a float or out of range"},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after error")
 				}
@@ -211,7 +212,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "invalid"},
 			},
 			setup: func() {
-				shared.Memory["mylist"] = shared.MemoryEntry{
+				server.Memory["mylist"] = shared.MemoryEntry{
 					Array:   []string{"a", "b"},
 					Expires: 0,
 				}
@@ -219,7 +220,7 @@ func TestBlpop(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR timeout is not a float or out of range"},
 			verify: func() {
 				// Verify the list is unchanged
-				entry, exists := shared.Memory["mylist"]
+				entry, exists := server.Memory["mylist"]
 				if !exists {
 					t.Error("List should still exist after error")
 				}
@@ -246,7 +247,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "bulk", Bulk: "1"},
 			},
 			setup: func() {
-				shared.Memory["unicodelist"] = shared.MemoryEntry{
+				server.Memory["unicodelist"] = shared.MemoryEntry{
 					Array:   []string{"Hello 世界", "🌍", "测试"},
 					Expires: 0,
 				}
@@ -256,7 +257,7 @@ func TestBlpop(t *testing.T) {
 				{Typ: "string", Str: "Hello 世界"},
 			}},
 			verify: func() {
-				entry, exists := shared.Memory["unicodelist"]
+				entry, exists := server.Memory["unicodelist"]
 				if !exists {
 					t.Error("List should still exist after BLPOP")
 				}
@@ -304,7 +305,7 @@ func TestBlpop(t *testing.T) {
 
 func BenchmarkBlpop(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
 		Expires: 0,
 	}
@@ -323,11 +324,11 @@ func BenchmarkBlpop(b *testing.B) {
 
 func BenchmarkBlpopMultipleLists(b *testing.B) {
 	clearMemory()
-	shared.Memory["list1"] = shared.MemoryEntry{
+	server.Memory["list1"] = shared.MemoryEntry{
 		Array:   []string{"a", "b", "c"},
 		Expires: 0,
 	}
-	shared.Memory["list2"] = shared.MemoryEntry{
+	server.Memory["list2"] = shared.MemoryEntry{
 		Array:   []string{"d", "e", "f"},
 		Expires: 0,
 	}
@@ -362,7 +363,7 @@ func BenchmarkBlpopNonExistent(b *testing.B) {
 
 func BenchmarkBlpopEmpty(b *testing.B) {
 	clearMemory()
-	shared.Memory["benchlist"] = shared.MemoryEntry{
+	server.Memory["benchlist"] = shared.MemoryEntry{
 		Array:   []string{},
 		Expires: 0,
 	}

@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // lpush handles the LPUSH command.
 // Usage: LPUSH key value [value ...]
@@ -26,7 +29,7 @@ func Lpush(connID string, args []shared.Value) shared.Value {
 	}
 
 	key := args[0].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	// If key doesn't exist, create a new linked list
 	if !exists {
@@ -56,6 +59,6 @@ func Lpush(connID string, args []shared.Value) shared.Value {
 		entry.List.AddToHead(args[i].Bulk)
 	}
 
-	shared.Memory[key] = entry
+	server.Memory[key] = entry
 	return shared.Value{Typ: "integer", Num: entry.List.Size}
 }

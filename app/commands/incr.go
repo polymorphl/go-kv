@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // incr handles the INCR command.
@@ -17,10 +18,10 @@ func Incr(connID string, args []shared.Value) shared.Value {
 	}
 
 	key := args[0].Bulk
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 
 	if !exists {
-		shared.Memory[key] = shared.MemoryEntry{Value: "1", Expires: 0}
+		server.Memory[key] = shared.MemoryEntry{Value: "1", Expires: 0}
 		return shared.Value{Typ: "integer", Num: 1}
 	}
 
@@ -30,6 +31,6 @@ func Incr(connID string, args []shared.Value) shared.Value {
 	}
 
 	entry.Value = strconv.Itoa(value + 1)
-	shared.Memory[key] = entry
+	server.Memory[key] = entry
 	return shared.Value{Typ: "integer", Num: value + 1}
 }

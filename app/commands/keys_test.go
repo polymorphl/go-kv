@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestKeys(t *testing.T) {
@@ -19,7 +20,7 @@ func TestKeys(t *testing.T) {
 			args: []shared.Value{},
 			setup: func() {
 				// Clear memory
-				shared.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory = make(map[string]shared.MemoryEntry)
 			},
 			expected: createErrorResponse("ERR wrong number of arguments for 'keys' command"),
 		},
@@ -31,7 +32,7 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory
-				shared.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory = make(map[string]shared.MemoryEntry)
 			},
 			expected: createErrorResponse("ERR wrong number of arguments for 'keys' command"),
 		},
@@ -42,7 +43,7 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory
-				shared.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory = make(map[string]shared.MemoryEntry)
 			},
 			expected: shared.Value{Typ: "array", Array: []shared.Value{}},
 		},
@@ -53,10 +54,10 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
-				shared.Memory["baz"] = shared.MemoryEntry{Value: "qux"}
-				shared.Memory["test"] = shared.MemoryEntry{Value: "value"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
+				server.Memory["baz"] = shared.MemoryEntry{Value: "qux"}
+				server.Memory["test"] = shared.MemoryEntry{Value: "value"}
 			},
 			expected: shared.Value{
 				Typ: "array",
@@ -74,11 +75,11 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
-				shared.Memory["baz"] = shared.MemoryEntry{Value: "qux"}
-				shared.Memory["fizz"] = shared.MemoryEntry{Value: "buzz"}
-				shared.Memory["test"] = shared.MemoryEntry{Value: "value"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
+				server.Memory["baz"] = shared.MemoryEntry{Value: "qux"}
+				server.Memory["fizz"] = shared.MemoryEntry{Value: "buzz"}
+				server.Memory["test"] = shared.MemoryEntry{Value: "value"}
 			},
 			expected: shared.Value{
 				Typ: "array",
@@ -95,12 +96,12 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
-				shared.Memory["foo1"] = shared.MemoryEntry{Value: "bar1"}
-				shared.Memory["foo2"] = shared.MemoryEntry{Value: "bar2"}
-				shared.Memory["foobar"] = shared.MemoryEntry{Value: "baz"}
-				shared.Memory["test"] = shared.MemoryEntry{Value: "value"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
+				server.Memory["foo1"] = shared.MemoryEntry{Value: "bar1"}
+				server.Memory["foo2"] = shared.MemoryEntry{Value: "bar2"}
+				server.Memory["foobar"] = shared.MemoryEntry{Value: "baz"}
+				server.Memory["test"] = shared.MemoryEntry{Value: "value"}
 			},
 			expected: shared.Value{
 				Typ: "array",
@@ -117,12 +118,12 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["apple"] = shared.MemoryEntry{Value: "fruit"}
-				shared.Memory["banana"] = shared.MemoryEntry{Value: "fruit"}
-				shared.Memory["cherry"] = shared.MemoryEntry{Value: "fruit"}
-				shared.Memory["dog"] = shared.MemoryEntry{Value: "animal"}
-				shared.Memory["test"] = shared.MemoryEntry{Value: "value"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["apple"] = shared.MemoryEntry{Value: "fruit"}
+				server.Memory["banana"] = shared.MemoryEntry{Value: "fruit"}
+				server.Memory["cherry"] = shared.MemoryEntry{Value: "fruit"}
+				server.Memory["dog"] = shared.MemoryEntry{Value: "animal"}
+				server.Memory["test"] = shared.MemoryEntry{Value: "value"}
 			},
 			expected: shared.Value{
 				Typ: "array",
@@ -140,12 +141,12 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["test0"] = shared.MemoryEntry{Value: "value0"}
-				shared.Memory["test1"] = shared.MemoryEntry{Value: "value1"}
-				shared.Memory["test2"] = shared.MemoryEntry{Value: "value2"}
-				shared.Memory["test10"] = shared.MemoryEntry{Value: "value10"}
-				shared.Memory["test"] = shared.MemoryEntry{Value: "value"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["test0"] = shared.MemoryEntry{Value: "value0"}
+				server.Memory["test1"] = shared.MemoryEntry{Value: "value1"}
+				server.Memory["test2"] = shared.MemoryEntry{Value: "value2"}
+				server.Memory["test10"] = shared.MemoryEntry{Value: "value10"}
+				server.Memory["test"] = shared.MemoryEntry{Value: "value"}
 			},
 			expected: shared.Value{
 				Typ: "array",
@@ -163,9 +164,9 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
-				shared.Memory["baz"] = shared.MemoryEntry{Value: "qux"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["foo"] = shared.MemoryEntry{Value: "bar"}
+				server.Memory["baz"] = shared.MemoryEntry{Value: "qux"}
 			},
 			expected: shared.Value{Typ: "array", Array: []shared.Value{}},
 		},
@@ -176,9 +177,9 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Clear memory and add some keys with expiration
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["foo"] = shared.MemoryEntry{Value: "bar", Expires: 0}     // Not expired
-				shared.Memory["expired"] = shared.MemoryEntry{Value: "old", Expires: 1} // Expired (timestamp 1 is in the past)
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["foo"] = shared.MemoryEntry{Value: "bar", Expires: 0}     // Not expired
+				server.Memory["expired"] = shared.MemoryEntry{Value: "old", Expires: 1} // Expired (timestamp 1 is in the past)
 			},
 			expected: shared.Value{
 				Typ: "array",
@@ -194,8 +195,8 @@ func TestKeys(t *testing.T) {
 			},
 			setup: func() {
 				// Add a key so the loop executes
-				shared.Memory = make(map[string]shared.MemoryEntry)
-				shared.Memory["test"] = shared.MemoryEntry{Value: "value"}
+				server.Memory = make(map[string]shared.MemoryEntry)
+				server.Memory["test"] = shared.MemoryEntry{Value: "value"}
 			},
 			expected: createErrorResponse("ERR invalid pattern"),
 		},
@@ -250,10 +251,10 @@ func TestKeys(t *testing.T) {
 
 func BenchmarkKeys(b *testing.B) {
 	// Setup: add many keys to memory
-	shared.Memory = make(map[string]shared.MemoryEntry)
+	server.Memory = make(map[string]shared.MemoryEntry)
 	for i := 0; i < 1000; i++ {
 		key := fmt.Sprintf("key%d", i)
-		shared.Memory[key] = shared.MemoryEntry{Value: "value"}
+		server.Memory[key] = shared.MemoryEntry{Value: "value"}
 	}
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "*"}}
@@ -266,10 +267,10 @@ func BenchmarkKeys(b *testing.B) {
 
 func BenchmarkKeysPattern(b *testing.B) {
 	// Setup: add many keys to memory
-	shared.Memory = make(map[string]shared.MemoryEntry)
+	server.Memory = make(map[string]shared.MemoryEntry)
 	for i := 0; i < 1000; i++ {
 		key := fmt.Sprintf("key%d", i)
-		shared.Memory[key] = shared.MemoryEntry{Value: "value"}
+		server.Memory[key] = shared.MemoryEntry{Value: "value"}
 	}
 
 	args := []shared.Value{{Typ: "bulk", Bulk: "key[0-9]*"}}

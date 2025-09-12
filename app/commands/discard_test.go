@@ -5,6 +5,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestDiscard(t *testing.T) {
@@ -106,10 +107,10 @@ func TestDiscard(t *testing.T) {
 					t.Error("Transaction should be cleared after DISCARD")
 				}
 				// Commands should NOT have been executed
-				if _, exists := shared.Memory["key1"]; exists {
+				if _, exists := server.Memory["key1"]; exists {
 					t.Error("Key1 should not exist after DISCARD")
 				}
-				if _, exists := shared.Memory["key2"]; exists {
+				if _, exists := server.Memory["key2"]; exists {
 					t.Error("Key2 should not exist after DISCARD")
 				}
 			},
@@ -134,13 +135,13 @@ func TestDiscard(t *testing.T) {
 					t.Error("Transaction should be cleared after DISCARD")
 				}
 				// Commands should NOT have been executed
-				if _, exists := shared.Memory["stringkey"]; exists {
+				if _, exists := server.Memory["stringkey"]; exists {
 					t.Error("String key should not exist after DISCARD")
 				}
-				if _, exists := shared.Memory["listkey"]; exists {
+				if _, exists := server.Memory["listkey"]; exists {
 					t.Error("List key should not exist after DISCARD")
 				}
-				if _, exists := shared.Memory["numkey"]; exists {
+				if _, exists := server.Memory["numkey"]; exists {
 					t.Error("Number key should not exist after DISCARD")
 				}
 			},
@@ -204,10 +205,10 @@ func TestDiscardTransactionClearing(t *testing.T) {
 	}
 
 	// Verify commands were NOT executed
-	if _, exists := shared.Memory["testkey"]; exists {
+	if _, exists := server.Memory["testkey"]; exists {
 		t.Error("Key should not exist after DISCARD")
 	}
-	if _, exists := shared.Memory["testlist"]; exists {
+	if _, exists := server.Memory["testlist"]; exists {
 		t.Error("List should not exist after DISCARD")
 	}
 }
@@ -255,11 +256,11 @@ func TestDiscardMultipleConnections(t *testing.T) {
 	}
 
 	// Verify commands were NOT executed
-	if _, exists := shared.Memory["key1"]; exists {
+	if _, exists := server.Memory["key1"]; exists {
 		t.Error("Key1 should not exist after DISCARD")
 	}
 
-	if _, exists := shared.Memory["key2"]; exists {
+	if _, exists := server.Memory["key2"]; exists {
 		t.Error("Key2 should not exist after DISCARD")
 	}
 }
@@ -290,7 +291,7 @@ func TestDiscardVsExec(t *testing.T) {
 	}
 
 	// Verify command was NOT executed
-	if _, exists := shared.Memory["comparekey"]; exists {
+	if _, exists := server.Memory["comparekey"]; exists {
 		t.Error("Key should not exist after DISCARD")
 	}
 
@@ -312,7 +313,7 @@ func TestDiscardVsExec(t *testing.T) {
 	}
 
 	// Verify command WAS executed
-	entry, exists := shared.Memory["comparekey"]
+	entry, exists := server.Memory["comparekey"]
 	if !exists {
 		t.Error("Key should exist after EXEC")
 	}

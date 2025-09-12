@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestSet(t *testing.T) {
@@ -27,7 +28,7 @@ func TestSet(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				entry, exists := shared.Memory["mykey"]
+				entry, exists := server.Memory["mykey"]
 				if !exists {
 					t.Error("Key should exist after SET")
 				}
@@ -50,7 +51,7 @@ func TestSet(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				entry, exists := shared.Memory["expiringkey"]
+				entry, exists := server.Memory["expiringkey"]
 				if !exists {
 					t.Error("Key should exist after SET")
 				}
@@ -71,7 +72,7 @@ func TestSet(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				entry, exists := shared.Memory["emptykey"]
+				entry, exists := server.Memory["emptykey"]
 				if !exists {
 					t.Error("Key should exist after SET")
 				}
@@ -89,7 +90,7 @@ func TestSet(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				entry, exists := shared.Memory["overwritekey"]
+				entry, exists := server.Memory["overwritekey"]
 				if !exists {
 					t.Error("Key should exist after SET")
 				}
@@ -110,7 +111,7 @@ func TestSet(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR value is not an integer or out of range"},
 			verify: func() {
 				// Key should not exist after error
-				if _, exists := shared.Memory["invalidkey"]; exists {
+				if _, exists := server.Memory["invalidkey"]; exists {
 					t.Error("Key should not exist after error")
 				}
 			},
@@ -133,7 +134,7 @@ func TestSet(t *testing.T) {
 			},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				entry, exists := shared.Memory["unicodekey"]
+				entry, exists := server.Memory["unicodekey"]
 				if !exists {
 					t.Error("Key should exist after SET")
 				}
@@ -150,7 +151,7 @@ func TestSet(t *testing.T) {
 
 			// Set up initial data for overwrite test
 			if tt.name == "overwrite existing key" {
-				shared.Memory["overwritekey"] = shared.MemoryEntry{Value: "old value", Expires: 0}
+				server.Memory["overwritekey"] = shared.MemoryEntry{Value: "old value", Expires: 0}
 			}
 
 			result := Set(tt.connID, tt.args)

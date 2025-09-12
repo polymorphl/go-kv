@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // set handles the SET command.
@@ -40,6 +41,6 @@ func Set(connID string, args []shared.Value) shared.Value {
 		}
 	}
 
-	shared.Memory[key] = entry
+	server.Memory[key] = entry
 	return shared.Value{Typ: "string", Str: "OK"}
 }

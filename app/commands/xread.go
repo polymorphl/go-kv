@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 // parseBlockParameter parses the BLOCK parameter and returns timeout and streams index.
@@ -53,7 +54,7 @@ func convertDollarToLastID(remainingArgs []shared.Value, keyCount int) []shared.
 		startID := remainingArgs[i+keyCount].Bulk
 
 		if startID == "$" {
-			if entry, exists := shared.Memory[key]; exists && len(entry.Stream) > 0 {
+			if entry, exists := server.Memory[key]; exists && len(entry.Stream) > 0 {
 				processedArgs[i+keyCount] = shared.Value{Typ: "bulk", Bulk: entry.Stream[len(entry.Stream)-1].ID}
 			} else {
 				processedArgs[i+keyCount] = shared.Value{Typ: "bulk", Bulk: "0-0"}
@@ -71,7 +72,7 @@ func convertDollarToLastID(remainingArgs []shared.Value, keyCount int) []shared.
 //	getStreamEntriesAfter("mystream", "1526985054069-0")  // Returns entries newer than specific ID
 //	getStreamEntriesAfter("nonexistent", "0-0") // Returns nil (stream doesn't exist)
 func getStreamEntriesAfter(key, startID string) []shared.Value {
-	entry, exists := shared.Memory[key]
+	entry, exists := server.Memory[key]
 	if !exists {
 		return nil
 	}
