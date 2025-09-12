@@ -8,6 +8,7 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/storage"
 )
 
 // psync handles the PSYNC command.
@@ -54,7 +55,7 @@ func GetRDBData() ([]byte, error) {
 
 	if data, err := os.ReadFile(filePath); err == nil {
 		// Successfully loaded RDB file, parse it into memory
-		if parseErr := shared.ParseRDBData(data); parseErr != nil {
+		if parseErr := storage.ParseRDBData(data); parseErr != nil {
 			fmt.Printf("Warning: Failed to parse RDB file %s: %v\n", filePath, parseErr)
 		}
 		return data, nil

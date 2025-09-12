@@ -13,6 +13,7 @@ import (
 	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/storage"
 )
 
 const DEFAULT_PORT = "6379"
@@ -67,7 +68,7 @@ func main() {
 
 	// Load RDB file if we're a master
 	if server.StoreState.Role == "master" {
-		if err := shared.LoadRDBFile(server.StoreState.ConfigDir, server.StoreState.ConfigDbfilename); err != nil {
+		if err := storage.LoadRDBFile(server.StoreState.ConfigDir, server.StoreState.ConfigDbfilename); err != nil {
 			fmt.Printf("Warning: Failed to load RDB file: %v\n", err)
 		}
 	}

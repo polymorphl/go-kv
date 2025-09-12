@@ -1,4 +1,4 @@
-package shared
+package storage
 
 import (
 	"encoding/binary"
@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 // RDBParser handles parsing RDB files
@@ -46,7 +48,7 @@ func ParseRDBData(data []byte) error {
 	}
 
 	// Clear existing memory before loading RDB data
-	Memory = make(map[string]MemoryEntry)
+	shared.Memory = make(map[string]shared.MemoryEntry)
 
 	parser := NewRDBParser(data)
 	return parser.parse()
@@ -288,7 +290,7 @@ func (p *RDBParser) parseKeyValue(opcode byte) error {
 	}
 
 	// Store in memory
-	Memory[key] = MemoryEntry{
+	shared.Memory[key] = shared.MemoryEntry{
 		Value:   value,
 		Expires: expires,
 	}
