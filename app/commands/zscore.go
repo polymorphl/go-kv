@@ -34,6 +34,10 @@ func Zscore(connID string, args []shared.Value) shared.Value {
 		return shared.Value{Typ: "null", Str: ""}
 	}
 
+	if entry.SortedSet == nil {
+		return shared.Value{Typ: "null", Str: ""}
+	}
+
 	score, exists := entry.SortedSet.GetScore(args[1].Bulk)
 	if !exists {
 		return shared.Value{Typ: "null", Str: ""}

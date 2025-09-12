@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/codecrafters-io/redis-starter-go/app/shared"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 // compareStrings performs a simple string comparison.
@@ -18,7 +18,7 @@ func compareStrings(s1, s2 string) int {
 	return 0
 }
 
-// compareStreamIDs compares two Redis stream IDs lexicographically.
+// compareStreamIDs compares two Redis stream IDs alphabetically.
 func compareStreamIDs(id1, id2 string) int {
 	// Handle special Redis stream IDs
 	if id1 == "$" || id2 == "$" {

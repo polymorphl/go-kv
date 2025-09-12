@@ -182,7 +182,7 @@ func (ss *SortedSet) GetScore(member string) (float64, bool) {
 }
 
 // GetRank returns the rank (0-based index) of a member in the sorted set
-// Members are sorted by score in ascending order, then by member name lexicographically
+// Members are sorted by score in ascending order, then by member name alphabetically
 func (ss *SortedSet) GetRank(member string) (int, bool) {
 	_, exists := ss.Members[member]
 	if !exists {
@@ -200,7 +200,7 @@ func (ss *SortedSet) GetRank(member string) (int, bool) {
 		members = append(members, memberScore{m, s})
 	}
 
-	// Sort by score (ascending), then by member name (lexicographically)
+	// Sort by score (ascending), then by member name (alphabetically)
 	for i := 0; i < len(members)-1; i++ {
 		for j := i + 1; j < len(members); j++ {
 			if members[i].score > members[j].score ||
@@ -221,7 +221,7 @@ func (ss *SortedSet) GetRank(member string) (int, bool) {
 }
 
 // GetSortedMembers returns all members of the sorted set in sorted order
-// Members are sorted by score (ascending), then by member name (lexicographically)
+// Members are sorted by score (ascending), then by member name (alphabetically)
 func (ss *SortedSet) GetSortedMembers() []string {
 	// Create a slice of members with their scores for sorting
 	type memberScore struct {
@@ -234,7 +234,7 @@ func (ss *SortedSet) GetSortedMembers() []string {
 		members = append(members, memberScore{m, s})
 	}
 
-	// Sort by score (ascending), then by member name (lexicographically)
+	// Sort by score (ascending), then by member name (alphabetically)
 	for i := 0; i < len(members)-1; i++ {
 		for j := i + 1; j < len(members); j++ {
 			if members[i].score > members[j].score ||

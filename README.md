@@ -33,6 +33,14 @@ This implementation supports the following Redis commands:
 - `XRANGE` - Retrieve entries from a stream within a specified ID range
 - `XREAD` - Read entries from one or more streams newer than specified IDs
 
+### Sorted Set Operations
+- `ZADD` - Add one or more members to a sorted set with scores
+- `ZRANK` - Get the rank of a member in a sorted set (0-based index)
+- `ZRANGE` - Get a range of members from a sorted set by rank
+- `ZSCORE` - Get the score of a member in a sorted set
+- `ZREM` - Remove one or more members from a sorted set
+- `ZCARD` - Get the number of members in a sorted set
+
 ### Transaction Operations
 - `MULTI` - Start a transaction block
 - `EXEC` - Execute all commands in a transaction block
@@ -115,6 +123,7 @@ make test-stream             # Test stream commands (XADD, XRANGE, XREAD)
 make test-transaction        # Test transaction commands (MULTI, EXEC, DISCARD)
 make test-pubsub             # Test pub/sub commands (SUBSCRIBE, UNSUBSCRIBE, PUBLISH)
 make test-replication       # Test replication commands (REPLCONF, PSYNC, INFO, WAIT)
+make test-zset              # Test sorted set commands (ZADD, ZRANK, ZRANGE, ZSCORE, ZREM, ZCARD)
 ```
 
 #### **Benchmarking Commands**
@@ -125,6 +134,7 @@ make bench-list             # Benchmark list commands
 make bench-stream           # Benchmark stream commands
 make bench-pubsub           # Benchmark pub/sub commands
 make bench-replication     # Benchmark replication commands
+make bench-zset            # Benchmark sorted set commands
 ```
 
 #### **Development Commands**
@@ -164,6 +174,14 @@ LPOP mylist
 XADD mystream * field1 "value1" field2 "value2"
 XRANGE mystream - +
 XREAD STREAMS mystream 0
+
+# Sorted set operations
+ZADD myzset 1 "member1" 2 "member2" 3 "member3"
+ZRANK myzset "member2"
+ZRANGE myzset 0 -1
+ZSCORE myzset "member1"
+ZREM myzset "member2"
+ZCARD myzset
 
 # Transaction operations
 MULTI
@@ -216,6 +234,7 @@ make test-coverage
 - **Stream Support**: Full Redis stream implementation with ID generation and blocking reads
 - **Pub/Sub Support**: Complete pub/sub implementation with channel subscription system, multi-channel support, duplicate handling, and real-time message delivery to all subscribers
 - **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
+- **Sorted Set Support**: Complete Redis sorted set implementation with score-based ordering, alphabetical tie-breaking, and efficient member management
 - **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations
 

@@ -50,5 +50,11 @@ func initCommandHandlers() {
 		"XRANGE": Xrange,
 		"XREAD":  Xread,
 		"BLPOP":  Blpop,
+		"ZADD":   Zadd,
+		"ZRANK":  Zrank,
+		"ZRANGE": Zrange,
+		"ZSCORE": Zscore,
+		"ZREM":   Zrem,
+		"ZCARD":  Zcard,
 	}
 }
