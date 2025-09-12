@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
@@ -24,7 +25,7 @@ func Publish(connID string, args []shared.Value) shared.Value {
 	message := args[1].Bulk
 
 	// Send message to all subscribers and get the count of delivered messages
-	deliveredCount := pubsub.SendMessageToSubscribers(channel, message, shared.ConnectionsGet, shared.ConnectionsDelete, pubsub.SubscriptionsDelete, pubsub.SubscribedModeDelete)
+	deliveredCount := pubsub.SendMessageToSubscribers(channel, message, network.ConnectionsGet, network.ConnectionsDelete, pubsub.SubscriptionsDelete, pubsub.SubscribedModeDelete)
 
 	return shared.Value{Typ: "integer", Num: deliveredCount}
 }

@@ -3,6 +3,7 @@ package commands
 import (
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -23,7 +24,7 @@ func TestMulti(t *testing.T) {
 			args:     []shared.Value{},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				transaction, exists := shared.Transactions["test-conn-1"]
+				transaction, exists := network.Transactions["test-conn-1"]
 				if !exists {
 					t.Error("Transaction should exist after MULTI")
 				}
@@ -44,7 +45,7 @@ func TestMulti(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR wrong number of arguments for 'multi' command"},
 			verify: func() {
 				// Transaction should not exist after error
-				if _, exists := shared.Transactions["test-conn-2"]; exists {
+				if _, exists := network.Transactions["test-conn-2"]; exists {
 					t.Error("Transaction should not exist after error")
 				}
 			},
@@ -59,7 +60,7 @@ func TestMulti(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR wrong number of arguments for 'multi' command"},
 			verify: func() {
 				// Transaction should not exist after error
-				if _, exists := shared.Transactions["test-conn-3"]; exists {
+				if _, exists := network.Transactions["test-conn-3"]; exists {
 					t.Error("Transaction should not exist after error")
 				}
 			},
@@ -70,7 +71,7 @@ func TestMulti(t *testing.T) {
 			args:     []shared.Value{},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
-				transaction, exists := shared.Transactions["test-conn-4"]
+				transaction, exists := network.Transactions["test-conn-4"]
 				if !exists {
 					t.Error("Transaction should exist after MULTI")
 				}
@@ -87,7 +88,7 @@ func TestMulti(t *testing.T) {
 
 			// Set up initial transaction for overwrite test
 			if tt.name == "multi overwrites existing transaction" {
-				shared.Transactions["test-conn-4"] = shared.Transaction{
+				network.Transactions["test-conn-4"] = shared.Transaction{
 					Commands: []shared.QueuedCommand{
 						{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key"}, {Typ: "bulk", Bulk: "value"}}},
 					},
@@ -121,7 +122,7 @@ func TestMultiTransactionState(t *testing.T) {
 	}
 
 	// Verify transaction exists
-	transaction, exists := shared.Transactions[connID]
+	transaction, exists := network.Transactions[connID]
 	if !exists {
 		t.Error("Transaction should exist after MULTI")
 	}
@@ -155,20 +156,20 @@ func TestMultiMultipleConnections(t *testing.T) {
 	}
 
 	// Verify both transactions exist independently
-	if _, exists := shared.Transactions[conn1]; !exists {
+	if _, exists := network.Transactions[conn1]; !exists {
 		t.Error("Transaction for conn1 should exist")
 	}
 
-	if _, exists := shared.Transactions[conn2]; !exists {
+	if _, exists := network.Transactions[conn2]; !exists {
 		t.Error("Transaction for conn2 should exist")
 	}
 
 	// Verify transactions are independent
-	if len(shared.Transactions[conn1].Commands) != 0 {
+	if len(network.Transactions[conn1].Commands) != 0 {
 		t.Error("Transaction for conn1 should start empty")
 	}
 
-	if len(shared.Transactions[conn2].Commands) != 0 {
+	if len(network.Transactions[conn2].Commands) != 0 {
 		t.Error("Transaction for conn2 should start empty")
 	}
 }
@@ -183,7 +184,7 @@ func BenchmarkMulti(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Multi(connID, args)
 		// Clear transaction after each iteration to avoid accumulation
-		delete(shared.Transactions, connID)
+		delete(network.Transactions, connID)
 	}
 }
 
@@ -194,7 +195,7 @@ func BenchmarkMultiWithExistingTransaction(b *testing.B) {
 	args := []shared.Value{}
 
 	// Pre-create a transaction
-	shared.Transactions[connID] = shared.Transaction{
+	network.Transactions[connID] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key"}, {Typ: "bulk", Bulk: "value"}}},
 		},

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
@@ -14,8 +15,8 @@ func clearMemory() {
 
 // clearTransactions clears all transactions for testing
 func clearTransactions() {
-	for k := range shared.Transactions {
-		delete(shared.Transactions, k)
+	for k := range network.Transactions {
+		delete(network.Transactions, k)
 	}
 }
 
@@ -33,7 +34,7 @@ func getListAsArray(key string) []string {
 
 // initCommandHandlers initializes the shared command handlers for testing
 func initCommandHandlers() {
-	shared.CommandHandlers = map[string]shared.CommandHandler{
+	network.CommandHandlers = map[string]shared.CommandHandler{
 		"SET":    Set,
 		"GET":    Get,
 		"LPUSH":  Lpush,

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
@@ -329,8 +330,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Register connections
-		shared.ConnectionsSet("127.0.0.1:12345", conn1)
-		shared.ConnectionsSet("127.0.0.1:12346", conn2)
+		network.ConnectionsSet("127.0.0.1:12345", conn1)
+		network.ConnectionsSet("127.0.0.1:12346", conn2)
 
 		// Subscribe client1 to channel
 		Subscribe("127.0.0.1:12345", []shared.Value{{Typ: "bulk", Bulk: "test-channel"}})
@@ -359,8 +360,8 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Clean up
-		shared.ConnectionsDelete("127.0.0.1:12345")
-		shared.ConnectionsDelete("127.0.0.1:12346")
+		network.ConnectionsDelete("127.0.0.1:12345")
+		network.ConnectionsDelete("127.0.0.1:12346")
 		pubsub.SubscriptionsDelete("127.0.0.1:12345")
 		pubsub.SubscribedModeDelete("127.0.0.1:12345")
 	})
@@ -388,9 +389,9 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Register connections
-		shared.ConnectionsSet("127.0.0.1:12345", conn1)
-		shared.ConnectionsSet("127.0.0.1:12346", conn2)
-		shared.ConnectionsSet("127.0.0.1:12347", conn3)
+		network.ConnectionsSet("127.0.0.1:12345", conn1)
+		network.ConnectionsSet("127.0.0.1:12346", conn2)
+		network.ConnectionsSet("127.0.0.1:12347", conn3)
 
 		// Subscribe all clients to the same channel
 		Subscribe("127.0.0.1:12345", []shared.Value{{Typ: "bulk", Bulk: "test-channel"}})
@@ -418,9 +419,9 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Clean up
-		shared.ConnectionsDelete("127.0.0.1:12345")
-		shared.ConnectionsDelete("127.0.0.1:12346")
-		shared.ConnectionsDelete("127.0.0.1:12347")
+		network.ConnectionsDelete("127.0.0.1:12345")
+		network.ConnectionsDelete("127.0.0.1:12346")
+		network.ConnectionsDelete("127.0.0.1:12347")
 		pubsub.SubscriptionsDelete("127.0.0.1:12345")
 		pubsub.SubscriptionsDelete("127.0.0.1:12346")
 		pubsub.SubscriptionsDelete("127.0.0.1:12347")
@@ -452,9 +453,9 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Register connections
-		shared.ConnectionsSet("127.0.0.1:12345", conn1)
-		shared.ConnectionsSet("127.0.0.1:12346", conn2)
-		shared.ConnectionsSet("127.0.0.1:12347", conn3)
+		network.ConnectionsSet("127.0.0.1:12345", conn1)
+		network.ConnectionsSet("127.0.0.1:12346", conn2)
+		network.ConnectionsSet("127.0.0.1:12347", conn3)
 
 		// Subscribe clients to different channels
 		Subscribe("127.0.0.1:12345", []shared.Value{{Typ: "bulk", Bulk: "channel-1"}})
@@ -485,9 +486,9 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Clean up
-		shared.ConnectionsDelete("127.0.0.1:12345")
-		shared.ConnectionsDelete("127.0.0.1:12346")
-		shared.ConnectionsDelete("127.0.0.1:12347")
+		network.ConnectionsDelete("127.0.0.1:12345")
+		network.ConnectionsDelete("127.0.0.1:12346")
+		network.ConnectionsDelete("127.0.0.1:12347")
 		pubsub.SubscriptionsDelete("127.0.0.1:12345")
 		pubsub.SubscriptionsDelete("127.0.0.1:12346")
 		pubsub.SubscriptionsDelete("127.0.0.1:12347")
@@ -510,7 +511,7 @@ func TestPublishMessageDelivery(t *testing.T) {
 		// conn2 will be a failed connection (not registered in Connections map)
 
 		// Register only one connection
-		shared.ConnectionsSet("127.0.0.1:12345", conn1)
+		network.ConnectionsSet("127.0.0.1:12345", conn1)
 
 		// Subscribe both clients (one with connection, one without)
 		Subscribe("127.0.0.1:12345", []shared.Value{{Typ: "bulk", Bulk: "test-channel"}})
@@ -534,7 +535,7 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Clean up
-		shared.ConnectionsDelete("127.0.0.1:12345")
+		network.ConnectionsDelete("127.0.0.1:12345")
 		pubsub.SubscriptionsDelete("127.0.0.1:12345")
 		pubsub.SubscriptionsDelete("127.0.0.1:12346")
 		pubsub.SubscribedModeDelete("127.0.0.1:12345")
@@ -554,7 +555,7 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Register connection
-		shared.ConnectionsSet("127.0.0.1:12345", conn1)
+		network.ConnectionsSet("127.0.0.1:12345", conn1)
 
 		// Subscribe to unicode channel
 		channel := "测试频道"
@@ -581,7 +582,7 @@ func TestPublishMessageDelivery(t *testing.T) {
 		}
 
 		// Clean up
-		shared.ConnectionsDelete("127.0.0.1:12345")
+		network.ConnectionsDelete("127.0.0.1:12345")
 		pubsub.SubscriptionsDelete("127.0.0.1:12345")
 		pubsub.SubscribedModeDelete("127.0.0.1:12345")
 	})
@@ -601,7 +602,7 @@ func TestPublishMessageFormat(t *testing.T) {
 		}
 
 		// Register connection
-		shared.ConnectionsSet("127.0.0.1:12345", conn1)
+		network.ConnectionsSet("127.0.0.1:12345", conn1)
 
 		// Subscribe to channel
 		Subscribe("127.0.0.1:12345", []shared.Value{{Typ: "bulk", Bulk: "channel_1"}})
@@ -620,7 +621,7 @@ func TestPublishMessageFormat(t *testing.T) {
 		}
 
 		// Clean up
-		shared.ConnectionsDelete("127.0.0.1:12345")
+		network.ConnectionsDelete("127.0.0.1:12345")
 		pubsub.SubscriptionsDelete("127.0.0.1:12345")
 		pubsub.SubscribedModeDelete("127.0.0.1:12345")
 	})
@@ -641,7 +642,7 @@ func TestPublishConcurrentAccess(t *testing.T) {
 				localAddr:  "127.0.0.1:6379",
 			}
 			connections[i] = conn
-			shared.ConnectionsSet(conn.remoteAddr, conn)
+			network.ConnectionsSet(conn.remoteAddr, conn)
 		}
 
 		// Subscribe all connections to the same channel concurrently
@@ -680,7 +681,7 @@ func TestPublishConcurrentAccess(t *testing.T) {
 
 		// Clean up
 		for _, conn := range connections {
-			shared.ConnectionsDelete(conn.remoteAddr)
+			network.ConnectionsDelete(conn.remoteAddr)
 			pubsub.SubscriptionsDelete(conn.remoteAddr)
 			pubsub.SubscribedModeDelete(conn.remoteAddr)
 		}

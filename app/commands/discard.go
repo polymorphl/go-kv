@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/network"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // discard handles the DISCARD command.
 // Usage: DISCARD
@@ -12,11 +15,11 @@ func Discard(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'discard' command")
 	}
 
-	if _, exists := shared.TransactionsGet(connID); !exists {
+	if _, exists := network.TransactionsGet(connID); !exists {
 		return createErrorResponse("ERR DISCARD without MULTI")
 	}
 
-	shared.TransactionsDelete(connID)
+	network.TransactionsDelete(connID)
 
 	return shared.Value{Typ: "string", Str: "OK"}
 }

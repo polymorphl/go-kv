@@ -72,7 +72,7 @@ func main() {
 		}
 	}
 
-	network.HandleReplicaMode(port, server.StoreState.Role, server.StoreState.ReplicaOf, shared.ExecuteCommand)
+	network.HandleReplicaMode(port, server.StoreState.Role, server.StoreState.ReplicaOf, network.ExecuteCommand)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {
@@ -95,7 +95,7 @@ func main() {
 // registerConnection registers a connection and returns its ID
 func registerConnection(conn net.Conn) string {
 	connID := conn.RemoteAddr().String()
-	shared.ConnectionsSet(connID, conn)
+	network.ConnectionsSet(connID, conn)
 	return connID
 }
 
@@ -119,7 +119,7 @@ func readAndValidateCommand(conn net.Conn) (string, []protocol.Value, error) {
 // executeTransactionCommand executes a command within a transaction context
 func executeTransactionCommand(command string, connID string, args []protocol.Value, writer *protocol.Writer) {
 	if IsTransactionCommand(command) {
-		result := shared.ExecuteCommand(command, connID, args)
+		result := network.ExecuteCommand(command, connID, args)
 
 		// Propagate transaction commands to replicas
 		if network.IsWriteCommand(command) {
@@ -127,17 +127,17 @@ func executeTransactionCommand(command string, connID string, args []protocol.Va
 		}
 
 		// Only write response if it's not a NO_RESPONSE type
-		if result.Typ != shared.NO_RESPONSE {
+		if result.Typ != network.NO_RESPONSE {
 			writer.Write(result)
 		}
 	} else {
 		// Queue the command instead of executing it
-		transaction, _ := shared.TransactionsGet(connID)
+		transaction, _ := network.TransactionsGet(connID)
 		transaction.Commands = append(transaction.Commands, shared.QueuedCommand{
 			Command: command,
 			Args:    args,
 		})
-		shared.TransactionsSet(connID, transaction)
+		network.TransactionsSet(connID, transaction)
 
 		// Return QUEUED response
 		result := protocol.Value{Typ: "string", Str: "QUEUED"}
@@ -147,7 +147,7 @@ func executeTransactionCommand(command string, connID string, args []protocol.Va
 
 // executeNormalCommand executes a command outside of transaction context
 func executeNormalCommand(command string, connID string, args []protocol.Value, writer *protocol.Writer) {
-	result := shared.ExecuteCommand(command, connID, args)
+	result := network.ExecuteCommand(command, connID, args)
 
 	// Propagate write commands to replicas
 	if network.IsWriteCommand(command) {
@@ -155,7 +155,7 @@ func executeNormalCommand(command string, connID string, args []protocol.Value, 
 	}
 
 	// Only write response if it's not a NO_RESPONSE type
-	if result.Typ != shared.NO_RESPONSE {
+	if result.Typ != network.NO_RESPONSE {
 		writer.Write(result)
 	}
 }
@@ -165,7 +165,7 @@ func handleConnection(conn net.Conn) {
 
 	// Register the connection (concurrency-safe)
 	connID := registerConnection(conn)
-	defer shared.ConnectionsDelete(connID)
+	defer network.ConnectionsDelete(connID)
 
 	for {
 		command, args, err := readAndValidateCommand(conn)
@@ -182,7 +182,7 @@ func handleConnection(conn net.Conn) {
 		writer := protocol.NewWriter(conn)
 
 		// Check if this connection is in a transaction (concurrency-safe)
-		if _, exists := shared.TransactionsGet(connID); exists {
+		if _, exists := network.TransactionsGet(connID); exists {
 			executeTransactionCommand(command, connID, args, writer)
 		} else {
 			// No active transaction, execute command normally

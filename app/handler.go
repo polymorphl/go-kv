@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/commands"
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -52,8 +53,8 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 
 // init initializes the shared command handlers map
 func init() {
-	shared.CommandHandlers = make(map[string]shared.CommandHandler)
+	network.CommandHandlers = make(map[string]shared.CommandHandler)
 	for cmd, handler := range Handlers {
-		shared.CommandHandlers[cmd] = handler
+		network.CommandHandlers[cmd] = handler
 	}
 }

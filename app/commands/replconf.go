@@ -37,14 +37,14 @@ func Replconf(connID string, args []shared.Value) shared.Value {
 			// Mark this replica as having acknowledged
 			network.AcknowledgedReplicasSet(connID)
 			// Return NO_RESPONSE since this is an internal command
-			return shared.Value{Typ: shared.NO_RESPONSE, Str: ""}
+			return shared.Value{Typ: network.NO_RESPONSE, Str: ""}
 		}
 		return createErrorResponse("ERR wrong number of arguments for 'replconf ack' command")
 	}
 
 	// Register replica connection as soon as we receive REPLCONF
 	// This ensures the replica is registered before any commands are processed
-	if conn, exists := shared.ConnectionsGet(connID); exists {
+	if conn, exists := network.ConnectionsGet(connID); exists {
 		// Only register if not already registered
 		if _, alreadyRegistered := shared.StoreState.Replicas[connID]; !alreadyRegistered {
 			network.ReplicasSet(connID, conn)

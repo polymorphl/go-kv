@@ -1,6 +1,9 @@
 package commands
 
-import "github.com/codecrafters-io/redis-starter-go/app/shared"
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/network"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
+)
 
 // Multi handles the MULTI command.
 // After a MULTI command is executed, any further commands from the same connection will be "queued" but not executed.
@@ -14,7 +17,7 @@ func Multi(connID string, args []shared.Value) shared.Value {
 	}
 
 	// Create a new transaction for this connection (concurrency-safe)
-	shared.TransactionsSet(connID, shared.Transaction{Commands: []shared.QueuedCommand{}})
+	network.TransactionsSet(connID, shared.Transaction{Commands: []shared.QueuedCommand{}})
 
 	return shared.Value{Typ: "string", Str: "OK"}
 }

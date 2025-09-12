@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
@@ -504,7 +505,7 @@ func TestSubscribedModeCommandRestrictions(t *testing.T) {
 
 		for _, cmd := range allowedCommands {
 			// These should not return error responses
-			result := shared.ExecuteCommand(cmd, connID, []shared.Value{})
+			result := network.ExecuteCommand(cmd, connID, []shared.Value{})
 			if result.Typ == "error" {
 				t.Errorf("Command %s should be allowed in subscribed mode, got error: %s", cmd, result.Str)
 			}
@@ -526,7 +527,7 @@ func TestSubscribedModeCommandRestrictions(t *testing.T) {
 		disallowedCommands := []string{"GET", "SET", "ECHO", "INCR", "LPUSH", "RPUSH", "XADD", "MULTI", "EXEC"}
 
 		for _, cmd := range disallowedCommands {
-			result := shared.ExecuteCommand(cmd, connID, []shared.Value{})
+			result := network.ExecuteCommand(cmd, connID, []shared.Value{})
 			if result.Typ != "error" {
 				t.Errorf("Command %s should return error in subscribed mode, got: %v", cmd, result)
 			}
@@ -549,12 +550,12 @@ func TestSubscribedModeCommandRestrictions(t *testing.T) {
 		}
 
 		// Test that normal commands work
-		result := shared.ExecuteCommand("PING", connID, []shared.Value{})
+		result := network.ExecuteCommand("PING", connID, []shared.Value{})
 		if result.Typ == "error" {
 			t.Errorf("PING should work when not in subscribed mode, got error: %s", result.Str)
 		}
 
-		result = shared.ExecuteCommand("ECHO", connID, []shared.Value{{Typ: "bulk", Bulk: "hello"}})
+		result = network.ExecuteCommand("ECHO", connID, []shared.Value{{Typ: "bulk", Bulk: "hello"}})
 		if result.Typ == "error" {
 			t.Errorf("ECHO should work when not in subscribed mode, got error: %s", result.Str)
 		}

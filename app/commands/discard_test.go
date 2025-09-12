@@ -3,6 +3,7 @@ package commands
 import (
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -30,7 +31,7 @@ func TestDiscard(t *testing.T) {
 			expected: shared.Value{Typ: "error", Str: "ERR DISCARD without MULTI"},
 			verify: func() {
 				// Transaction should not exist after error
-				if _, exists := shared.Transactions["test-conn-1"]; exists {
+				if _, exists := network.Transactions["test-conn-1"]; exists {
 					t.Error("Transaction should not exist after error")
 				}
 			},
@@ -42,12 +43,12 @@ func TestDiscard(t *testing.T) {
 				{Typ: "bulk", Bulk: "extra"},
 			},
 			setup: func() {
-				shared.Transactions["test-conn-2"] = shared.Transaction{Commands: []shared.QueuedCommand{}}
+				network.Transactions["test-conn-2"] = shared.Transaction{Commands: []shared.QueuedCommand{}}
 			},
 			expected: shared.Value{Typ: "error", Str: "ERR wrong number of arguments for 'discard' command"},
 			verify: func() {
 				// Transaction should still exist after argument error
-				if _, exists := shared.Transactions["test-conn-2"]; !exists {
+				if _, exists := network.Transactions["test-conn-2"]; !exists {
 					t.Error("Transaction should still exist after argument error")
 				}
 			},
@@ -60,12 +61,12 @@ func TestDiscard(t *testing.T) {
 				{Typ: "bulk", Bulk: "arg2"},
 			},
 			setup: func() {
-				shared.Transactions["test-conn-3"] = shared.Transaction{Commands: []shared.QueuedCommand{}}
+				network.Transactions["test-conn-3"] = shared.Transaction{Commands: []shared.QueuedCommand{}}
 			},
 			expected: shared.Value{Typ: "error", Str: "ERR wrong number of arguments for 'discard' command"},
 			verify: func() {
 				// Transaction should still exist after argument error
-				if _, exists := shared.Transactions["test-conn-3"]; !exists {
+				if _, exists := network.Transactions["test-conn-3"]; !exists {
 					t.Error("Transaction should still exist after argument error")
 				}
 			},
@@ -75,12 +76,12 @@ func TestDiscard(t *testing.T) {
 			connID: "test-conn-4",
 			args:   []shared.Value{},
 			setup: func() {
-				shared.Transactions["test-conn-4"] = shared.Transaction{Commands: []shared.QueuedCommand{}}
+				network.Transactions["test-conn-4"] = shared.Transaction{Commands: []shared.QueuedCommand{}}
 			},
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
 				// Transaction should be cleared after DISCARD
-				if _, exists := shared.Transactions["test-conn-4"]; exists {
+				if _, exists := network.Transactions["test-conn-4"]; exists {
 					t.Error("Transaction should be cleared after DISCARD")
 				}
 			},
@@ -90,7 +91,7 @@ func TestDiscard(t *testing.T) {
 			connID: "test-conn-5",
 			args:   []shared.Value{},
 			setup: func() {
-				shared.Transactions["test-conn-5"] = shared.Transaction{
+				network.Transactions["test-conn-5"] = shared.Transaction{
 					Commands: []shared.QueuedCommand{
 						{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key1"}, {Typ: "bulk", Bulk: "value1"}}},
 						{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key2"}, {Typ: "bulk", Bulk: "value2"}}},
@@ -101,7 +102,7 @@ func TestDiscard(t *testing.T) {
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
 				// Transaction should be cleared after DISCARD
-				if _, exists := shared.Transactions["test-conn-5"]; exists {
+				if _, exists := network.Transactions["test-conn-5"]; exists {
 					t.Error("Transaction should be cleared after DISCARD")
 				}
 				// Commands should NOT have been executed
@@ -118,7 +119,7 @@ func TestDiscard(t *testing.T) {
 			connID: "test-conn-6",
 			args:   []shared.Value{},
 			setup: func() {
-				shared.Transactions["test-conn-6"] = shared.Transaction{
+				network.Transactions["test-conn-6"] = shared.Transaction{
 					Commands: []shared.QueuedCommand{
 						{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "stringkey"}, {Typ: "bulk", Bulk: "stringvalue"}}},
 						{Command: "LPUSH", Args: []shared.Value{{Typ: "bulk", Bulk: "listkey"}, {Typ: "bulk", Bulk: "item1"}}},
@@ -129,7 +130,7 @@ func TestDiscard(t *testing.T) {
 			expected: shared.Value{Typ: "string", Str: "OK"},
 			verify: func() {
 				// Transaction should be cleared after DISCARD
-				if _, exists := shared.Transactions["test-conn-6"]; exists {
+				if _, exists := network.Transactions["test-conn-6"]; exists {
 					t.Error("Transaction should be cleared after DISCARD")
 				}
 				// Commands should NOT have been executed
@@ -177,7 +178,7 @@ func TestDiscardTransactionClearing(t *testing.T) {
 	connID := "test-conn-clear"
 
 	// Setup transaction with commands
-	shared.Transactions[connID] = shared.Transaction{
+	network.Transactions[connID] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "testkey"}, {Typ: "bulk", Bulk: "testvalue"}}},
 			{Command: "LPUSH", Args: []shared.Value{{Typ: "bulk", Bulk: "testlist"}, {Typ: "bulk", Bulk: "item"}}},
@@ -185,7 +186,7 @@ func TestDiscardTransactionClearing(t *testing.T) {
 	}
 
 	// Verify transaction exists before DISCARD
-	if _, exists := shared.Transactions[connID]; !exists {
+	if _, exists := network.Transactions[connID]; !exists {
 		t.Error("Transaction should exist before DISCARD")
 	}
 
@@ -193,7 +194,7 @@ func TestDiscardTransactionClearing(t *testing.T) {
 	result := Discard(connID, []shared.Value{})
 
 	// Verify transaction is cleared after DISCARD
-	if _, exists := shared.Transactions[connID]; exists {
+	if _, exists := network.Transactions[connID]; exists {
 		t.Error("Transaction should be cleared after DISCARD")
 	}
 
@@ -220,13 +221,13 @@ func TestDiscardMultipleConnections(t *testing.T) {
 	conn2 := "connection-2"
 
 	// Setup transactions for both connections
-	shared.Transactions[conn1] = shared.Transaction{
+	network.Transactions[conn1] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key1"}, {Typ: "bulk", Bulk: "value1"}}},
 		},
 	}
 
-	shared.Transactions[conn2] = shared.Transaction{
+	network.Transactions[conn2] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key2"}, {Typ: "bulk", Bulk: "value2"}}},
 		},
@@ -245,11 +246,11 @@ func TestDiscardMultipleConnections(t *testing.T) {
 	}
 
 	// Verify both transactions are cleared
-	if _, exists := shared.Transactions[conn1]; exists {
+	if _, exists := network.Transactions[conn1]; exists {
 		t.Error("Transaction for conn1 should be cleared")
 	}
 
-	if _, exists := shared.Transactions[conn2]; exists {
+	if _, exists := network.Transactions[conn2]; exists {
 		t.Error("Transaction for conn2 should be cleared")
 	}
 
@@ -271,7 +272,7 @@ func TestDiscardVsExec(t *testing.T) {
 	connID := "test-conn-compare"
 
 	// Setup transaction
-	shared.Transactions[connID] = shared.Transaction{
+	network.Transactions[connID] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "comparekey"}, {Typ: "bulk", Bulk: "comparevalue"}}},
 		},
@@ -284,7 +285,7 @@ func TestDiscardVsExec(t *testing.T) {
 	}
 
 	// Verify transaction is cleared
-	if _, exists := shared.Transactions[connID]; exists {
+	if _, exists := network.Transactions[connID]; exists {
 		t.Error("Transaction should be cleared after DISCARD")
 	}
 
@@ -294,7 +295,7 @@ func TestDiscardVsExec(t *testing.T) {
 	}
 
 	// Now test EXEC on a new transaction
-	shared.Transactions[connID] = shared.Transaction{
+	network.Transactions[connID] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "comparekey"}, {Typ: "bulk", Bulk: "comparevalue"}}},
 		},
@@ -306,7 +307,7 @@ func TestDiscardVsExec(t *testing.T) {
 	}
 
 	// Verify transaction is cleared
-	if _, exists := shared.Transactions[connID]; exists {
+	if _, exists := network.Transactions[connID]; exists {
 		t.Error("Transaction should be cleared after EXEC")
 	}
 
@@ -327,7 +328,7 @@ func BenchmarkDiscard(b *testing.B) {
 	args := []shared.Value{}
 
 	// Setup transaction
-	shared.Transactions[connID] = shared.Transaction{
+	network.Transactions[connID] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key"}, {Typ: "bulk", Bulk: "value"}}},
 		},
@@ -337,7 +338,7 @@ func BenchmarkDiscard(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Discard(connID, args)
 		// Re-setup transaction after each iteration
-		shared.Transactions[connID] = shared.Transaction{
+		network.Transactions[connID] = shared.Transaction{
 			Commands: []shared.QueuedCommand{
 				{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key"}, {Typ: "bulk", Bulk: "value"}}},
 			},
@@ -352,13 +353,13 @@ func BenchmarkDiscardEmptyTransaction(b *testing.B) {
 	args := []shared.Value{}
 
 	// Setup empty transaction
-	shared.Transactions[connID] = shared.Transaction{Commands: []shared.QueuedCommand{}}
+	network.Transactions[connID] = shared.Transaction{Commands: []shared.QueuedCommand{}}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		Discard(connID, args)
 		// Re-setup empty transaction after each iteration
-		shared.Transactions[connID] = shared.Transaction{Commands: []shared.QueuedCommand{}}
+		network.Transactions[connID] = shared.Transaction{Commands: []shared.QueuedCommand{}}
 	}
 }
 
@@ -369,7 +370,7 @@ func BenchmarkDiscardMultipleCommands(b *testing.B) {
 	args := []shared.Value{}
 
 	// Setup transaction with multiple commands
-	shared.Transactions[connID] = shared.Transaction{
+	network.Transactions[connID] = shared.Transaction{
 		Commands: []shared.QueuedCommand{
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key1"}, {Typ: "bulk", Bulk: "value1"}}},
 			{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key2"}, {Typ: "bulk", Bulk: "value2"}}},
@@ -381,7 +382,7 @@ func BenchmarkDiscardMultipleCommands(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Discard(connID, args)
 		// Re-setup transaction after each iteration
-		shared.Transactions[connID] = shared.Transaction{
+		network.Transactions[connID] = shared.Transaction{
 			Commands: []shared.QueuedCommand{
 				{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key1"}, {Typ: "bulk", Bulk: "value1"}}},
 				{Command: "SET", Args: []shared.Value{{Typ: "bulk", Bulk: "key2"}, {Typ: "bulk", Bulk: "value2"}}},

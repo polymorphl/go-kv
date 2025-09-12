@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -18,13 +19,13 @@ func Exec(connID string, args []shared.Value) shared.Value {
 	}
 
 	// Check if there's an active transaction for this connection (concurrency-safe)
-	transaction, exists := shared.TransactionsGet(connID)
+	transaction, exists := network.TransactionsGet(connID)
 	if !exists {
 		return createErrorResponse("ERR EXEC without MULTI")
 	}
 
 	// Clear the transaction (concurrency-safe)
-	shared.TransactionsDelete(connID)
+	network.TransactionsDelete(connID)
 
 	if len(transaction.Commands) == 0 {
 		return shared.Value{Typ: "array", Array: []shared.Value{}}
@@ -33,7 +34,7 @@ func Exec(connID string, args []shared.Value) shared.Value {
 	// Execute all queued commands
 	results := make([]shared.Value, len(transaction.Commands))
 	for i, queuedCmd := range transaction.Commands {
-		results[i] = shared.ExecuteCommand(queuedCmd.Command, connID, queuedCmd.Args)
+		results[i] = network.ExecuteCommand(queuedCmd.Command, connID, queuedCmd.Args)
 	}
 
 	return shared.Value{Typ: "array", Array: results}
