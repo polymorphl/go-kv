@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
@@ -71,7 +72,7 @@ func main() {
 		}
 	}
 
-	server.HandleReplicaMode(port, server.StoreState.Role, server.StoreState.ReplicaOf, shared.ExecuteCommand)
+	network.HandleReplicaMode(port, server.StoreState.Role, server.StoreState.ReplicaOf, shared.ExecuteCommand)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {
@@ -121,8 +122,8 @@ func executeTransactionCommand(command string, connID string, args []protocol.Va
 		result := shared.ExecuteCommand(command, connID, args)
 
 		// Propagate transaction commands to replicas
-		if server.IsWriteCommand(command) {
-			server.PropagateCommand(command, args)
+		if network.IsWriteCommand(command) {
+			network.PropagateCommand(command, args)
 		}
 
 		// Only write response if it's not a NO_RESPONSE type
@@ -149,8 +150,8 @@ func executeNormalCommand(command string, connID string, args []protocol.Value, 
 	result := shared.ExecuteCommand(command, connID, args)
 
 	// Propagate write commands to replicas
-	if server.IsWriteCommand(command) {
-		server.PropagateCommand(command, args)
+	if network.IsWriteCommand(command) {
+		network.PropagateCommand(command, args)
 	}
 
 	// Only write response if it's not a NO_RESPONSE type

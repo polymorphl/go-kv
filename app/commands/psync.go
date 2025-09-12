@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -24,7 +24,7 @@ func Psync(connID string, args []shared.Value) shared.Value {
 	// Find the connection to send the RDB file
 	if conn, exists := shared.ConnectionsGet(connID); exists {
 		// Register this replica connection for command propagation
-		server.ReplicasSet(connID, conn)
+		network.ReplicasSet(connID, conn)
 
 		// Send the FULLRESYNC response first
 		response := shared.Value{Typ: "string", Str: fullResyncResponse}
