@@ -51,13 +51,15 @@ This implementation supports the following Redis commands:
 
 ## Architecture
 
-The server is built with a clean, modular architecture:
+The server is built with a clean, modular architecture organized into distinct layers:
 
-- **Network Layer**: TCP server listening on port 6379
-- **Protocol Layer**: RESP (Redis Serialization Protocol) implementation
-- **Command Handler**: Extensible command routing system
-- **Storage**: In-memory key-value store with support for strings, lists, and streams
-- **Replication**: Master-replica replication with command propagation and acknowledgment tracking
+- **Network Layer** (`network/`): TCP server connection management and replication networking
+- **Protocol Layer** (`protocol/`): RESP (Redis Serialization Protocol) implementation with parsing, marshaling, and response writing
+- **Command Handler** (`commands/`): Extensible command routing system with individual command implementations
+- **Storage Layer** (`storage/`): In-memory key-value store with RDB persistence support for strings, lists, and streams
+- **Pub/Sub System** (`pubsub/`): Real-time messaging system with channel subscription management
+- **Server State** (`server/`): Server configuration and state management
+- **Shared Components** (`shared/`): Common utilities, types, and data structures used across modules
 
 ## Project Structure
 
@@ -65,9 +67,13 @@ The server is built with a clean, modular architecture:
 app/
 ├── main.go                    # Server entry point and connection handling
 ├── handler.go                 # Command routing and request handling
-├── writer.go                  # Response writing utilities
 ├── commands/                  # Individual command implementations
-└── shared/                    # Shared utilities and data structures
+├── network/                   # Network layer and connection management
+├── protocol/                  # RESP protocol implementation
+├── pubsub/                    # Pub/Sub messaging system
+├── server/                    # Server state and configuration
+├── shared/                    # Shared utilities and data structures
+└── storage/                   # Data storage and persistence
 ```
 
 ## Getting Started
@@ -212,35 +218,6 @@ make test-coverage
 - **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
 - **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations
-
-## PUBLISH Command Implementation
-
-The PUBLISH command implements real-time message delivery to all subscribers of a channel:
-
-### Message Format
-When a message is published to a channel, each subscribed client receives a RESP array with 3 elements:
-```
-*3\r\n
-$7\r\n
-message\r\n
-$9\r\n
-channel_1\r\n
-$5\r\n
-hello\r\n
-```
-
-### Key Features
-- **Real-time Delivery**: Messages are immediately delivered to all active subscribers
-- **Concurrent Safety**: Thread-safe subscription management with proper mutex protection
-- **Error Handling**: Failed connections are automatically cleaned up and removed from subscriptions
-- **Unicode Support**: Full UTF-8 support for channel names and message content
-- **Return Value**: Returns the number of clients that successfully received the message
-
-### Example Workflow
-1. Client A: `SUBSCRIBE news` → Enters subscribed mode
-2. Client B: `SUBSCRIBE news` → Enters subscribed mode  
-3. Client C: `PUBLISH news "Breaking news!"` → Returns `(integer) 2`
-4. Both Client A and Client B receive: `["message", "news", "Breaking news!"]`
 
 ## Test Coverage
 
