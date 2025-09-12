@@ -104,12 +104,12 @@ func contains(s, substr string) bool {
 // BenchmarkReplconf benchmarks the REPLCONF command
 func BenchmarkReplconf(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "listening-port"},
@@ -125,12 +125,12 @@ func BenchmarkReplconf(b *testing.B) {
 // BenchmarkReplconfGetack benchmarks the REPLCONF GETACK command
 func BenchmarkReplconfGetack(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "GETACK"},

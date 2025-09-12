@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/protocol"
-	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 // sendPing sends a PING command to the master
@@ -101,7 +100,7 @@ func sendPsync(conn net.Conn, writer *protocol.Writer, reader *protocol.Resp, ma
 }
 
 // performReplicationHandshake performs the complete replication handshake with master
-func performReplicationHandshake(address, port string) {
+func performReplicationHandshake(address, port string, executeCommand func(string, string, []protocol.Value) protocol.Value) {
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		fmt.Printf("Failed to connect to master %s: %s\n", address, err.Error())
@@ -126,11 +125,11 @@ func performReplicationHandshake(address, port string) {
 
 	// Step 5: Start listening for propagated commands
 	// Reuse the same RESP reader to avoid losing any buffered bytes
-	go processPropagatedCommands(conn, reader)
+	go processPropagatedCommands(conn, reader, executeCommand)
 }
 
-func connectToMaster(replicaPort string) {
-	parts := strings.Split(shared.StoreState.ReplicaOf, " ")
+func connectToMaster(replicaPort string, replicaOf string, executeCommand func(string, string, []protocol.Value) protocol.Value) {
+	parts := strings.Split(replicaOf, " ")
 	if len(parts) != 2 {
 		fmt.Println("Invalid replicaof format. Expected 'host port'")
 		os.Exit(1)
@@ -140,11 +139,11 @@ func connectToMaster(replicaPort string) {
 	masterPort := parts[1]
 	address := host + ":" + masterPort
 
-	performReplicationHandshake(address, replicaPort)
+	performReplicationHandshake(address, replicaPort, executeCommand)
 }
 
 // processPropagatedCommands processes commands propagated from the master
-func processPropagatedCommands(conn net.Conn, reader *protocol.Resp) {
+func processPropagatedCommands(conn net.Conn, reader *protocol.Resp, executeCommand func(string, string, []protocol.Value) protocol.Value) {
 	writer := protocol.NewWriter(conn)
 	var processedOffset int64 = 0
 
@@ -189,17 +188,17 @@ func processPropagatedCommands(conn net.Conn, reader *protocol.Resp) {
 			continue
 		}
 
-		// Execute the command using the shared handlers; ignore response to master
+		// Execute the command using the provided handler; ignore response to master
 		connID := conn.RemoteAddr().String()
-		_ = shared.ExecuteCommand(command, connID, args)
+		_ = executeCommand(command, connID, args)
 		processedOffset += bytesConsumed
 	}
 }
 
-// handleReplicaMode sets up the server as a replica and connects to master
-func handleReplicaMode(replicaPort string) {
-	if shared.StoreState.Role == "slave" {
+// HandleReplicaMode sets up the server as a replica and connects to master
+func HandleReplicaMode(replicaPort string, role string, replicaOf string, executeCommand func(string, string, []protocol.Value) protocol.Value) {
+	if role == "slave" {
 		// Start replica connection in a goroutine so it doesn't block the server startup
-		go connectToMaster(replicaPort)
+		go connectToMaster(replicaPort, replicaOf, executeCommand)
 	}
 }

@@ -9,12 +9,12 @@ import (
 
 func TestInfo(t *testing.T) {
 	// Reset store state for clean test
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 12345,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	tests := []struct {
 		name     string
@@ -84,12 +84,12 @@ func TestInfoWithDifferentRoles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up store state
-			shared.StoreState = shared.State{
+			shared.SetStoreState(shared.State{
 				Role:             tt.role,
 				MasterReplID:     tt.replID,
 				MasterReplOffset: tt.offset,
 				Replicas:         make(map[string]net.Conn),
-			}
+			})
 
 			result := Info("test-conn", []shared.Value{})
 
@@ -104,16 +104,15 @@ func TestInfoWithDifferentRoles(t *testing.T) {
 	}
 }
 
-
 // BenchmarkInfo benchmarks the INFO command
 func BenchmarkInfo(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
-		Role:            "master",
-		MasterReplID:    "bench-repl-id",
+	shared.SetStoreState(shared.State{
+		Role:             "master",
+		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 12345,
-		Replicas:        make(map[string]net.Conn),
-	}
+		Replicas:         make(map[string]net.Conn),
+	})
 
 	args := []shared.Value{}
 
@@ -126,12 +125,12 @@ func BenchmarkInfo(b *testing.B) {
 // BenchmarkInfoWithSection benchmarks the INFO command with section argument
 func BenchmarkInfoWithSection(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
-		Role:            "master",
-		MasterReplID:    "bench-repl-id",
+	shared.SetStoreState(shared.State{
+		Role:             "master",
+		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 12345,
-		Replicas:        make(map[string]net.Conn),
-	}
+		Replicas:         make(map[string]net.Conn),
+	})
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "replication"},

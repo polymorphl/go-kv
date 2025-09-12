@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/codecrafters-io/redis-starter-go/app/protocol"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -37,19 +38,19 @@ func generateReplID() string {
 func parseArgs() string {
 	flag.StringVar(&port, "port", DEFAULT_PORT, "Port to listen on")
 	flag.StringVar(&replicaOf, "replicaof", "", "Replica of")
-	flag.StringVar(&shared.StoreState.ConfigDir, "dir", shared.StoreState.ConfigDir, "Directory where Redis stores its data")
-	flag.StringVar(&shared.StoreState.ConfigDbfilename, "dbfilename", shared.StoreState.ConfigDbfilename, "Database filename")
+	flag.StringVar(&server.StoreState.ConfigDir, "dir", server.StoreState.ConfigDir, "Directory where Redis stores its data")
+	flag.StringVar(&server.StoreState.ConfigDbfilename, "dbfilename", server.StoreState.ConfigDbfilename, "Database filename")
 	flag.Parse()
 
 	if replicaOf != "" {
-		shared.StoreState.Role = "slave"
-		shared.StoreState.ReplicaOf = replicaOf
+		server.StoreState.Role = "slave"
+		server.StoreState.ReplicaOf = replicaOf
 	} else {
-		shared.StoreState.Role = "master"
+		server.StoreState.Role = "master"
 	}
 
-	if shared.StoreState.Role == "master" {
-		shared.StoreState.MasterReplID = generateReplID()
+	if server.StoreState.Role == "master" {
+		server.StoreState.MasterReplID = generateReplID()
 	}
 
 	return port
@@ -58,16 +59,16 @@ func parseArgs() string {
 func main() {
 	port := parseArgs()
 
-	fmt.Printf("Starting Redis server on port %s, role: %s\n", port, shared.StoreState.Role)
+	fmt.Printf("Starting Redis server on port %s, role: %s\n", port, server.StoreState.Role)
 
 	// Load RDB file if we're a master
-	if shared.StoreState.Role == "master" {
-		if err := shared.LoadRDBFile(shared.StoreState.ConfigDir, shared.StoreState.ConfigDbfilename); err != nil {
+	if server.StoreState.Role == "master" {
+		if err := shared.LoadRDBFile(server.StoreState.ConfigDir, server.StoreState.ConfigDbfilename); err != nil {
 			fmt.Printf("Warning: Failed to load RDB file: %v\n", err)
 		}
 	}
 
-	handleReplicaMode(port)
+	server.HandleReplicaMode(port, server.StoreState.Role, server.StoreState.ReplicaOf, shared.ExecuteCommand)
 
 	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {

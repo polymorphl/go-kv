@@ -9,14 +9,14 @@ import (
 
 func TestConfigGet(t *testing.T) {
 	// Reset store state for clean test
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 12345,
 		Replicas:         make(map[string]net.Conn),
 		ConfigDir:        "/tmp/redis-data",
 		ConfigDbfilename: "rdbfile",
-	}
+	})
 
 	tests := []struct {
 		name     string
@@ -142,14 +142,14 @@ func TestConfigUnknownSubcommand(t *testing.T) {
 
 func TestConfigGetAllSupportedParameters(t *testing.T) {
 	// Reset store state for clean test
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 12345,
 		Replicas:         make(map[string]net.Conn),
 		ConfigDir:        "/tmp/redis-data",
 		ConfigDbfilename: "rdbfile",
-	}
+	})
 
 	// Test all supported configuration parameters
 	supportedParams := []string{
@@ -195,12 +195,12 @@ func TestConfigGetAllSupportedParameters(t *testing.T) {
 // BenchmarkConfigGet benchmarks the CONFIG GET command
 func BenchmarkConfigGet(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "GET"},
@@ -216,12 +216,12 @@ func BenchmarkConfigGet(b *testing.B) {
 // BenchmarkConfigGetMultiple benchmarks the CONFIG GET command with multiple parameters
 func BenchmarkConfigGetMultiple(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "GET"},

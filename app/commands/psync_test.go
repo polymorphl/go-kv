@@ -9,12 +9,12 @@ import (
 
 func TestPsync(t *testing.T) {
 	// Reset store state for clean test
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id-123",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	tests := []struct {
 		name        string
@@ -104,12 +104,12 @@ func TestPsyncWithDifferentMasterInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up store state
-			shared.StoreState = shared.State{
+			shared.SetStoreState(shared.State{
 				Role:             "master",
 				MasterReplID:     tt.replID,
 				MasterReplOffset: tt.offset,
 				Replicas:         make(map[string]net.Conn),
-			}
+			})
 
 			args := []shared.Value{
 				{Typ: "bulk", Bulk: "?"},
@@ -155,12 +155,12 @@ func TestGetRDBData(t *testing.T) {
 // BenchmarkPsync benchmarks the PSYNC command
 func BenchmarkPsync(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	args := []shared.Value{
 		{Typ: "bulk", Bulk: "?"},

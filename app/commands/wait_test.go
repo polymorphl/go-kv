@@ -11,12 +11,12 @@ import (
 
 func TestWait(t *testing.T) {
 	// Reset store state for clean test
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	// Clear acknowledged replicas
 	shared.AcknowledgedReplicasClear()
@@ -97,12 +97,12 @@ func TestWait(t *testing.T) {
 
 func TestWaitWithConnectedReplicas(t *testing.T) {
 	// Set up store state with mock replicas
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	// Clear acknowledged replicas
 	shared.AcknowledgedReplicasClear()
@@ -176,12 +176,12 @@ func TestWaitWithConnectedReplicas(t *testing.T) {
 
 func TestWaitWithAcknowledgedReplicas(t *testing.T) {
 	// Set up store state
-	shared.StoreState = shared.State{
+	shared.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 0,
 		Replicas:         make(map[string]net.Conn),
-	}
+	})
 
 	// Clear acknowledged replicas
 	shared.AcknowledgedReplicasClear()
@@ -225,17 +225,16 @@ func (m *mockConn) SetDeadline(t time.Time) error      { return nil }
 func (m *mockConn) SetReadDeadline(t time.Time) error  { return nil }
 func (m *mockConn) SetWriteDeadline(t time.Time) error { return nil }
 
-
 // BenchmarkWait benchmarks the WAIT command
 func BenchmarkWait(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.StoreState = shared.State{
-		Role:            "master",
-		MasterReplID:    "bench-repl-id",
+	shared.SetStoreState(shared.State{
+		Role:             "master",
+		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
-		Replicas:        make(map[string]net.Conn),
-	}
-	
+		Replicas:         make(map[string]net.Conn),
+	})
+
 	// Clear acknowledged replicas
 	shared.AcknowledgedReplicasClear()
 
