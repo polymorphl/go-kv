@@ -219,3 +219,36 @@ func (ss *SortedSet) GetRank(member string) (int, bool) {
 
 	return 0, false
 }
+
+// GetSortedMembers returns all members of the sorted set in sorted order
+// Members are sorted by score (ascending), then by member name (lexicographically)
+func (ss *SortedSet) GetSortedMembers() []string {
+	// Create a slice of members with their scores for sorting
+	type memberScore struct {
+		member string
+		score  float64
+	}
+
+	members := make([]memberScore, 0, len(ss.Members))
+	for m, s := range ss.Members {
+		members = append(members, memberScore{m, s})
+	}
+
+	// Sort by score (ascending), then by member name (lexicographically)
+	for i := 0; i < len(members)-1; i++ {
+		for j := i + 1; j < len(members); j++ {
+			if members[i].score > members[j].score ||
+				(members[i].score == members[j].score && members[i].member > members[j].member) {
+				members[i], members[j] = members[j], members[i]
+			}
+		}
+	}
+
+	// Extract just the member names
+	result := make([]string, len(members))
+	for i, ms := range members {
+		result[i] = ms.member
+	}
+
+	return result
+}

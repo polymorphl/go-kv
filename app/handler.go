@@ -50,6 +50,7 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"XRANGE":      commands.Xrange,
 	"XREAD":       commands.Xread,
 	"ZADD":        commands.Zadd,
+	"ZRANGE":      commands.Zrange,
 	"ZRANK":       commands.Zrank,
 }
 
