@@ -259,6 +259,7 @@ func (ss *SortedSet) Remove(member string) bool {
 	if !exists {
 		return false
 	}
+	delete(ss.Members, member)
 	ss.Size--
 	return true
 }
