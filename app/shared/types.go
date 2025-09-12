@@ -1,5 +1,41 @@
 package shared
 
+import (
+	"github.com/codecrafters-io/redis-starter-go/app/protocol"
+)
+
+// Type aliases for backward compatibility
+type Value = protocol.Value
+type Resp = protocol.Resp
+type Writer = protocol.Writer
+
+// StreamEntry represents a single entry in a Redis stream
+type StreamEntry struct {
+	ID   string            // Stream ID (e.g., "1526985054069-0")
+	Data map[string]string // Field-value pairs
+}
+
+// MemoryEntry represents a value stored in the in-memory database.
+// It can hold either a string value, an array of strings, or a linked list, with optional expiration.
+type MemoryEntry struct {
+	Value   string        // String value (used when Array is empty)
+	Array   []string      // Array of strings (used for list operations - kept for compatibility)
+	List    *LinkedList   // Linked list (used for optimized list operations)
+	Stream  []StreamEntry // Stream entries (used for stream operations)
+	Expires int64         // Unix timestamp in milliseconds, 0 means no expiry
+}
+
+// QueuedCommand represents a command that is queued in a transaction.
+type QueuedCommand struct {
+	Command string
+	Args    []protocol.Value
+}
+
+// Transaction represents a transaction that is being executed.
+type Transaction struct {
+	Commands []QueuedCommand
+}
+
 // ListNode represents a single node in a doubly linked list
 type ListNode struct {
 	Value string
@@ -13,6 +49,9 @@ type LinkedList struct {
 	Tail *ListNode
 	Size int
 }
+
+// CommandHandler represents a function that handles a Redis command
+type CommandHandler func(string, []protocol.Value) protocol.Value
 
 // NewLinkedList creates a new empty linked list
 func NewLinkedList() *LinkedList {
