@@ -8,11 +8,12 @@ import (
 
 	"github.com/codecrafters-io/redis-starter-go/app/network"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestWait(t *testing.T) {
 	// Reset store state for clean test
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 0,
@@ -98,7 +99,7 @@ func TestWait(t *testing.T) {
 
 func TestWaitWithConnectedReplicas(t *testing.T) {
 	// Set up store state with mock replicas
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 0,
@@ -177,7 +178,7 @@ func TestWaitWithConnectedReplicas(t *testing.T) {
 
 func TestWaitWithAcknowledgedReplicas(t *testing.T) {
 	// Set up store state
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 0,
@@ -229,7 +230,7 @@ func (m *mockConn) SetWriteDeadline(t time.Time) error { return nil }
 // BenchmarkWait benchmarks the WAIT command
 func BenchmarkWait(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,

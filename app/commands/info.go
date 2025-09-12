@@ -3,6 +3,7 @@ package commands
 import (
 	"strconv"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -10,7 +11,7 @@ import (
 // Usage: INFO
 // This command is used to get information about the server.
 func Info(connID string, args []shared.Value) shared.Value {
-	state := shared.StoreState
+	state := server.StoreState
 
 	// Build the info response as a bulk string with key-value pairs
 	info := "role:" + state.Role + "\r\n"

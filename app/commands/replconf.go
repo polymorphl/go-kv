@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/codecrafters-io/redis-starter-go/app/network"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -46,7 +47,7 @@ func Replconf(connID string, args []shared.Value) shared.Value {
 	// This ensures the replica is registered before any commands are processed
 	if conn, exists := network.ConnectionsGet(connID); exists {
 		// Only register if not already registered
-		if _, alreadyRegistered := shared.StoreState.Replicas[connID]; !alreadyRegistered {
+		if _, alreadyRegistered := server.StoreState.Replicas[connID]; !alreadyRegistered {
 			network.ReplicasSet(connID, conn)
 		}
 	}

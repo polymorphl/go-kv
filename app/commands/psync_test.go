@@ -4,12 +4,13 @@ import (
 	"net"
 	"testing"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 func TestPsync(t *testing.T) {
 	// Reset store state for clean test
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id-123",
 		MasterReplOffset: 0,
@@ -104,7 +105,7 @@ func TestPsyncWithDifferentMasterInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up store state
-			shared.SetStoreState(shared.State{
+			server.SetStoreState(shared.State{
 				Role:             "master",
 				MasterReplID:     tt.replID,
 				MasterReplOffset: tt.offset,
@@ -155,7 +156,7 @@ func TestGetRDBData(t *testing.T) {
 // BenchmarkPsync benchmarks the PSYNC command
 func BenchmarkPsync(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,

@@ -55,9 +55,6 @@ func parseArgs() string {
 		server.StoreState.MasterReplID = generateReplID()
 	}
 
-	// Initialize shared state
-	server.InitializeSharedState()
-
 	return port
 }
 

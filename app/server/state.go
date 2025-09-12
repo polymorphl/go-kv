@@ -20,7 +20,13 @@ var StoreState = &shared.State{
 // Memory is the global in-memory database that stores all key-value pairs.
 var Memory = make(map[string]shared.MemoryEntry)
 
-// InitializeSharedState initializes the shared.StoreState with our server state
-func InitializeSharedState() {
-	shared.StoreState = StoreState
+// Helper functions for test compatibility
+func SetStoreState(state shared.State) {
+	if StoreState != nil {
+		*StoreState = state
+	}
+}
+
+func GetStoreState() *shared.State {
+	return StoreState
 }

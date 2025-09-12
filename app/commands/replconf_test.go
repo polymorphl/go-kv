@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestReplconfGetack(t *testing.T) {
@@ -104,7 +105,7 @@ func contains(s, substr string) bool {
 // BenchmarkReplconf benchmarks the REPLCONF command
 func BenchmarkReplconf(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
@@ -125,7 +126,7 @@ func BenchmarkReplconf(b *testing.B) {
 // BenchmarkReplconfGetack benchmarks the REPLCONF GETACK command
 func BenchmarkReplconfGetack(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,

@@ -3,6 +3,7 @@ package commands
 import (
 	"strings"
 
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -69,10 +70,10 @@ func getConfigValue(param string) string {
 
 // getConfigDir returns the current directory configuration
 func getConfigDir() string {
-	return shared.StoreState.ConfigDir
+	return server.StoreState.ConfigDir
 }
 
 // getConfigDbfilename returns the current database filename configuration
 func getConfigDbfilename() string {
-	return shared.StoreState.ConfigDbfilename
+	return server.StoreState.ConfigDbfilename
 }

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/codecrafters-io/redis-starter-go/app/network"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 	"github.com/codecrafters-io/redis-starter-go/app/storage"
 )
@@ -20,7 +21,7 @@ func Psync(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR wrong number of arguments for 'psync' command")
 	}
 
-	fullResyncResponse := fmt.Sprintf("FULLRESYNC %s %d", shared.StoreState.MasterReplID, shared.StoreState.MasterReplOffset)
+	fullResyncResponse := fmt.Sprintf("FULLRESYNC %s %d", server.StoreState.MasterReplID, server.StoreState.MasterReplOffset)
 
 	// Find the connection to send the RDB file
 	if conn, exists := network.ConnectionsGet(connID); exists {
@@ -51,7 +52,7 @@ func Psync(connID string, args []shared.Value) shared.Value {
 // GetRDBData returns the RDB file data, loading from disk if available
 func GetRDBData() ([]byte, error) {
 	// Try to load the actual RDB file first
-	filePath := filepath.Join(shared.StoreState.ConfigDir, shared.StoreState.ConfigDbfilename)
+	filePath := filepath.Join(server.StoreState.ConfigDir, server.StoreState.ConfigDbfilename)
 
 	if data, err := os.ReadFile(filePath); err == nil {
 		// Successfully loaded RDB file, parse it into memory

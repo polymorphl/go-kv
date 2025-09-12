@@ -52,8 +52,3 @@ func initCommandHandlers() {
 		"BLPOP":  Blpop,
 	}
 }
-
-// initTestState initializes the shared state for testing
-func initTestState() {
-	server.InitializeSharedState()
-}

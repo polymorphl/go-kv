@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestInfo(t *testing.T) {
 	// Reset store state for clean test
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 12345,
@@ -84,7 +85,7 @@ func TestInfoWithDifferentRoles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Set up store state
-			shared.SetStoreState(shared.State{
+			server.SetStoreState(shared.State{
 				Role:             tt.role,
 				MasterReplID:     tt.replID,
 				MasterReplOffset: tt.offset,
@@ -107,7 +108,7 @@ func TestInfoWithDifferentRoles(t *testing.T) {
 // BenchmarkInfo benchmarks the INFO command
 func BenchmarkInfo(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 12345,
@@ -125,7 +126,7 @@ func BenchmarkInfo(b *testing.B) {
 // BenchmarkInfoWithSection benchmarks the INFO command with section argument
 func BenchmarkInfoWithSection(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 12345,

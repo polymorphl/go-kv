@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/codecrafters-io/redis-starter-go/app/network"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
@@ -50,7 +51,7 @@ func Wait(connID string, args []shared.Value) shared.Value {
 	// But if no acknowledgments were received, return total replicas (fallback behavior)
 	finalAckCount := network.AcknowledgedReplicasCount()
 	if finalAckCount == 0 {
-		return shared.Value{Typ: "integer", Num: len(shared.StoreState.Replicas)}
+		return shared.Value{Typ: "integer", Num: len(server.StoreState.Replicas)}
 	}
 	return shared.Value{Typ: "integer", Num: finalAckCount}
 }

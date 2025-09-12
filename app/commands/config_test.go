@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
+	"github.com/codecrafters-io/redis-starter-go/app/server"
 )
 
 func TestConfigGet(t *testing.T) {
@@ -12,7 +13,7 @@ func TestConfigGet(t *testing.T) {
 	initTestState()
 
 	// Reset store state for clean test
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 12345,
@@ -145,7 +146,7 @@ func TestConfigUnknownSubcommand(t *testing.T) {
 
 func TestConfigGetAllSupportedParameters(t *testing.T) {
 	// Reset store state for clean test
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "test-repl-id",
 		MasterReplOffset: 12345,
@@ -198,7 +199,7 @@ func TestConfigGetAllSupportedParameters(t *testing.T) {
 // BenchmarkConfigGet benchmarks the CONFIG GET command
 func BenchmarkConfigGet(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
@@ -219,7 +220,7 @@ func BenchmarkConfigGet(b *testing.B) {
 // BenchmarkConfigGetMultiple benchmarks the CONFIG GET command with multiple parameters
 func BenchmarkConfigGetMultiple(b *testing.B) {
 	// Reset store state for clean benchmark
-	shared.SetStoreState(shared.State{
+	server.SetStoreState(shared.State{
 		Role:             "master",
 		MasterReplID:     "bench-repl-id",
 		MasterReplOffset: 0,
