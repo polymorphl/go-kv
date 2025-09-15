@@ -41,6 +41,12 @@ This implementation supports the following Redis commands:
 - `ZREM` - Remove one or more members from a sorted set
 - `ZCARD` - Get the number of members in a sorted set
 
+### Geospatial Operations
+- `GEOADD` - Add one or more geospatial members to a sorted set
+- `GEOPOS` - Get the longitude and latitude of members in a geospatial sorted set
+- `GEODIST` - Get the distance between two members in a geospatial sorted set
+- `GEOSEARCH` - Search for members within a given radius using FROMLONLAT and BYRADIUS
+
 ### Transaction Operations
 - `MULTI` - Start a transaction block
 - `EXEC` - Execute all commands in a transaction block
@@ -124,6 +130,7 @@ make test-transaction        # Test transaction commands (MULTI, EXEC, DISCARD)
 make test-pubsub             # Test pub/sub commands (SUBSCRIBE, UNSUBSCRIBE, PUBLISH)
 make test-replication       # Test replication commands (REPLCONF, PSYNC, INFO, WAIT)
 make test-zset              # Test sorted set commands (ZADD, ZRANK, ZRANGE, ZSCORE, ZREM, ZCARD)
+make test-geo               # Test geospatial commands (GEOADD, GEOPOS, GEODIST, GEOSEARCH)
 ```
 
 #### **Benchmarking Commands**
@@ -135,6 +142,7 @@ make bench-stream           # Benchmark stream commands
 make bench-pubsub           # Benchmark pub/sub commands
 make bench-replication     # Benchmark replication commands
 make bench-zset            # Benchmark sorted set commands
+make bench-geo             # Benchmark geospatial commands
 ```
 
 #### **Development Commands**
@@ -182,6 +190,12 @@ ZRANGE myzset 0 -1
 ZSCORE myzset "member1"
 ZREM myzset "member2"
 ZCARD myzset
+
+# Geospatial operations
+GEOADD places 2.2944692 48.8584625 "Paris" 11.5030378 48.164271 "Munich"
+GEOPOS places "Paris" "Munich"
+GEODIST places "Paris" "Munich" km
+GEOSEARCH places FROMLONLAT 2.2944692 48.8584625 BYRADIUS 1000 km
 
 # Transaction operations
 MULTI
@@ -235,6 +249,7 @@ make test-coverage
 - **Pub/Sub Support**: Complete pub/sub implementation with channel subscription system, multi-channel support, duplicate handling, and real-time message delivery to all subscribers
 - **Replication Support**: Master-replica replication with command propagation and acknowledgment tracking
 - **Sorted Set Support**: Complete Redis sorted set implementation with score-based ordering, alphabetical tie-breaking, and efficient member management
+- **Geospatial Support**: Full Redis geospatial implementation with GEOADD, GEOPOS, GEODIST, and GEOSEARCH commands using Redis-compatible geohash encoding and Haversine distance calculations
 - **Thread Safety**: Concurrent access protection with mutexes for shared data structures
 - **Unicode Support**: Complete UTF-8 string support across all operations
 
