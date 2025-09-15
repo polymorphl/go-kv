@@ -29,7 +29,7 @@ func SubscriptionsSet(connID string, channel string) {
 
 	// Check if connection already exists
 	if channels, exists := Subscriptions[connID]; exists {
-		// Check if channel is already subscribed
+		// Check if channel is already subscribed (linear search is fine for small lists)
 		for _, existingChannel := range channels {
 			if existingChannel == channel {
 				return // Already subscribed to this channel
