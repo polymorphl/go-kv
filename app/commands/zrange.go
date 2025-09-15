@@ -1,12 +1,75 @@
 package commands
 
 import (
+	"sort"
 	"strconv"
+	"sync"
 
 	"github.com/codecrafters-io/redis-starter-go/app/protocol"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
+
+// Object pool for result slices to reduce allocations
+var (
+	zrangeResultPool = sync.Pool{
+		New: func() interface{} {
+			return make([]shared.Value, 0, 16)
+		},
+	}
+)
+
+// Helper functions for pool management
+func getZrangeResult() []shared.Value {
+	return zrangeResultPool.Get().([]shared.Value)
+}
+
+func putZrangeResult(s []shared.Value) {
+	s = s[:0] // Reset length but keep capacity
+	zrangeResultPool.Put(s)
+}
+
+// getSortedRange efficiently gets a range from a sorted set without full sorting
+func getSortedRange(ss *shared.SortedSet, start, stop int) []string {
+	if start > stop || start >= ss.Size || stop < 0 {
+		return []string{}
+	}
+
+	// Clamp indices to valid range
+	if start < 0 {
+		start = 0
+	}
+	if stop >= ss.Size {
+		stop = ss.Size - 1
+	}
+
+	// Create slice of members with scores for efficient sorting
+	type memberScore struct {
+		member string
+		score  float64
+	}
+
+	members := make([]memberScore, 0, len(ss.Members))
+	for m, s := range ss.Members {
+		members = append(members, memberScore{m, s})
+	}
+
+	// Use Go's efficient sort instead of bubble sort
+	sort.Slice(members, func(i, j int) bool {
+		if members[i].score != members[j].score {
+			return members[i].score < members[j].score
+		}
+		return members[i].member < members[j].member
+	})
+
+	// Extract only the requested range
+	result := make([]string, 0, stop-start+1)
+	for i := start; i <= stop; i++ {
+		result = append(result, members[i].member)
+	}
+
+	return result
+}
 
 // zrange handles the ZRANGE command.
 // Usage: ZRANGE key start stop [WITHSCORES]
@@ -52,22 +115,12 @@ func Zrange(connID string, args []protocol.Value) protocol.Value {
 		return createErrorResponse("ERR value is not an integer or out of range")
 	}
 
-	members := entry.SortedSet.GetSortedMembers()
-
 	// Handle negative indices
 	if start < 0 {
-		start = len(members) + start
+		start = entry.SortedSet.Size + start
 	}
 	if stop < 0 {
-		stop = len(members) + stop
-	}
-
-	// Clamp indices to valid range
-	if start < 0 {
-		start = 0
-	}
-	if stop >= len(members) {
-		stop = len(members) - 1
+		stop = entry.SortedSet.Size + stop
 	}
 
 	// If start > stop, return empty array
@@ -75,11 +128,23 @@ func Zrange(connID string, args []protocol.Value) protocol.Value {
 		return shared.Value{Typ: "array", Array: []shared.Value{}}
 	}
 
-	result := make([]shared.Value, 0, stop-start+1)
-	for i := start; i <= stop; i++ {
-		result = append(result, shared.Value{Typ: "string", Str: members[i]})
+	// Get range efficiently using optimized method
+	rangeMembers := getSortedRange(entry.SortedSet, start, stop)
+
+	// Use object pool for result slice
+	result := getZrangeResult()
+	defer putZrangeResult(result)
+
+	// Pre-allocate with exact capacity
+	result = result[:0]
+	if cap(result) < len(rangeMembers) {
+		result = make([]shared.Value, 0, len(rangeMembers))
+	}
+
+	// Convert to shared.Value array efficiently
+	for _, member := range rangeMembers {
+		result = append(result, shared.Value{Typ: "string", Str: member})
 	}
 
 	return shared.Value{Typ: "array", Array: result}
-
 }
