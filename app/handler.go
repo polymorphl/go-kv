@@ -28,6 +28,7 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"ECHO":        commands.Echo,
 	"EXEC":        commands.Exec,
 	"GET":         commands.Get,
+	"GEOADD":      commands.Geoadd,
 	"INCR":        commands.Incr,
 	"INFO":        commands.Info,
 	"KEYS":        commands.Keys,
