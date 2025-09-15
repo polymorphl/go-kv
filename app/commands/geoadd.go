@@ -61,9 +61,9 @@ func Geoadd(connID string, args []shared.Value) shared.Value {
 			return createErrorResponse("ERR invalid latitude value")
 		}
 
-		// For GEOADD, we use the longitude as the score (Redis uses longitude for sorting)
-		// In a real implementation, you would convert lat/lng to a geohash or use a different scoring system
-		if entry.SortedSet.Add(member, longitude) {
+		// For GEOADD, we use a hardcoded score of 0 for now
+		// In later stages, we'll implement proper geohash scoring
+		if entry.SortedSet.Add(member, 0) {
 			newElementsCount++
 		}
 	}
