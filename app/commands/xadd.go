@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/codecrafters-io/redis-starter-go/app/shared"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
 
 // StreamID represents a parsed Redis stream ID with timestamp and sequence
@@ -16,41 +17,43 @@ type StreamID struct {
 	Sequence  int64
 }
 
-// generateSequenceForTimestamp generates the appropriate sequence number for a given timestamp.
-func generateSequenceForTimestamp(timestamp int64, stream []string) int64 {
-	if len(stream) == 0 {
-		// For empty stream, start at 1 if timestamp is 0, otherwise 0
-		if timestamp == 0 {
-			return 1
-		}
-		return 0
+// Object pools for reducing allocations
+var (
+	streamIDPool = sync.Pool{
+		New: func() interface{} {
+			return &StreamID{}
+		},
 	}
+)
 
-	// Get the last entry's sequence and increment
-	lastEntry := stream[len(stream)-1]
-	lastParts := strings.Split(lastEntry, "-")
-	if len(lastParts) != 2 {
-		return 0
-	}
-
-	lastTimestamp, _ := strconv.ParseInt(lastParts[0], 10, 64)
-	lastSequence, _ := strconv.ParseInt(lastParts[1], 10, 64)
-
-	if timestamp == lastTimestamp {
-		return lastSequence + 1 // Same timestamp, increment sequence
-	}
-	return 0 // Different timestamp, start sequence at 0
+// Helper functions for pool management
+func getStreamID() *StreamID {
+	return streamIDPool.Get().(*StreamID)
 }
 
-// generateActualID generates the actual Redis stream ID by replacing wildcards with appropriate values.
-func generateActualID(id string, stream []string) string {
+func putStreamID(id *StreamID) {
+	id.Timestamp = 0
+	id.Sequence = 0
+	streamIDPool.Put(id)
+}
+
+// parseStreamComponent parses a stream ID component, handling "*" for auto-generation.
+func parseStreamComponent(component string, defaultValue int64) (int64, error) {
+	if component == "*" {
+		return defaultValue, nil
+	}
+	return strconv.ParseInt(component, 10, 64)
+}
+
+// generateActualIDOptimized is an optimized version of generateActualID
+func generateActualIDOptimized(id string, stream []string) string {
 	if !strings.Contains(id, "*") {
 		return id
 	}
 
 	if id == "*" {
 		timestamp := time.Now().UnixMilli()
-		sequence := generateSequenceForTimestamp(timestamp, stream)
+		sequence := generateSequenceForTimestampOptimized(timestamp, stream)
 		return fmt.Sprintf("%d-%d", timestamp, sequence)
 	}
 
@@ -72,7 +75,7 @@ func generateActualID(id string, stream []string) string {
 	// Handle sequence
 	var sequence int64
 	if sequenceStr == "*" {
-		sequence = generateSequenceForTimestamp(timestamp, stream)
+		sequence = generateSequenceForTimestampOptimized(timestamp, stream)
 	} else {
 		sequence, _ = strconv.ParseInt(sequenceStr, 10, 64)
 	}
@@ -80,77 +83,56 @@ func generateActualID(id string, stream []string) string {
 	return fmt.Sprintf("%d-%d", timestamp, sequence)
 }
 
-// getStreamIDs extracts stream IDs from existing stream entries.
-func getStreamIDs(stream []shared.StreamEntry) []string {
-	streamIDs := make([]string, len(stream))
-	for i, streamEntry := range stream {
-		streamIDs[i] = streamEntry.ID
-	}
-	return streamIDs
-}
-
-// parseFieldValuePairs extracts field-value pairs from command arguments.
-func parseFieldValuePairs(args []shared.Value) map[string]string {
-	streamData := make(map[string]string)
-	for i := 2; i < len(args); i += 2 {
-		if i+1 < len(args) {
-			field := args[i].Bulk
-			value := args[i+1].Bulk
-			streamData[field] = value
+// generateSequenceForTimestampOptimized is an optimized version
+func generateSequenceForTimestampOptimized(timestamp int64, stream []string) int64 {
+	if len(stream) == 0 {
+		if timestamp == 0 {
+			return 1
 		}
+		return 0
 	}
-	return streamData
+
+	// Optimize: Get last entry more efficiently
+	lastEntry := stream[len(stream)-1]
+	lastParts := strings.Split(lastEntry, "-")
+	if len(lastParts) != 2 {
+		return 0
+	}
+
+	lastTimestamp, _ := strconv.ParseInt(lastParts[0], 10, 64)
+	lastSequence, _ := strconv.ParseInt(lastParts[1], 10, 64)
+
+	if timestamp == lastTimestamp {
+		return lastSequence + 1
+	}
+	return 0
 }
 
-// parseStreamComponent parses a stream ID component, handling "*" for auto-generation.
-func parseStreamComponent(component string, defaultValue int64) (int64, error) {
-	if component == "*" {
-		return defaultValue, nil
-	}
-	return strconv.ParseInt(component, 10, 64)
-}
+// validateStreamKeyOptimized is an optimized version
+func validateStreamKeyOptimized(id string, stream []string) (bool, error) {
+	// Parse the new ID efficiently
+	newID := getStreamID()
+	defer putStreamID(newID)
 
-// parseStreamID parses a Redis stream ID string into timestamp and sequence components.
-//
-// Examples:
-//
-//	parseStreamID("*")           // Returns current timestamp with sequence 0
-//	parseStreamID("1234-5")       // Returns timestamp 1234, sequence 5
-//	parseStreamID("1234-*")       // Returns timestamp 1234, sequence 0
-func parseStreamID(id string) (*StreamID, error) {
+	var err error
 	if id == "*" {
-		return &StreamID{
-			Timestamp: time.Now().UnixMilli(),
-			Sequence:  0,
-		}, nil
-	}
+		newID.Timestamp = time.Now().UnixMilli()
+		newID.Sequence = 0
+	} else {
+		parts := strings.Split(id, "-")
+		if len(parts) != 2 {
+			return false, fmt.Errorf("ERR Invalid stream ID format")
+		}
 
-	parts := strings.Split(id, "-")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("ERR Invalid stream ID format")
-	}
+		newID.Timestamp, err = parseStreamComponent(parts[0], time.Now().UnixMilli())
+		if err != nil {
+			return false, fmt.Errorf("ERR Invalid timestamp in stream ID")
+		}
 
-	timestampStr, sequenceStr := parts[0], parts[1]
-
-	timestamp, err := parseStreamComponent(timestampStr, time.Now().UnixMilli())
-	if err != nil {
-		return nil, fmt.Errorf("ERR Invalid timestamp in stream ID")
-	}
-
-	sequence, err := parseStreamComponent(sequenceStr, 0)
-	if err != nil {
-		return nil, fmt.Errorf("ERR Invalid sequence in stream ID")
-	}
-
-	return &StreamID{Timestamp: timestamp, Sequence: sequence}, nil
-}
-
-// validateStreamKey validates a Redis stream ID against existing stream entries.
-func validateStreamKey(id string, stream []string) (bool, error) {
-	// Parse the new ID
-	newID, err := parseStreamID(id)
-	if err != nil {
-		return false, err
+		newID.Sequence, err = parseStreamComponent(parts[1], 0)
+		if err != nil {
+			return false, fmt.Errorf("ERR Invalid sequence in stream ID")
+		}
 	}
 
 	// Check if ID is greater than 0-0
@@ -159,11 +141,8 @@ func validateStreamKey(id string, stream []string) (bool, error) {
 	}
 
 	// Reject exactly "0-0" only if it was explicitly provided
-	// Allow "0-0" if it was auto-generated (e.g., from "*" or "0-*")
 	if newID.Timestamp == 0 && newID.Sequence == 0 {
-		// Check if this was auto-generated by looking for "*" in the original ID
 		if strings.Contains(id, "*") {
-			// This was auto-generated, so "0-0" is valid
 			return true, nil
 		}
 		return false, fmt.Errorf("ERR The ID specified in XADD must be greater than 0-0")
@@ -174,44 +153,30 @@ func validateStreamKey(id string, stream []string) (bool, error) {
 		return true, nil
 	}
 
-	// Get the last entry ID from the stream
-	lastID, err := getLastStreamID(stream)
+	// Get the last entry ID from the stream efficiently
+	lastEntry := stream[len(stream)-1]
+	parts := strings.Split(lastEntry, "-")
+	if len(parts) != 2 {
+		return false, fmt.Errorf("ERR Invalid stream data format")
+	}
+
+	lastTimestamp, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("ERR Invalid timestamp in existing stream entry")
+	}
+
+	lastSequence, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return false, fmt.Errorf("ERR Invalid sequence in existing stream entry")
 	}
 
 	// Check if new ID is greater than the last entry
-	if newID.Timestamp < lastID.Timestamp ||
-		(newID.Timestamp == lastID.Timestamp && newID.Sequence <= lastID.Sequence) {
+	if newID.Timestamp < lastTimestamp ||
+		(newID.Timestamp == lastTimestamp && newID.Sequence <= lastSequence) {
 		return false, fmt.Errorf("ERR The ID specified in XADD is equal or smaller than the target stream top item")
 	}
 
 	return true, nil
-}
-
-// getLastStreamID extracts and parses the last ID from a stream.
-func getLastStreamID(stream []string) (*StreamID, error) {
-	if len(stream) == 0 {
-		return nil, nil
-	}
-
-	lastEntry := stream[len(stream)-1]
-	parts := strings.Split(lastEntry, "-")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("ERR Invalid stream data format")
-	}
-
-	timestamp, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("ERR Invalid timestamp in existing stream entry")
-	}
-
-	sequence, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("ERR Invalid sequence in existing stream entry")
-	}
-
-	return &StreamID{Timestamp: timestamp, Sequence: sequence}, nil
 }
 
 // xadd handles the XADD command.
@@ -231,29 +196,41 @@ func Xadd(connID string, args []shared.Value) shared.Value {
 	id := args[1].Bulk
 	entry, exists := server.Memory[key]
 
+	// Parse field-value pairs efficiently
+	streamData := make(map[string]string, (len(args)-2)/2)
+	for i := 2; i < len(args); i += 2 {
+		if i+1 < len(args) {
+			streamData[args[i].Bulk] = args[i+1].Bulk
+		}
+	}
+
 	var actualID string
 	var streamIDs []string
 
 	if !exists {
 		streamIDs = []string{}
 	} else {
-		streamIDs = getStreamIDs(entry.Stream)
+		// Optimize: Pre-allocate slice with known capacity
+		streamIDs = make([]string, 0, len(entry.Stream))
+		for _, streamEntry := range entry.Stream {
+			streamIDs = append(streamIDs, streamEntry.ID)
+		}
 	}
 
-	actualID = generateActualID(id, streamIDs)
-	valid, err := validateStreamKey(actualID, streamIDs)
+	actualID = generateActualIDOptimized(id, streamIDs)
+	valid, err := validateStreamKeyOptimized(actualID, streamIDs)
 	if !valid {
 		return createErrorResponse(err.Error())
 	}
 
-	streamData := parseFieldValuePairs(args)
+	// Create stream entry efficiently
 	streamEntry := shared.StreamEntry{ID: actualID, Data: streamData}
 
 	if !exists {
-		entry = shared.MemoryEntry{Stream: []shared.StreamEntry{streamEntry}}
-	} else {
-		entry.Stream = append(entry.Stream, streamEntry)
+		// Optimize: Pre-allocate with capacity
+		entry = shared.MemoryEntry{Stream: make([]shared.StreamEntry, 0, 1)}
 	}
+	entry.Stream = append(entry.Stream, streamEntry)
 	server.Memory[key] = entry
 
 	return shared.Value{Typ: "bulk", Bulk: actualID}
