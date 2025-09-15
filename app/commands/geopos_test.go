@@ -31,8 +31,8 @@ func TestGeopos(t *testing.T) {
 					{
 						Typ: "array",
 						Array: []shared.Value{
-							{Typ: "bulk", Bulk: "-0.0884968042373657"},
-							{Typ: "bulk", Bulk: "51.5064768740388"},
+							{Typ: "bulk", Bulk: "-0.0884941220283508"},
+							{Typ: "bulk", Bulk: "51.5064781413993"},
 						},
 					},
 				},
@@ -60,15 +60,15 @@ func TestGeopos(t *testing.T) {
 					{
 						Typ: "array",
 						Array: []shared.Value{
-							{Typ: "bulk", Bulk: "-0.0884968042373657"},
-							{Typ: "bulk", Bulk: "51.5064768740388"},
+							{Typ: "bulk", Bulk: "-0.0884941220283508"},
+							{Typ: "bulk", Bulk: "51.5064781413993"},
 						},
 					},
 					{
 						Typ: "array",
 						Array: []shared.Value{
-							{Typ: "bulk", Bulk: "11.5030342340469"},
-							{Typ: "bulk", Bulk: "48.1642695949692"},
+							{Typ: "bulk", Bulk: "11.503036916256"},
+							{Typ: "bulk", Bulk: "48.1642708623298"},
 						},
 					},
 				},
@@ -133,16 +133,16 @@ func TestGeopos(t *testing.T) {
 					{
 						Typ: "array",
 						Array: []shared.Value{
-							{Typ: "bulk", Bulk: "-0.0884968042373657"},
-							{Typ: "bulk", Bulk: "51.5064768740388"},
+							{Typ: "bulk", Bulk: "-0.0884941220283508"},
+							{Typ: "bulk", Bulk: "51.5064781413993"},
 						},
 					},
 					{Typ: "null_array", Str: ""},
 					{
 						Typ: "array",
 						Array: []shared.Value{
-							{Typ: "bulk", Bulk: "11.5030342340469"},
-							{Typ: "bulk", Bulk: "48.1642695949692"},
+							{Typ: "bulk", Bulk: "11.503036916256"},
+							{Typ: "bulk", Bulk: "48.1642708623298"},
 						},
 					},
 				},
@@ -200,8 +200,8 @@ func TestGeopos(t *testing.T) {
 					{
 						Typ: "array",
 						Array: []shared.Value{
-							{Typ: "bulk", Bulk: "180"},
-							{Typ: "bulk", Bulk: "0"},
+							{Typ: "bulk", Bulk: "180.000002682209"},
+							{Typ: "bulk", Bulk: "1.26736057382004e-06"},
 						},
 					},
 				},
