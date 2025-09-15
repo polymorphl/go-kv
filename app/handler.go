@@ -29,6 +29,7 @@ var Handlers = map[string]func(string, []shared.Value) shared.Value{
 	"EXEC":        commands.Exec,
 	"GET":         commands.Get,
 	"GEOADD":      commands.Geoadd,
+	"GEODIST":     commands.Geodist,
 	"GEOPOS":      commands.Geopos,
 	"INCR":        commands.Incr,
 	"INFO":        commands.Info,
