@@ -2,10 +2,79 @@ package commands
 
 import (
 	"strconv"
+	"sync"
 
-	"github.com/codecrafters-io/redis-starter-go/app/shared"
 	"github.com/codecrafters-io/redis-starter-go/app/server"
+	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
+
+// Object pool for result slices to reduce allocations
+var (
+	lrangeResultPool = sync.Pool{
+		New: func() interface{} {
+			return make([]shared.Value, 0, 16)
+		},
+	}
+)
+
+// Helper functions for pool management
+func getLrangeResult() []shared.Value {
+	return lrangeResultPool.Get().([]shared.Value)
+}
+
+func putLrangeResult(s []shared.Value) {
+	s = s[:0] // Reset length but keep capacity
+	lrangeResultPool.Put(s)
+}
+
+// getRangeFromArray efficiently extracts a range from an array without copying
+func getRangeFromArray(arr []string, start, stop int) []string {
+	if start > stop || start >= len(arr) || stop < 0 {
+		return []string{}
+	}
+
+	// Clamp indices to array bounds
+	if start < 0 {
+		start = 0
+	}
+	if stop >= len(arr) {
+		stop = len(arr) - 1
+	}
+
+	return arr[start : stop+1]
+}
+
+// getRangeFromLinkedList efficiently extracts a range from a linked list without full conversion
+func getRangeFromLinkedList(ll *shared.LinkedList, start, stop int) []string {
+	if start > stop || start >= ll.Size || stop < 0 {
+		return []string{}
+	}
+
+	// Clamp indices to list bounds
+	if start < 0 {
+		start = 0
+	}
+	if stop >= ll.Size {
+		stop = ll.Size - 1
+	}
+
+	// Pre-allocate result with exact capacity
+	result := make([]string, 0, stop-start+1)
+
+	// Navigate to start position
+	current := ll.Head
+	for i := 0; i < start; i++ {
+		current = current.Next
+	}
+
+	// Extract range elements
+	for i := start; i <= stop; i++ {
+		result = append(result, current.Value)
+		current = current.Next
+	}
+
+	return result
+}
 
 // lrange handles the LRANGE command.
 // Usage: LRANGE key start stop
@@ -54,16 +123,12 @@ func Lrange(connID string, args []shared.Value) shared.Value {
 		return createErrorResponse("ERR value is not an integer or out of range")
 	}
 
-	// Get the list length and elements
+	// Get list length and handle negative indices
 	var listLen int
-	var elements []string
-
 	if entry.List != nil {
 		listLen = entry.List.Size
-		elements = entry.List.ToArray()
 	} else {
 		listLen = len(entry.Array)
-		elements = entry.Array
 	}
 
 	// Handle negative indices (count from end)
@@ -74,22 +139,31 @@ func Lrange(connID string, args []shared.Value) shared.Value {
 		stop = listLen + stop
 	}
 
-	// Clamp indices to valid range
-	if start < 0 {
-		start = 0
-	}
-	if stop >= listLen {
-		stop = listLen - 1
-	}
-
 	// Check if start is after stop (invalid range)
 	if start > stop {
 		return shared.Value{Typ: "array", Array: []shared.Value{}}
 	}
 
-	// Pre-allocate result slice with exact capacity for better performance
-	result := make([]shared.Value, 0, stop-start+1)
-	for _, value := range elements[start : stop+1] {
+	// Get range elements efficiently
+	var rangeElements []string
+	if entry.List != nil {
+		rangeElements = getRangeFromLinkedList(entry.List, start, stop)
+	} else {
+		rangeElements = getRangeFromArray(entry.Array, start, stop)
+	}
+
+	// Use object pool for result slice
+	result := getLrangeResult()
+	defer putLrangeResult(result)
+
+	// Pre-allocate with exact capacity
+	result = result[:0]
+	if cap(result) < len(rangeElements) {
+		result = make([]shared.Value, 0, len(rangeElements))
+	}
+
+	// Convert to shared.Value array efficiently
+	for _, value := range rangeElements {
 		result = append(result, shared.Value{Typ: "string", Str: value})
 	}
 
