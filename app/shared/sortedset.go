@@ -1,5 +1,29 @@
 package shared
 
+import (
+	"sort"
+	"sync"
+)
+
+// Object pool for member slices to reduce allocations
+var (
+	memberScorePool = sync.Pool{
+		New: func() interface{} {
+			return make([]memberScore, 0, 16)
+		},
+	}
+)
+
+// Helper functions for pool management
+func getMemberScoreSlice() []memberScore {
+	return memberScorePool.Get().([]memberScore)
+}
+
+func putMemberScoreSlice(s []memberScore) {
+	s = s[:0] // Reset length but keep capacity
+	memberScorePool.Put(s)
+}
+
 // SortedSetMember represents a member in a sorted set with its score
 type SortedSetMember struct {
 	Score  float64
@@ -38,6 +62,12 @@ func (ss *SortedSet) GetScore(member string) (float64, bool) {
 	return score, exists
 }
 
+// memberScore represents a member with its score for sorting
+type memberScore struct {
+	member string
+	score  float64
+}
+
 // GetRank returns the rank (0-based index) of a member in the sorted set
 // Members are sorted by score in ascending order, then by member name alphabetically
 func (ss *SortedSet) GetRank(member string) (int, bool) {
@@ -46,26 +76,28 @@ func (ss *SortedSet) GetRank(member string) (int, bool) {
 		return 0, false
 	}
 
-	// Create a slice of members with their scores for sorting
-	type memberScore struct {
-		member string
-		score  float64
+	// Use object pool for member slice
+	members := getMemberScoreSlice()
+	defer putMemberScoreSlice(members)
+
+	// Pre-allocate with exact capacity
+	members = members[:0]
+	if cap(members) < len(ss.Members) {
+		members = make([]memberScore, 0, len(ss.Members))
 	}
 
-	members := make([]memberScore, 0, len(ss.Members))
+	// Create a slice of members with their scores for sorting
 	for m, s := range ss.Members {
 		members = append(members, memberScore{m, s})
 	}
 
-	// Sort by score (ascending), then by member name (alphabetically)
-	for i := 0; i < len(members)-1; i++ {
-		for j := i + 1; j < len(members); j++ {
-			if members[i].score > members[j].score ||
-				(members[i].score == members[j].score && members[i].member > members[j].member) {
-				members[i], members[j] = members[j], members[i]
-			}
+	// Use Go's efficient sort instead of bubble sort
+	sort.Slice(members, func(i, j int) bool {
+		if members[i].score != members[j].score {
+			return members[i].score < members[j].score
 		}
-	}
+		return members[i].member < members[j].member
+	})
 
 	// Find the rank of the target member
 	for i, ms := range members {
