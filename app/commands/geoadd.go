@@ -1,11 +1,57 @@
 package commands
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
+
+const (
+	MIN_LATITUDE  = -85.05112878
+	MAX_LATITUDE  = 85.05112878
+	MIN_LONGITUDE = -180.0
+	MAX_LONGITUDE = 180.0
+
+	LATITUDE_RANGE  = MAX_LATITUDE - MIN_LATITUDE
+	LONGITUDE_RANGE = MAX_LONGITUDE - MIN_LONGITUDE
+)
+
+// spreadInt32ToInt64 spreads the bits of a 32-bit integer to a 64-bit integer
+// This is used for interleaving latitude and longitude bits
+func spreadInt32ToInt64(v uint32) uint64 {
+	result := uint64(v)
+	result = (result | (result << 16)) & 0x0000FFFF0000FFFF
+	result = (result | (result << 8)) & 0x00FF00FF00FF00FF
+	result = (result | (result << 4)) & 0x0F0F0F0F0F0F0F0F
+	result = (result | (result << 2)) & 0x3333333333333333
+	result = (result | (result << 1)) & 0x5555555555555555
+	return result
+}
+
+// interleave interleaves two 32-bit integers into a single 64-bit integer
+// This creates a geohash-like encoding where latitude and longitude bits are interleaved
+func interleave(x, y uint32) uint64 {
+	xSpread := spreadInt32ToInt64(x)
+	ySpread := spreadInt32ToInt64(y)
+	yShifted := ySpread << 1
+	return xSpread | yShifted
+}
+
+// encodeGeohash converts latitude and longitude to a geohash score
+// This is the core algorithm for storing geospatial data in sorted sets
+func encodeGeohash(latitude, longitude float64) uint64 {
+	// Normalize to the range 0-2^26
+	normalizedLatitude := math.Pow(2, 26) * (latitude - MIN_LATITUDE) / LATITUDE_RANGE
+	normalizedLongitude := math.Pow(2, 26) * (longitude - MIN_LONGITUDE) / LONGITUDE_RANGE
+
+	// Truncate to integers
+	latInt := uint32(normalizedLatitude)
+	lonInt := uint32(normalizedLongitude)
+
+	return interleave(latInt, lonInt)
+}
 
 // geoadd handles the GEOADD command.
 // Usage: GEOADD key longitude latitude member [longitude latitude member ...]
@@ -52,18 +98,20 @@ func Geoadd(connID string, args []shared.Value) shared.Value {
 		}
 
 		// Validate longitude range: -180° to +180° (inclusive)
-		if longitude < -180.0 || longitude > 180.0 {
+		if longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE {
 			return createErrorResponse("ERR invalid longitude value")
 		}
 
 		// Validate latitude range: -85.05112878° to +85.05112878° (inclusive)
-		if latitude < -85.05112878 || latitude > 85.05112878 {
+		if latitude < MIN_LATITUDE || latitude > MAX_LATITUDE {
 			return createErrorResponse("ERR invalid latitude value")
 		}
 
-		// For GEOADD, we use a hardcoded score of 0 for now
-		// In later stages, we'll implement proper geohash scoring
-		if entry.SortedSet.Add(member, 0) {
+		// Convert latitude and longitude to geohash score
+		score := encodeGeohash(latitude, longitude)
+
+		// Add member to sorted set with geohash score
+		if entry.SortedSet.Add(member, float64(score)) {
 			newElementsCount++
 		}
 	}

@@ -43,8 +43,10 @@ func TestGeoadd(t *testing.T) {
 				if !exists {
 					t.Error("Member should exist")
 				}
-				if score != 0 {
-					t.Errorf("Expected score 0, got %f", score)
+				// San Francisco: -122.4194, 37.7749 -> expected score: 1367859919124626
+				expectedScore := 1367859919124626.0
+				if score != expectedScore {
+					t.Errorf("Expected score %f, got %f", expectedScore, score)
 				}
 			},
 		},
@@ -97,8 +99,10 @@ func TestGeoadd(t *testing.T) {
 				if !exists {
 					t.Error("Member should exist")
 				}
-				if score != 0 {
-					t.Errorf("Expected score 0, got %f", score)
+				// Boundary Longitude Positive: 180, 0 -> expected score: 10133099161583616
+				expectedScore := 10133099161583616.0
+				if score != expectedScore {
+					t.Errorf("Expected score %f, got %f", expectedScore, score)
 				}
 			},
 		},
@@ -121,8 +125,10 @@ func TestGeoadd(t *testing.T) {
 				if !exists {
 					t.Error("Member should exist")
 				}
-				if score != 0 {
-					t.Errorf("Expected score 0, got %f", score)
+				// Boundary Longitude Negative: -180, 0 -> expected score: 1125899906842624
+				expectedScore := 1125899906842624.0
+				if score != expectedScore {
+					t.Errorf("Expected score %f, got %f", expectedScore, score)
 				}
 			},
 		},
@@ -145,8 +151,10 @@ func TestGeoadd(t *testing.T) {
 				if !exists {
 					t.Error("Member should exist")
 				}
-				if score != 0 {
-					t.Errorf("Expected score 0, got %f", score)
+				// Boundary Latitude Positive: 0, 85.05112878 -> expected score: 6755399441055744
+				expectedScore := 6755399441055744.0
+				if score != expectedScore {
+					t.Errorf("Expected score %f, got %f", expectedScore, score)
 				}
 			},
 		},
@@ -169,8 +177,10 @@ func TestGeoadd(t *testing.T) {
 				if !exists {
 					t.Error("Member should exist")
 				}
-				if score != 0 {
-					t.Errorf("Expected score 0, got %f", score)
+				// Boundary Latitude Negative: 0, -85.05112878 -> expected score: 2251799813685248
+				expectedScore := 2251799813685248.0
+				if score != expectedScore {
+					t.Errorf("Expected score %f, got %f", expectedScore, score)
 				}
 			},
 		},
@@ -289,8 +299,10 @@ func TestGeoadd(t *testing.T) {
 				if !exists {
 					t.Error("Member should exist")
 				}
-				if score != 0 {
-					t.Errorf("Expected score 0, got %f", score)
+				// Existing member: 0, 0 -> expected score: 3377699720527872
+				expectedScore := 3377699720527872.0
+				if score != expectedScore {
+					t.Errorf("Expected score %f, got %f", expectedScore, score)
 				}
 			},
 		},

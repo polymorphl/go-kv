@@ -43,5 +43,9 @@ func Zscore(connID string, args []shared.Value) shared.Value {
 		return shared.Value{Typ: "null", Str: ""}
 	}
 
+	// Format score as integer if it's a whole number, otherwise use decimal
+	if score == float64(int64(score)) {
+		return shared.Value{Typ: "bulk", Bulk: fmt.Sprintf("%.0f", score)}
+	}
 	return shared.Value{Typ: "bulk", Bulk: fmt.Sprintf("%.15g", score)}
 }
