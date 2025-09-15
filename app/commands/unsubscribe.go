@@ -1,9 +1,44 @@
 package commands
 
 import (
+	"sync"
+
 	"github.com/codecrafters-io/redis-starter-go/app/pubsub"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
 )
+
+// Object pool for response slices to reduce allocations
+var (
+	unsubscribeResponsePool = sync.Pool{
+		New: func() interface{} {
+			return make([]shared.Value, 0, 8)
+		},
+	}
+	unsubscribeChannelPool = sync.Pool{
+		New: func() interface{} {
+			return make([]string, 0, 16)
+		},
+	}
+)
+
+// Helper functions for pool management
+func getUnsubscribeResponse() []shared.Value {
+	return unsubscribeResponsePool.Get().([]shared.Value)
+}
+
+func putUnsubscribeResponse(s []shared.Value) {
+	s = s[:0] // Reset length but keep capacity
+	unsubscribeResponsePool.Put(s)
+}
+
+func getUnsubscribeChannelSlice() []string {
+	return unsubscribeChannelPool.Get().([]string)
+}
+
+func putUnsubscribeChannelSlice(s []string) {
+	s = s[:0] // Reset length but keep capacity
+	unsubscribeChannelPool.Put(s)
+}
 
 // Unsubscribe handles the UNSUBSCRIBE command.
 // Usage: UNSUBSCRIBE [channel [channel ...]]
@@ -18,7 +53,7 @@ import (
 //	UNSUBSCRIBE mychannel1 mychannel2   // Unsubscribe from two channels
 //	UNSUBSCRIBE                         // Unsubscribe from all channels
 func Unsubscribe(connID string, args []shared.Value) shared.Value {
-	// Get current subscriptions
+	// Get current subscriptions once
 	channels, hasSubscriptions := pubsub.SubscriptionsGet(connID)
 	if !hasSubscriptions {
 		// Client has no subscriptions, return empty response
@@ -35,14 +70,24 @@ func Unsubscribe(connID string, args []shared.Value) shared.Value {
 		pubsub.SubscriptionsDelete(connID)
 		pubsub.SubscribedModeDelete(connID)
 
-		// Return response for each previously subscribed channel
-		var responses []shared.Value
+		// Use object pool for responses
+		responses := getUnsubscribeResponse()
+		defer putUnsubscribeResponse(responses)
+
+		// Pre-allocate with exact capacity
+		responses = responses[:0]
+		if cap(responses) < len(channels) {
+			responses = make([]shared.Value, 0, len(channels))
+		}
+
+		// Create responses efficiently
 		for _, channel := range channels {
-			responses = append(responses, shared.Value{Typ: "array", Array: []shared.Value{
+			responseArray := []shared.Value{
 				{Typ: "bulk", Bulk: "unsubscribe"},
 				{Typ: "bulk", Bulk: channel},
 				{Typ: "integer", Num: 0},
-			}})
+			}
+			responses = append(responses, shared.Value{Typ: "array", Array: responseArray})
 		}
 
 		// Return the first response (Redis behavior)
@@ -57,47 +102,62 @@ func Unsubscribe(connID string, args []shared.Value) shared.Value {
 		}}
 	}
 
-	// Unsubscribe from specified channels
-	var unsubscribedChannels []string
-	for _, arg := range args {
-		channel := arg.Bulk
-		// Remove channel from subscriptions if it exists
-		channels, _ := pubsub.SubscriptionsGet(connID)
-		var newChannels []string
-		found := false
-		for _, existingChannel := range channels {
-			if existingChannel == channel {
-				found = true
-				unsubscribedChannels = append(unsubscribedChannels, channel)
-			} else {
-				newChannels = append(newChannels, existingChannel)
-			}
-		}
+	// Use object pools for channel slices
+	unsubscribedChannels := getUnsubscribeChannelSlice()
+	defer putUnsubscribeChannelSlice(unsubscribedChannels)
 
-		if found {
-			if len(newChannels) == 0 {
-				// No more subscriptions, remove from subscribed mode
-				pubsub.SubscriptionsDelete(connID)
-				pubsub.SubscribedModeDelete(connID)
-			} else {
-				// Update subscriptions with remaining channels
-				pubsub.SubscriptionsSetChannels(connID, newChannels)
-			}
+	// Pre-allocate with estimated capacity
+	unsubscribedChannels = unsubscribedChannels[:0]
+	if cap(unsubscribedChannels) < len(args) {
+		unsubscribedChannels = make([]string, 0, len(args))
+	}
+
+	// Create a map of channels to unsubscribe for efficient lookup
+	channelsToUnsubscribe := make(map[string]bool, len(args))
+	for _, arg := range args {
+		channelsToUnsubscribe[arg.Bulk] = true
+	}
+
+	// Build new channels list efficiently
+	newChannels := make([]string, 0, len(channels))
+	for _, existingChannel := range channels {
+		if channelsToUnsubscribe[existingChannel] {
+			unsubscribedChannels = append(unsubscribedChannels, existingChannel)
+		} else {
+			newChannels = append(newChannels, existingChannel)
 		}
 	}
 
-	// Get remaining subscription count
-	remainingChannels, _ := pubsub.SubscriptionsGet(connID)
-	remainingCount := len(remainingChannels)
+	// Update subscriptions
+	if len(newChannels) == 0 {
+		// No more subscriptions, remove from subscribed mode
+		pubsub.SubscriptionsDelete(connID)
+		pubsub.SubscribedModeDelete(connID)
+	} else {
+		// Update subscriptions with remaining channels
+		pubsub.SubscriptionsSetChannels(connID, newChannels)
+	}
 
-	// Return response for each unsubscribed channel
-	var responses []shared.Value
+	remainingCount := len(newChannels)
+
+	// Use object pool for responses
+	responses := getUnsubscribeResponse()
+	defer putUnsubscribeResponse(responses)
+
+	// Pre-allocate with exact capacity
+	responses = responses[:0]
+	if cap(responses) < len(unsubscribedChannels) {
+		responses = make([]shared.Value, 0, len(unsubscribedChannels))
+	}
+
+	// Create responses efficiently
 	for _, channel := range unsubscribedChannels {
-		responses = append(responses, shared.Value{Typ: "array", Array: []shared.Value{
+		responseArray := []shared.Value{
 			{Typ: "bulk", Bulk: "unsubscribe"},
 			{Typ: "bulk", Bulk: channel},
 			{Typ: "integer", Num: remainingCount},
-		}})
+		}
+		responses = append(responses, shared.Value{Typ: "array", Array: responseArray})
 	}
 
 	// For single channel unsubscription, return the response directly
