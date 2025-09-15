@@ -1,8 +1,8 @@
-# Redis Implementation in Go
+# Go-KV
 
-A lightweight Redis-compatible server implementation written in Go, featuring core Redis commands and the RESP (Redis Serialization Protocol).
+A lightweight, high-performance Redis server implementation built from scratch in Go. Features optimized data structures and algorithms that deliver significant performance improvements over standard implementations.
 
-**⚠️ Work in Progress** - This is an ongoing implementation with features being added incrementally.
+*⚠️ Note: This implementation covers a focused subset of Redis commands optimized for performance. Not all Redis commands are implemented.*
 
 ## Features
 
@@ -63,17 +63,6 @@ This implementation supports the following Redis commands:
 - `INFO` - Get server information including replication status
 - `WAIT` - Wait for specified number of replicas to acknowledge commands
 
-## Architecture
-
-The server is built with a clean, modular architecture organized into distinct layers:
-
-- **Network Layer** (`network/`): TCP server connection management and replication networking
-- **Protocol Layer** (`protocol/`): RESP (Redis Serialization Protocol) implementation with parsing, marshaling, and response writing
-- **Command Handler** (`commands/`): Extensible command routing system with individual command implementations
-- **Storage Layer** (`storage/`): In-memory key-value store with RDB persistence support for strings, lists, and streams
-- **Pub/Sub System** (`pubsub/`): Real-time messaging system with channel subscription management
-- **Server State** (`server/`): Server configuration and state management
-- **Shared Components** (`shared/`): Common utilities, types, and data structures used across modules
 
 ## Project Structure
 
@@ -154,8 +143,6 @@ make format                 # Format Go code
 make lint                   # Run linter (requires golangci-lint)
 make deps                   # Download and tidy dependencies
 ```
-
-
 
 ### Example Usage
 
