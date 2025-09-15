@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"math"
 	"strconv"
 
 	"github.com/codecrafters-io/redis-starter-go/app/server"
@@ -42,11 +41,14 @@ func interleave(x, y uint32) uint64 {
 // encodeGeohash converts latitude and longitude to a geohash score
 // This is the core algorithm for storing geospatial data in sorted sets
 func encodeGeohash(latitude, longitude float64) uint64 {
-	// Normalize to the range 0-2^26
-	normalizedLatitude := math.Pow(2, 26) * (latitude - MIN_LATITUDE) / LATITUDE_RANGE
-	normalizedLongitude := math.Pow(2, 26) * (longitude - MIN_LONGITUDE) / LONGITUDE_RANGE
+	// Use integer arithmetic for better precision
+	const scale = 1 << 26 // 2^26 as integer
 
-	// Truncate to integers
+	// Normalize to the range 0-2^26
+	normalizedLatitude := float64(scale) * (latitude - MIN_LATITUDE) / LATITUDE_RANGE
+	normalizedLongitude := float64(scale) * (longitude - MIN_LONGITUDE) / LONGITUDE_RANGE
+
+	// Convert to integers (truncate, don't round)
 	latInt := uint32(normalizedLatitude)
 	lonInt := uint32(normalizedLongitude)
 

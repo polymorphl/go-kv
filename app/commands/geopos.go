@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/codecrafters-io/redis-starter-go/app/server"
 	"github.com/codecrafters-io/redis-starter-go/app/shared"
@@ -24,9 +23,12 @@ func decodeGeohash(score uint64) (latitude, longitude float64) {
 		}
 	}
 
-	// Convert back to coordinates
-	latitude = MIN_LATITUDE + (float64(x) * LATITUDE_RANGE / math.Pow(2, 26))
-	longitude = MIN_LONGITUDE + (float64(y) * LONGITUDE_RANGE / math.Pow(2, 26))
+	// Use integer arithmetic for better precision (same as encoding)
+	const scale = 1 << 26 // 2^26 as integer
+
+	// Convert back to coordinates (add 0.5 to get center of geohash cell)
+	latitude = MIN_LATITUDE + ((float64(x) + 0.5) * LATITUDE_RANGE / float64(scale))
+	longitude = MIN_LONGITUDE + ((float64(y) + 0.5) * LONGITUDE_RANGE / float64(scale))
 
 	return latitude, longitude
 }
