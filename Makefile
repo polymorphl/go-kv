@@ -72,6 +72,10 @@ test-zset: ## Run sorted set command tests (ZADD, ZRANK, ZRANGE, ZSCORE, ZREM, Z
 	@echo "$(BLUE)Running sorted set command tests...$(RESET)"
 	$(GO_TEST) ./app/commands -v -run "TestZadd|TestZrank|TestZrange|TestZscore|TestZrem|TestZcard" -timeout $(TEST_TIMEOUT)
 
+test-geo: ## Run geospatial command tests (GEOADD)
+	@echo "$(BLUE)Running geospatial command tests...$(RESET)"
+	$(GO_TEST) ./app/commands -v -run "TestGeoadd" -timeout $(TEST_TIMEOUT)
+
 # Benchmarking commands
 bench: ## Run all benchmarks
 	@echo "$(BLUE)Running all benchmarks...$(RESET)"
@@ -104,6 +108,10 @@ bench-replication: ## Run replication command benchmarks (REPLCONF, PSYNC, INFO,
 bench-zset: ## Run sorted set command benchmarks (ZADD, ZRANK, ZRANGE, ZSCORE, ZREM, ZCARD)
 	@echo "$(BLUE)Running sorted set command benchmarks...$(RESET)"
 	$(GO_TEST) ./app/commands -bench="BenchmarkZadd|BenchmarkZrank|BenchmarkZrange|BenchmarkZscore|BenchmarkZrem|BenchmarkZcard" -benchmem
+
+bench-geo: ## Run geospatial command benchmarks (GEOADD)
+	@echo "$(BLUE)Running geospatial command benchmarks...$(RESET)"
+	$(GO_TEST) ./app/commands -bench="BenchmarkGeoadd" -benchmem
 
 # Development commands
 build: ## Build the Redis server
@@ -138,16 +146,16 @@ deps: ## Download dependencies
 # Quick test commands for development
 quick-test: ## Run quick tests (excluding slow BLPOP tests)
 	@echo "$(BLUE)Running quick tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard|TestSubscribe|TestUnsubscribe|TestPublish|TestZadd|TestZrank|TestZrange|TestZscore|TestZrem|TestZcard" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestXread|TestMulti|TestExec|TestDiscard|TestSubscribe|TestUnsubscribe|TestPublish|TestZadd|TestZrank|TestZrange|TestZscore|TestZrem|TestZcard|TestGeoadd" -timeout $(TEST_TIMEOUT)
 
 # CI/CD helpers
 ci-test: ## Run tests suitable for CI (no blocking operations)
 	@echo "$(BLUE)Running CI tests...$(RESET)"
-	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard|TestSubscribe|TestUnsubscribe|TestPublish|TestZadd|TestZrank|TestZrange|TestZscore|TestZrem|TestZcard" -timeout $(TEST_TIMEOUT)
+	$(GO_TEST) ./app/commands -v -run "TestPing|TestEcho|TestGet|TestSet|TestIncr|TestType|TestLpush|TestRpush|TestLrange|TestLpop|TestLlen|TestXadd|TestXrange|TestMulti|TestExec|TestDiscard|TestSubscribe|TestUnsubscribe|TestPublish|TestZadd|TestZrank|TestZrange|TestZscore|TestZrem|TestZcard|TestGeoadd" -timeout $(TEST_TIMEOUT)
 
 ci-bench: ## Run benchmarks suitable for CI
 	@echo "$(BLUE)Running CI benchmarks...$(RESET)"
-	$(GO_TEST) ./app/commands -bench="BenchmarkPing|BenchmarkEcho|BenchmarkGet|BenchmarkSet|BenchmarkIncr|BenchmarkType|BenchmarkLpush|BenchmarkRpush|BenchmarkLrange|BenchmarkLpop|BenchmarkLlen|BenchmarkXadd|BenchmarkXrange|BenchmarkXread|BenchmarkSubscribe|BenchmarkUnsubscribe|BenchmarkPublish|BenchmarkZadd|BenchmarkZrank|BenchmarkZrange|BenchmarkZscore|BenchmarkZrem|BenchmarkZcard" -benchmem
+	$(GO_TEST) ./app/commands -bench="BenchmarkPing|BenchmarkEcho|BenchmarkGet|BenchmarkSet|BenchmarkIncr|BenchmarkType|BenchmarkLpush|BenchmarkRpush|BenchmarkLrange|BenchmarkLpop|BenchmarkLlen|BenchmarkXadd|BenchmarkXrange|BenchmarkXread|BenchmarkSubscribe|BenchmarkUnsubscribe|BenchmarkPublish|BenchmarkZadd|BenchmarkZrank|BenchmarkZrange|BenchmarkZscore|BenchmarkZrem|BenchmarkZcard|BenchmarkGeoadd" -benchmem
 
 # Documentation
 test-coverage: ## Generate test coverage report
@@ -168,6 +176,7 @@ status: ## Show project status and test results
 	@echo "  • Pub/Sub: SUBSCRIBE, UNSUBSCRIBE, PUBLISH"
 	@echo "  • Replication: REPLCONF, PSYNC, INFO, WAIT"
 	@echo "  • Sorted Sets: ZADD, ZRANK, ZRANGE, ZSCORE, ZREM, ZCARD"
+	@echo "  • Geospatial: GEOADD"
 	@echo ""
 	@echo "$(GREEN)Test coverage:$(RESET)"
 	@echo "  • $(shell find ./app/commands -name "*_test.go" | wc -l | tr -d ' ') test files"
